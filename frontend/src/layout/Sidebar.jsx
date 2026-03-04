@@ -1,65 +1,94 @@
-import { useMemo, useState } from "react";
-import logo from "../assets/ms-banner-transparent.png";
-import { LayoutDashboard, Users, Building2, FolderUp, Settings } from "lucide-react";
+import {
+    Bell,
+    BookText,
+    Box,
+    BriefcaseBusiness,
+    Building2,
+    Cable,
+    ChevronDown,
+    Clock3,
+    CreditCard,
+    Database,
+    Download,
+    Home,
+    Palette,
+    Shield,
+    SquarePen,
+    Upload,
+    UsersRound,
+} from "lucide-react";
 
-export default function Sidebar({ onNavigate }) {
-    const items = useMemo(
-        () => [
-            { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
-            { key: "users", label: "Users", icon: <Users size={18} /> },
-            { key: "departments", label: "Departments", icon: <Building2 size={18} /> },
-            { key: "resources", label: "Resources", icon: <FolderUp size={18} /> },
-            { key: "settings", label: "Settings", icon: <Settings size={18} /> },
-        ],
-        []
-    );
+const generalItems = [
+    { key: "home", label: "Home", icon: Home },
+    { key: "dashboard", label: "Dashboard", icon: Box },
+    { key: "notifications", label: "Notifications", icon: Bell, badge: "10" },
+    { key: "appearance", label: "Appearance", icon: Palette },
+    { key: "database", label: "Database", icon: Database },
+    { key: "connections", label: "Connections", icon: Cable },
+    { key: "timezones", label: "Timezones", icon: Clock3 },
+    { key: "documentation", label: "Documentation", icon: BookText },
+];
 
-    // For now: local “active page” state (later: wire to React Router)
-    const [active, setActive] = useState("dashboard");
+const ventureItems = [
+    { key: "authentication", label: "Authentication", icon: BriefcaseBusiness },
+    { key: "user-management", label: "User management", icon: UsersRound, active: true },
+    { key: "security", label: "Security", icon: Shield },
+    { key: "payments", label: "Payments", icon: CreditCard },
+    { key: "import-data", label: "Import data", icon: Upload },
+    { key: "export-data", label: "Export data", icon: Download },
+];
 
+function NavGroup({ title, items, onNavigate }) {
     return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <div style={{ padding: "6px 10px 14px 10px" }}>
-                <img
-                    src={logo}
-                    alt="MEH Studios Incorporated"
-                    style={{ width: "100%", height: "auto", opacity: 0.95 }}
-                />
-            </div>
-
-            <div style={{ height: 1, background: "var(--border)", margin: "6px 10px 12px" }} />
-
-            <nav style={{ flex: 1 }}>
-                {items.map((it) => (
-                    <div
-                        key={it.key}
-                        className={`nav-item ${active === it.key ? "active" : ""}`}
-                        onClick={() => {
-                            setActive(it.key);
-                            onNavigate?.();
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                                setActive(it.key);
-                                onNavigate?.();
-                            }
-                        }}
+        <div className="sidebar-group">
+            <div className="sidebar-group-title">{title}</div>
+            <nav className="sidebar-nav">
+                {items.map(({ key, label, icon: Icon, badge, active }) => (
+                    <button
+                        key={key}
+                        type="button"
+                        className={`sidebar-link ${active ? "active" : ""}`}
+                        onClick={() => onNavigate?.()}
                     >
-                        <span style={{ opacity: 0.95 }}>{it.icon}</span>
-                        <span style={{ fontWeight: 650 }}>{it.label}</span>
-                    </div>
+                        <span className="sidebar-link-main">
+                            <Icon size={16} />
+                            <span>{label}</span>
+                        </span>
+                        {badge ? <span className="sidebar-badge">{badge}</span> : null}
+                    </button>
                 ))}
             </nav>
+        </div>
+    );
+}
 
-            <div className="card" style={{ padding: 14, margin: "10px" }}>
-                <div style={{ fontSize: 12, color: "var(--muted)" }}>Signed in as</div>
-                <div style={{ marginTop: 6, fontWeight: 800 }}>MEH User</div>
-                <div style={{ marginTop: 8, display: "flex", gap: 10 }}>
-                    <button className="btn-brand" style={{ flex: 1 }}>Profile</button>
-                </div>
+export default function Sidebar({ onNavigate }) {
+    return (
+        <div className="sidebar-inner">
+            <div className="sidebar-brand">
+                <button type="button" className="brand-pill">
+                    <Building2 size={15} />
+                    <span>Company</span>
+                    <ChevronDown size={14} />
+                </button>
+
+                <button type="button" className="icon-square" aria-label="Edit workspace">
+                    <SquarePen size={16} />
+                </button>
             </div>
+
+            <div className="sidebar-actions">
+                <button type="button" className="quick-action">
+                    <span>Quick actions</span>
+                    <kbd>⌘K</kbd>
+                </button>
+                <button type="button" className="search-shortcut" aria-label="Search shortcut">
+                    /
+                </button>
+            </div>
+
+            <NavGroup title="General" items={generalItems} onNavigate={onNavigate} />
+            <NavGroup title="Ventures" items={ventureItems} onNavigate={onNavigate} />
         </div>
     );
 }

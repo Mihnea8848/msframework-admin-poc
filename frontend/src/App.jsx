@@ -1,3 +1,4 @@
+import "./App.css";
 import DashboardLayout from "./layout/DashboardLayout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 

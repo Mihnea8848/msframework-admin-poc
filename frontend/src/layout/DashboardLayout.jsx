@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }) {
                 <Sidebar onNavigate={() => setSidebarOpen(false)} />
             </aside>
 
-            <div className="main">
+            <div className="main-shell">
                 <header className="topbar">
                     <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
                 </header>

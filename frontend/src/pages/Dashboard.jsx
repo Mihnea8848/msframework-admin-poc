@@ -1,83 +1,153 @@
+import {
+    BadgeCheck,
+    Circle,
+    ListFilter,
+    Search,
+    ShieldCheck,
+    TableProperties,
+    UsersRound,
+} from "lucide-react";
+
+const tabs = [
+    { label: "Table", active: true, icon: TableProperties },
+    { label: "Board", active: false, icon: BadgeCheck },
+    { label: "List", active: false, icon: Circle },
+];
+
+const filters = ["Role", "2FA Auth", "Department"];
+
+const members = [
+    { name: "Liam Smith", email: "smith@example.com", role: "Project Manager", status: "Active", joined: "24 Jun 2023", accent: "rose" },
+    { name: "Noah Anderson", email: "anderson@example.com", role: "UX Designer", status: "Active", joined: "15 Mar 2023", accent: "cyan" },
+    { name: "Isabella Garcia", email: "garcia@example.com", role: "Front-End Developer", status: "Inactive", joined: "10 Apr 2024", accent: "magenta" },
+    { name: "William Clark", email: "clark@example.com", role: "Product Owner", status: "Active", joined: "28 Feb 2024", accent: "azure" },
+    { name: "James Hall", email: "hall@example.com", role: "Business Analyst", status: "Active", joined: "19 May 2023", accent: "amber" },
+    { name: "Benjamin Lewis", email: "lewis@example.com", role: "Data Analyst", status: "Active", joined: "03 Jan 2024", accent: "gold" },
+    { name: "Amelia Davis", email: "davis@example.com", role: "UX Designer", status: "Inactive", joined: "21 Jul 2023", accent: "violet" },
+    { name: "Emma Johnson", email: "johnson@example.com", role: "UX Designer", status: "Active", joined: "16 Sep 2023", accent: "jade" },
+    { name: "Olivia Brown", email: "brown@example.com", role: "Marketing Specialist", status: "Active", joined: "04 Nov 2023", accent: "sky" },
+    { name: "Ava Williams", email: "williams@example.com", role: "Software Engineer", status: "Active", joined: "30 Dec 2023", accent: "coral" },
+    { name: "Sophia Jones", email: "jones@example.com", role: "Front-End Developer", status: "Active", joined: "05 Jun 2024", accent: "orange" },
+    { name: "Mia Miller", email: "moller@example.com", role: "Security Analyst", status: "Inactive", joined: "12 Aug 2023", accent: "plum" },
+];
+
+function initials(name) {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+}
+
 export default function Dashboard() {
     return (
-        <div className="grid">
-            {/* KPI row */}
-            <div className="card col-3" style={{ padding: 18 }}>
-                <div className="kpi-title">New Employees Joined</div>
-                <div className="kpi-value">12</div>
-                <div className="kpi-sub">+3 this week</div>
-            </div>
-
-            <div className="card col-3" style={{ padding: 18 }}>
-                <div className="kpi-title">Departments</div>
-                <div className="kpi-value">6</div>
-                <div className="kpi-sub">Active org units</div>
-            </div>
-
-            <div className="card col-3" style={{ padding: 18 }}>
-                <div className="kpi-title">Resources Uploaded</div>
-                <div className="kpi-value">48</div>
-                <div className="kpi-sub">Last 30 days</div>
-            </div>
-
-            <div className="card col-3" style={{ padding: 18 }}>
-                <div className="kpi-title">Pending Approvals</div>
-                <div className="kpi-value">5</div>
-                <div className="kpi-sub">Needs admin action</div>
-            </div>
-
-            {/* Main widgets */}
-            <div className="card col-8" style={{ padding: 18, minHeight: 320 }}>
-                <div style={{ fontWeight: 900, marginBottom: 10 }}>Activity</div>
-                <div style={{ color: "var(--muted)", fontSize: 13 }}>
-                    Placeholder for charts / recent actions (we’ll add real data later).
+        <section className="workspace">
+            <div className="workspace-hero">
+                <div>
+                    <div className="workspace-breadcrumb">Ventures / User management</div>
+                    <div className="workspace-title-row">
+                        <h1>User management</h1>
+                        <span className="workspace-count">74</span>
+                    </div>
+                    <p className="workspace-subtitle">
+                        Manage your team members and their account permissions here.
+                    </p>
                 </div>
-                <div style={{ marginTop: 14, height: 240, borderRadius: 14, border: "1px dashed var(--border)" }} />
-            </div>
 
-            <div className="card col-4" style={{ padding: 18, minHeight: 320 }}>
-                <div style={{ fontWeight: 900, marginBottom: 10 }}>Quick Actions</div>
-                <div style={{ display: "grid", gap: 10 }}>
-                    <button className="btn-brand">Create Department</button>
-                    <button className="card" style={{ padding: 12, cursor: "pointer", background: "var(--card-2)" }}>
-                        Invite User
-                    </button>
-                    <button className="card" style={{ padding: 12, cursor: "pointer", background: "var(--card-2)" }}>
-                        Upload Resource
-                    </button>
+                <div className="workspace-summary">
+                    <div className="summary-card">
+                        <UsersRound size={16} />
+                        <span>14 online</span>
+                    </div>
+                    <div className="summary-card">
+                        <ShieldCheck size={16} />
+                        <span>6 pending reviews</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Table placeholder */}
-            <div className="card col-12" style={{ padding: 18 }}>
-                <div style={{ fontWeight: 900, marginBottom: 10 }}>Recent Users</div>
-                <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="workspace-panel">
+                <div className="workspace-toolbar">
+                    <div className="view-tabs" role="tablist" aria-label="View tabs">
+                        {tabs.map(({ label, active, icon: Icon }) => (
+                            <button
+                                key={label}
+                                className={`view-tab ${active ? "active" : ""}`}
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                            >
+                                <Icon size={14} />
+                                <span>{label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <button className="table-search" type="button">
+                        <Search size={15} />
+                        <span>Search</span>
+                    </button>
+                </div>
+
+                <div className="workspace-filters">
+                    <div className="filter-row">
+                        {filters.map((filter) => (
+                            <button key={filter} className="filter-chip" type="button">
+                                <ListFilter size={14} />
+                                <span>{filter}</span>
+                            </button>
+                        ))}
+                        <button className="filter-link" type="button">+ Add filter</button>
+                    </div>
+                </div>
+
+                <div className="data-table-shell">
+                    <table className="data-table">
                         <thead>
-                        <tr style={{ color: "var(--muted)", textAlign: "left", fontSize: 12 }}>
-                            <th style={{ padding: "10px 8px" }}>Name</th>
-                            <th style={{ padding: "10px 8px" }}>Email</th>
-                            <th style={{ padding: "10px 8px" }}>Department</th>
-                            <th style={{ padding: "10px 8px" }}>Role</th>
-                        </tr>
+                            <tr>
+                                <th className="checkbox-col">
+                                    <span className="checkbox" aria-hidden="true" />
+                                </th>
+                                <th>Full name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {[
-                            { name: "Alexandra Stan", email: "alex@mehstudios.com", dep: "Studio Ops", role: "ADMIN" },
-                            { name: "Steven Smith", email: "steven@mehstudios.com", dep: "Engineering", role: "USER" },
-                            { name: "Alyssa Healy", email: "alyssa@mehstudios.com", dep: "Art", role: "USER" },
-                        ].map((r) => (
-                            <tr key={r.email} style={{ borderTop: "1px solid var(--border)" }}>
-                                <td style={{ padding: "12px 8px", fontWeight: 700 }}>{r.name}</td>
-                                <td style={{ padding: "12px 8px", color: "var(--muted)" }}>{r.email}</td>
-                                <td style={{ padding: "12px 8px" }}>{r.dep}</td>
-                                <td style={{ padding: "12px 8px" }}>{r.role}</td>
-                            </tr>
-                        ))}
+                            {members.map((member) => (
+                                <tr key={member.email}>
+                                    <td className="checkbox-col">
+                                        <span className="checkbox" aria-hidden="true" />
+                                    </td>
+                                    <td>
+                                        <div className="member-cell">
+                                            <div className={`avatar avatar-${member.accent}`}>
+                                                {initials(member.name)}
+                                            </div>
+                                            <span>{member.name}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href={`mailto:${member.email}`} className="email-link">
+                                            {member.email}
+                                        </a>
+                                    </td>
+                                    <td>{member.role}</td>
+                                    <td>
+                                        <span className={`status-pill ${member.status.toLowerCase()}`}>
+                                            {member.status}
+                                        </span>
+                                    </td>
+                                    <td>{member.joined}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
