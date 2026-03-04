@@ -23,6 +23,17 @@ function validateFullName(value) {
     return { ok: nonEmpty && twoWords && capitalized, checks: { nonEmpty, twoWords, capitalized } };
 }
 
+function validateEmail(value) {
+    const v = value.trim();
+
+    const nonEmpty = v.length > 0;
+    const formatOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+
+    const ok = nonEmpty && formatOk;
+
+    return { ok, checks: { nonEmpty, formatOk } };
+}
+
 function validatePhone(value) {
     const v = value.trim();
     const nonEmpty = v.length > 0;
@@ -46,8 +57,6 @@ function validatePassword(value) {
 }
 
 function RequirementMeter({ show, checks, labels }) {
-    if (!show) return null;
-
     const entries = Object.entries(checks);
     const total = entries.length;
     const passed = entries.filter(([, v]) => v).length;
@@ -55,22 +64,29 @@ function RequirementMeter({ show, checks, labels }) {
 
     const unmet = entries.filter(([, v]) => !v).map(([k]) => k);
 
-    const hue = Math.round((pct / 100) * 105); // 0 red, ~105 green
+    const hue = Math.round((pct / 100) * 105);
     const barColor = `hsl(${hue} 90% 55%)`;
 
     return (
-        <div className="req-shell">
+        <div className={`req-shell ${show ? "show" : ""}`}>
             <div className="req-bar">
-                <div className="req-bar-fill" style={{ width: `${pct}%`, background: barColor }} />
+                <div
+                    className="req-bar-fill"
+                    style={{ width: `${pct}%`, background: barColor }}
+                />
             </div>
 
-            {unmet.length > 0 ? (
-                <div className="req-list">
-                    {unmet.map((k) => (
-                        <div key={k} className="req-item">⚠ {labels[k]}</div>
-                    ))}
-                </div>
-            ) : null}
+            <div className="req-list">
+                {unmet.map((k, i) => (
+                    <div
+                        key={k}
+                        className="req-item"
+                        style={{ transitionDelay: `${i * 70}ms` }}
+                    >
+                        ⚠ {labels[k]}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -120,12 +136,13 @@ export default function Register() {
     const nameVal = useMemo(() => validateFullName(fullName), [fullName]);
     const phoneVal = useMemo(() => validatePhone(phone), [phone]);
     const passVal = useMemo(() => validatePassword(password), [password]);
+    const emailVal = useMemo(() => validateEmail(email), [email]);
     const confirmOk = confirm.length > 0 && confirm === password;
 
     const canSubmit =
         nameVal.ok &&
         phoneVal.ok &&
-        email.trim().length > 0 &&
+        emailVal.ok &&
         departmentId &&
         passVal.ok &&
         confirmOk;
@@ -152,9 +169,9 @@ export default function Register() {
                         Already have an account? <Link className="auth-link" to="/login">Sign in</Link>
                     </div>
 
-                    <form className="auth-form" onSubmit={onSubmit}>
+                    <form className="auth-form" onSubmit={onSubmit} autoComplete="off">
                         <div className="auth-grid">
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="fullName">Full name</label>
                                 <input
                                     id="fullName"
@@ -177,7 +194,7 @@ export default function Register() {
                                 />
                             </div>
 
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="phone">Telephone number</label>
                                 <input
                                     id="phone"
@@ -200,7 +217,7 @@ export default function Register() {
                                 />
                             </div>
 
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="email">Email address</label>
                                 <input
                                     id="email"
@@ -210,11 +227,21 @@ export default function Register() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="email address"
+                                    onFocus={() => setFocusField("email")}
+                                    onBlur={() => setFocusField((f) => (f === "email" ? null : f))}
                                     required
+                                />
+                                <RequirementMeter
+                                    show={focusField === "email" && !emailVal.ok}
+                                    checks={emailVal.checks}
+                                    labels={{
+                                        nonEmpty: "Must not be empty",
+                                        formatOk: "Must be a valid email (example@domain.com)",
+                                    }}
                                 />
                             </div>
 
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="dept">Department</label>
                                 <select
                                     id="dept"
@@ -235,7 +262,7 @@ export default function Register() {
                                 {deptError ? <div className="auth-inline-error">{deptError}</div> : null}
                             </div>
 
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="password">Password</label>
                                 <input
                                     id="password"
@@ -260,7 +287,7 @@ export default function Register() {
                                 />
                             </div>
 
-                            <div className="auth-field">
+                            <div className="auth-field field-wrapper">
                                 <label className="auth-label" htmlFor="confirm">Confirm password</label>
                                 <input
                                     id="confirm"

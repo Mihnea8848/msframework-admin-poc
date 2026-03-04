@@ -1,17 +1,62 @@
 import { useState } from "react";
-import { SiGithub, SiGoogle, SiApple } from '@icons-pack/react-simple-icons';
+import { SiGithub, SiGoogle, SiApple } from "@icons-pack/react-simple-icons";
 import { Link } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
+
+const API_BASE = "http://localhost:8080";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    // error = { type: "auth" | "network", message: string }
+
     async function onSubmit(e) {
         e.preventDefault();
-        // TODO: wire POST /api/auth/login with credentials: "include"
-        console.log({ email, password });
+        if (loading) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (res.status === 401) {
+                setError({
+                    type: "auth",
+                    message: "Invalid email or password.",
+                });
+                return;
+            }
+
+            if (!res.ok) {
+                setError({
+                    type: "auth",
+                    message: "Login failed. Please try again.",
+                });
+                return;
+            }
+
+            // success
+            window.location.href = "/dashboard";
+            // later we’ll use navigate() + refresh() from AuthContext
+
+        } catch {
+            setError({
+                type: "network",
+                message: "Unable to contact server. Please try again later.",
+            });
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -22,14 +67,27 @@ export default function Login() {
                     <div className="auth-brand">
                         <img className="auth-logo" src={logo} alt="MSFramework" />
                     </div>
+
                     <h1 className="auth-title">Welcome Back</h1>
+
                     <div className="auth-subtitle">
-                        Don’t have an account yet? <Link className="auth-link" to="/register">Sign up</Link>
+                        Don’t have an account yet?{" "}
+                        <Link className="auth-link" to="/register">
+                            Sign up
+                        </Link>
                     </div>
 
                     <form className="auth-form" onSubmit={onSubmit}>
+                        {error && (
+                            <div className="login-error show">
+                                {error.message}
+                            </div>
+                        )}
+
                         <div className="auth-field">
-                            <label className="auth-label" htmlFor="email">Email address</label>
+                            <label className="auth-label" htmlFor="email">
+                                Email address
+                            </label>
                             <input
                                 id="email"
                                 className="auth-input"
@@ -43,7 +101,9 @@ export default function Login() {
                         </div>
 
                         <div className="auth-field">
-                            <label className="auth-label" htmlFor="password">Password</label>
+                            <label className="auth-label" htmlFor="password">
+                                Password
+                            </label>
                             <input
                                 id="password"
                                 className="auth-input"
@@ -56,20 +116,26 @@ export default function Login() {
                             />
                         </div>
 
-                        <button className="auth-primary" type="submit">Login</button>
+                        <button
+                            className="auth-primary gradient-hover-btn"
+                            type="submit"
+                            disabled={loading}
+                        >
+                            {loading ? "Signing in..." : "Login"}
+                        </button>
 
                         <div className="auth-divider">
                             <span>OR</span>
                         </div>
 
                         <div className="auth-social">
-                            <button type="button" className="auth-social-btn" aria-label="Sign in with Apple">
+                            <button type="button" className="auth-social-btn">
                                 <SiApple size={16} />
                             </button>
-                            <button type="button" className="auth-social-btn" aria-label="Sign in with Google">
+                            <button type="button" className="auth-social-btn">
                                 <SiGoogle size={16} />
                             </button>
-                            <button type="button" className="auth-social-btn" aria-label="Sign in with GitHub">
+                            <button type="button" className="auth-social-btn">
                                 <SiGithub size={16} />
                             </button>
                         </div>

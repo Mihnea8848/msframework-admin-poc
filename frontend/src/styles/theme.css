@@ -558,6 +558,7 @@ button {
     display: grid;
     place-items: center;
     padding: 32px 18px;
+    overflow: visible;
 }
 
 .auth-circuit{
@@ -604,6 +605,8 @@ button {
     box-shadow: var(--shadow);
     padding: 22px 22px 18px;
     position: relative;
+    z-index: 2;
+    overflow: visible;
 }
 
 .auth-card-wide{
@@ -614,6 +617,7 @@ button {
     display:flex;
     justify-content:center;
     margin-top: 2px;
+    overflow: visible;
 }
 
 .auth-logo{
@@ -654,6 +658,8 @@ button {
 .auth-field{
     display: grid;
     gap: 8px;
+    position: relative;
+    overflow: visible;
 }
 
 .auth-label{
@@ -744,6 +750,7 @@ button {
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    overflow: visible;
 }
 
 @media (max-width: 720px){
@@ -778,7 +785,7 @@ button {
     margin-top: 8px;
     display: grid;
     gap: 6px;
-    color: #ff9f95;
+    color: #fa5444;
     font-size: 12px;
 }
 
@@ -789,13 +796,13 @@ button {
 }
 
 .auth-inline-error{
-    color: #ff9f95;
+    color: #fa5444;
     font-size: 12px;
 }
 /* Wavy animation inside auth-circuit */
 .auth-circuit{
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 22px;
 }
 
@@ -827,8 +834,180 @@ button {
     mask-composite: add;
 }
 
-/* ensure the card stays above the waves */
-.auth-card{
+.req-shell {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+
+    padding: 14px 16px;
+    border-radius: 14px;
+
+    background: rgba(51, 62, 63, 0.14);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
+
+    box-shadow: 0 14px 35px rgba(0,0,0,0.45);
+
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    pointer-events: none;
+
+    transition:
+            opacity 0.25s ease,
+            transform 0.25s ease;
+
+    z-index: 100;
+}
+
+.req-shell.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.req-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.req-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.35s ease, background 0.35s ease;
+}
+
+.req-item {
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #fa5444;
+
+    opacity: 0;
+    transform: translateY(-4px);
+
+    transition:
+            opacity 0.25s ease,
+            transform 0.25s ease;
+}
+
+.req-shell.show .req-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .req-shell {
+        position: relative;
+        top: auto;
+        margin-top: 8px;
+    }
+}
+
+.login-error {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+
+    border-radius: 12px;
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    color: #fa5444;
+
+    font-size: 14px;
+
+    animation:
+            fadeSlideIn 0.25s ease forwards,
+            shakeX 0.35s ease 0.25s;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shakeX {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+    100% { transform: translateX(0); }
+}
+
+/* Base button color */
+.gradient-hover-btn {
     position: relative;
+    overflow: hidden;
+    background: #0D110EFF;
+    color: var(--text);
+    transition: color 0.3s ease, transform 0.2s ease;
+    border: 1px solid var(--line);
+    padding: 12px 18px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+/* Keep text above everything */
+.gradient-hover-btn > * {
+    position: relative;
+    z-index: 5;
+    color: #ffffff;
+}
+
+/* Gradient layer */
+.gradient-hover-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+            45deg,
+            #28beef 0%,
+            #2487cb 50%,
+            #28beef 100%
+    );
+    background-size: 300% 300%;
+    opacity: 0;
+    transition: opacity 1s ease;
     z-index: 1;
+}
+
+/* Play animation only on hover */
+.gradient-hover-btn:hover::before {
+    opacity: 1;
+    animation: hoverGradient 2s ease infinite;
+}
+
+/* Opacity and scale feedback */
+.gradient-hover-btn:hover {
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(40,190,239,0.42);
+    border: none;
+}
+
+@keyframes hoverGradient {
+    0% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* Disabled */
+.gradient-hover-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
