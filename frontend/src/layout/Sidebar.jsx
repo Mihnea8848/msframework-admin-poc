@@ -43,7 +43,7 @@ function NavGroup({ title, items, onNavigate }) {
         <div className="sidebar-group">
             <div className="sidebar-group-title">{title}</div>
             <nav className="sidebar-nav">
-                {items.map(({ key, label, icon: Icon, badge, active }) => (
+                {items.map(({ key, label, badge, active }) => (
                     <button
                         key={key}
                         type="button"
@@ -51,7 +51,6 @@ function NavGroup({ title, items, onNavigate }) {
                         onClick={() => onNavigate?.()}
                     >
                         <span className="sidebar-link-main">
-                            <Icon size={16} />
                             <span>{label}</span>
                         </span>
                         {badge ? <span className="sidebar-badge">{badge}</span> : null}

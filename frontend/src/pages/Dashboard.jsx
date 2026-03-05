@@ -70,7 +70,7 @@ export default function Dashboard() {
             <div className="workspace-panel">
                 <div className="workspace-toolbar">
                     <div className="view-tabs" role="tablist" aria-label="View tabs">
-                        {tabs.map(({ label, active, icon: Icon }) => (
+                        {tabs.map(({ label, active }) => (
                             <button
                                 key={label}
                                 className={`view-tab ${active ? "active" : ""}`}
@@ -78,7 +78,6 @@ export default function Dashboard() {
                                 role="tab"
                                 aria-selected={active}
                             >
-                                <Icon size={14} />
                                 <span>{label}</span>
                             </button>
                         ))}

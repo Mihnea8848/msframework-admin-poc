@@ -19,9 +19,8 @@ export default function Topbar({ onOpenSidebar }) {
             </button>
 
             <div className="topbar-actions" aria-label="Navigation actions">
-                {actions.map(({ label, icon: Icon }) => (
+                {actions.map(({ label }) => (
                     <button key={label} type="button" className="topbar-icon-button" aria-label={label}>
-                        <Icon size={15} />
                     </button>
                 ))}
             </div>
