@@ -1,60 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
-
-const API_BASE = "http://localhost:8080";
-
-function onlyDigits(s) {
-    return (s || "").replace(/\D/g, "");
-}
-
-function validateFullName(value) {
-    const v = value.trim();
-    if (!v) return { ok: false, checks: { nonEmpty: false, twoWords: false, capitalized: false } };
-
-    const parts = v.split(/\s+/).filter(Boolean);
-    const nonEmpty = v.length > 0;
-    const twoWords = parts.length >= 2;
-
-    const capWord = (w) => w.split("-").every(seg => /^[A-Z][a-z]+$/.test(seg));
-    const capitalized = parts.length > 0 && parts.every(capWord);
-
-    return { ok: nonEmpty && twoWords && capitalized, checks: { nonEmpty, twoWords, capitalized } };
-}
-
-function validateEmail(value) {
-    const v = value.trim();
-
-    const nonEmpty = v.length > 0;
-    const formatOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
-
-    const ok = nonEmpty && formatOk;
-
-    return { ok, checks: { nonEmpty, formatOk } };
-}
-
-function validatePhone(value) {
-    const v = value.trim();
-    const nonEmpty = v.length > 0;
-
-    const formatOk = /^\+?\d*$/.test(v);
-
-    const digits = onlyDigits(v);
-    const minDigits = digits.length >= 7;
-
-    const ok = nonEmpty && formatOk && minDigits;
-    return { ok, checks: { nonEmpty, formatOk, minDigits } };
-}
-
-function validatePassword(value) {
-    const v = value || "";
-    const minLen = v.length >= 8;
-    const hasNumber = /\d/.test(v);
-    const hasSymbol = /[^A-Za-z0-9]/.test(v);
-    const ok = minLen && hasNumber && hasSymbol;
-    return { ok, checks: { minLen, hasNumber, hasSymbol } };
-}
+import {
+    validateFullName,
+    validateEmail,
+    validatePhone,
+    validatePassword
+} from "../utils/validators.js";
 
 function RequirementMeter({ show, checks, labels }) {
     const entries = Object.entries(checks);
@@ -104,6 +57,7 @@ export default function Register() {
     const [confirm, setConfirm] = useState("");
 
     const [focusField, setFocusField] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         let alive = true;
@@ -113,12 +67,9 @@ export default function Register() {
             setDeptError("");
 
             try {
-                const res = await fetch(`${API_BASE}/api/departments`, { credentials: "include" });
-
-                if (!res.ok) {
-                    if (alive) setDeptError(`Failed to load departments (${res.status})`);
-                    return;
-                }
+                const res = await fetch("/api/departments", {
+                    credentials: "include"
+                });
 
                 const data = await res.json();
                 if (alive) setDepartments(Array.isArray(data) ? data : []);
@@ -151,8 +102,32 @@ export default function Register() {
         e.preventDefault();
         if (!canSubmit) return;
 
-        // TODO: wire POST /api/auth/register (JSON)
-        console.log({ fullName, phone, email, departmentId, password });
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    fullName,
+                    phone,
+                    email,
+                    departmentId: parseInt(departmentId, 10),
+                    password,
+                }),
+            });
+
+            if (!res.ok) {
+                const errorMessage = await res.text();
+                alert(`Registration failed: ${errorMessage}`); // Temp. alert in case things go south
+                return;
+            }
+            navigate("/login");
+
+        } catch (err) {
+            console.error("Network error:", err);
+            alert("Unable to contact the server.");
+        }
     }
 
     return (

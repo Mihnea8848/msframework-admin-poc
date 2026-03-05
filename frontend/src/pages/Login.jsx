@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { SiGithub, SiGoogle, SiApple } from "@icons-pack/react-simple-icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Add useNavigate
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
-
-const API_BASE = "http://localhost:8080";
+import { useAuth } from "../auth/useAuth.js"; // Add useAuth
 
 export default function Login() {
+    const navigate = useNavigate();
+    const { refresh } = useAuth();
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -22,7 +24,7 @@ export default function Login() {
         setError(null);
 
         try {
-            const res = await fetch(`${API_BASE}/api/auth/login`, {
+            const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -46,8 +48,8 @@ export default function Login() {
             }
 
             // success
-            window.location.href = "/dashboard";
-            // later we’ll use navigate() + refresh() from AuthContext
+            await refresh();
+            navigate("/");
 
         } catch {
             setError({
