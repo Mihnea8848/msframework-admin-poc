@@ -27,11 +27,11 @@ Right now, the project is in its early stages, starting with the absolute founda
 
 ## Getting Started (Local Development)
 
-I've set up a bash script to make spinning this environment up as painless as possible. You'll need Docker, Node.js (v20+), and Java 21 installed on your machine.
+We've set up a bash script to make spinning this environment up as painless as possible. You'll need Docker, Node.js (v20+), and Java 21 installed on your machine.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/msframework-admin-poc.git
+   git clone https://github.com/Mihnea8848/msframework-admin-poc.git
    cd msframework-admin-poc
    ```
 
@@ -45,7 +45,7 @@ What the script does automatically:
 * Starts the Spring Boot backend.
 * Starts the Vite frontend server and automatically proxies `/api` requests to bypass CORS restrictions.
 
-*Note: Press `Ctrl+C` to cleanly kill both the frontend and backend child processes.*
+*Note: Press `Ctrl+C` two times to cleanly kill both the frontend and backend child processes.*
 
 ## Roadmap
 - [x] Scaffold React frontend & Spring Boot backend
