@@ -1,36 +1,52 @@
-import { useEffect, useMemo, useState } from "react";
-import { AuthContext } from "./authContext.js";
-import { fetchMe } from "./auth.js";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useState } from "react";
+import * as authApi from "./auth";
+
+const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
-    const [me, setMe] = useState(null);
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [bootError, setBootError] = useState(null);
 
-    async function refresh() {
-        setLoading(true);
-        setBootError(null);
-
+    const refresh = async () => {
         try {
-            const user = await fetchMe();
-            setMe(user);
+            const currentUser = await authApi.fetchMe();
+            setUser(currentUser);
         } catch (err) {
             console.error("[AuthProvider] fetchMe failed:", err);
-            setMe(null);
-            setBootError(err);
+            setUser(null);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        refresh();
+
+        refresh().catch(console.error);
     }, []);
 
-    const value = useMemo(
-        () => ({ me, loading, refresh, setMe, bootError }),
-        [me, loading, bootError]
-    );
+    const login = async (email, password) => {
+        const loggedInUser = await authApi.login(email, password);
+        if (loggedInUser) {
+            setUser(loggedInUser);
+            return loggedInUser;
+        }
+        throw new Error("Login failed");
+    };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    const logout = () => {
+        setUser(null);
+    };
+
+    return (
+        <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuth must be used within AuthProvider");
+    return context;
+};

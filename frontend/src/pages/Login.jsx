@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { SiGithub, SiGoogle, SiApple } from "@icons-pack/react-simple-icons";
-import { Link, useNavigate } from "react-router-dom"; // Add useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
-import { useAuth } from "../auth/useAuth.js"; // Add useAuth
+import { useAuth } from "../auth/AuthProvider";
 
 export default function Login() {
     const navigate = useNavigate();
-    const { refresh } = useAuth();
+
+    const { login } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    // error = { type: "auth" | "network", message: string }
 
     async function onSubmit(e) {
         e.preventDefault();
@@ -24,38 +24,15 @@ export default function Login() {
         setError(null);
 
         try {
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ email, password }),
-            });
+            await login(email, password);
 
-            if (res.status === 401) {
-                setError({
-                    type: "auth",
-                    message: "Invalid email or password.",
-                });
-                return;
-            }
-
-            if (!res.ok) {
-                setError({
-                    type: "auth",
-                    message: "Login failed. Please try again.",
-                });
-                return;
-            }
-
-            // success
-            await refresh();
             navigate("/");
-
-        } catch {
+        } catch (err) {
             setError({
-                type: "network",
-                message: "Unable to contact server. Please try again later.",
+                type: "auth",
+                message: "Invalid email or password.",
             });
+            console.error(err);
         } finally {
             setLoading(false);
         }
