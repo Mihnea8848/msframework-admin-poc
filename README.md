@@ -53,6 +53,6 @@ What the script does automatically:
 - [x] Implement Auth (Login/Register) with HTTP-Only sessions
 - [x] Set up GitHub Actions CI pipeline
 - [ ] Connect dynamic database users to the React Dashboard
-- [ ] Build out full CRUD operations for Departments
+- [x] Build out full CRUD operations for Departments
 - [ ] Implement password reset & email verification flows
 - [ ] Expand RBAC (Role-Based Access Control) system
