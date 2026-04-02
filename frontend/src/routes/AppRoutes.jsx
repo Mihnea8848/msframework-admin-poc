@@ -1,7 +1,8 @@
 import { Route, Routes, Navigate } from "react-router-dom";
-import { RequireAuth, RedirectIfAuthed } from "./Guards.jsx"; // Import RedirectIfAuthed
+import { RequireAuth, RedirectIfAuthed } from "./Guards.jsx";
 import DashboardLayout from "../layout/DashboardLayout.jsx";
 import Dashboard from "../pages/Dashboard.jsx";
+import Departments from "../pages/Departments.jsx"; // 1. IMPORT YOUR COMPONENT
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
 
@@ -18,6 +19,8 @@ export default function AppRoutes() {
                     <Register />
                 </RedirectIfAuthed>
             } />
+
+            {/* User Management (Home) */}
             <Route
                 path="/"
                 element={
@@ -28,6 +31,19 @@ export default function AppRoutes() {
                     </RequireAuth>
                 }
             />
+
+            {/* 2. ADD THE DEPARTMENTS ROUTE HERE */}
+            <Route
+                path="/departments"
+                element={
+                    <RequireAuth>
+                        <DashboardLayout>
+                            <Departments />
+                        </DashboardLayout>
+                    </RequireAuth>
+                }
+            />
+
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
     );
