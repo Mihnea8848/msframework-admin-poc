@@ -48,7 +48,7 @@ public class AuthController {
         // 4. Return the user data to React
         User user = userRepository.findByEmail(request.get("email"))
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
+    
         return ResponseEntity.ok(user);
     }
 
