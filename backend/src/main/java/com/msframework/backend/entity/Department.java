@@ -1,5 +1,6 @@
 package com.msframework.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +22,7 @@ public class Department {
     @Column(nullable = false, unique = true)
     private String name;
 
-    // Optional: If you want a bi-directional relationship
     @OneToMany(mappedBy = "department")
+    @JsonIgnore
     private List<User> users;
 }

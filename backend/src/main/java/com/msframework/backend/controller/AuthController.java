@@ -1,27 +1,22 @@
 package com.msframework.backend.controller;
 
-import com.msframework.backend.dto.LoginRequest;
-import com.msframework.backend.dto.RegisterRequest;
-import com.msframework.backend.dto.UserInfoResponse;
 import com.msframework.backend.entity.User;
 import com.msframework.backend.repository.UserRepository;
-import com.msframework.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
-// Security Imports
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,56 +24,49 @@ import org.springframework.security.web.context.SecurityContextRepository;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final AuthService authService;
     private final UserRepository userRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request,
                                    HttpServletRequest httpRequest,
                                    HttpServletResponse httpResponse) {
 
-        // Verify credentials
+        // 1. Check the credentials
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+                new UsernamePasswordAuthenticationToken(request.get("email"), request.get("password"))
         );
 
-        // Set the security context
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 2. Create the security context
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
 
-        // Explicitly save the context to the session
+        // 3. Explicitly save this context into the user's session cookie
         SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
-        contextRepository.saveContext(SecurityContextHolder.getContext(), httpRequest, httpResponse);
+        contextRepository.saveContext(context, httpRequest, httpResponse);
 
-        return ResponseEntity.ok().body("Login successful");
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            authService.registerUser(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        // 4. Return the user data to React
+        User user = userRepository.findByEmail(request.get("email"))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserInfoResponse> getMe(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<?> getCurrentUser(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.ok().body(null);
         }
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findByEmail(principal.getName())
+                .map(user -> ResponseEntity.ok().body(user))
+                .orElseGet(() -> ResponseEntity.ok().body(null));
+    }
 
-        UserInfoResponse response = new UserInfoResponse(
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole(),
-                user.getStatus(),
-                user.getDepartment().getName()
-        );
-
-        return ResponseEntity.ok(response);
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+        return ResponseEntity.ok(userRepository.save(user));
     }
 }

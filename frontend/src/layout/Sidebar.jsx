@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router-dom"; // Add these
 import {
     Bell,
     BookText,
@@ -19,49 +20,57 @@ import {
 } from "lucide-react";
 
 const generalItems = [
-    { key: "home", label: "Home", icon: Home },
-    { key: "dashboard", label: "Dashboard", icon: Box },
-    { key: "notifications", label: "Notifications", icon: Bell, badge: "10" },
-    { key: "appearance", label: "Appearance", icon: Palette },
-    { key: "database", label: "Database", icon: Database },
-    { key: "connections", label: "Connections", icon: Cable },
-    { key: "timezones", label: "Timezones", icon: Clock3 },
-    { key: "documentation", label: "Documentation", icon: BookText },
+    { key: "home", label: "Home", icon: Home, path: "/" },
+    { key: "dashboard", label: "Dashboard", icon: Box, path: "/dashboard" },
+    { key: "notifications", label: "Notifications", icon: Bell, badge: "10", path: "/notifications" },
+    { key: "appearance", label: "Appearance", icon: Palette, path: "/appearance" },
+    { key: "database", label: "Database", icon: Database, path: "/database" },
+    { key: "connections", label: "Connections", icon: Cable, path: "/connections" },
+    { key: "timezones", label: "Timezones", icon: Clock3, path: "/timezones" },
+    { key: "documentation", label: "Documentation", icon: BookText, path: "/docs" },
 ];
 
 const ventureItems = [
-    { key: "authentication", label: "Authentication", icon: BriefcaseBusiness },
-    { key: "user-management", label: "User management", icon: UsersRound, active: true },
-    { key: "security", label: "Security", icon: Shield },
-    { key: "payments", label: "Payments", icon: CreditCard },
-    { key: "import-data", label: "Import data", icon: Upload },
-    { key: "export-data", label: "Export data", icon: Download },
+    { key: "authentication", label: "Authentication", icon: BriefcaseBusiness, path: "/auth" },
+    // Point this to your actual User Management route
+    { key: "user-management", label: "User management", icon: UsersRound, path: "/" },
+    // Point this to your actual Department CRUD route
+    { key: "departments", label: "Departments", icon: Building2, path: "/departments" },
+    { key: "security", label: "Security", icon: Shield, path: "/security" },
+    { key: "payments", label: "Payments", icon: CreditCard, path: "/payments" },
+    { key: "import-data", label: "Import data", icon: Upload, path: "/import" },
+    { key: "export-data", label: "Export data", icon: Download, path: "/export" },
 ];
 
-function NavGroup({ title, items, onNavigate }) {
+function NavGroup({ title, items }) {
+    const location = useLocation(); // To highlight which tab is active
+
     return (
         <div className="sidebar-group">
             <div className="sidebar-group-title">{title}</div>
             <nav className="sidebar-nav">
-                {items.map(({ key, label, badge, active }) => (
-                    <button
-                        key={key}
-                        type="button"
-                        className={`sidebar-link ${active ? "active" : ""}`}
-                        onClick={() => onNavigate?.()}
-                    >
-                        <span className="sidebar-link-main">
-                            <span>{label}</span>
-                        </span>
-                        {badge ? <span className="sidebar-badge">{badge}</span> : null}
-                    </button>
-                ))}
+                {items.map(({ key, label, badge, path, icon: Icon }) => {
+                    const isActive = location.pathname === path;
+                    return (
+                        <Link
+                            key={key}
+                            to={path}
+                            className={`sidebar-link ${isActive ? "active" : ""}`}
+                        >
+                            <span className="sidebar-link-main">
+                                <Icon size={18} className="sidebar-icon" />
+                                <span>{label}</span>
+                            </span>
+                            {badge ? <span className="sidebar-badge">{badge}</span> : null}
+                        </Link>
+                    );
+                })}
             </nav>
         </div>
     );
 }
 
-export default function Sidebar({ onNavigate }) {
+export default function Sidebar() {
     return (
         <div className="sidebar-inner">
             <div className="sidebar-brand">
@@ -70,7 +79,6 @@ export default function Sidebar({ onNavigate }) {
                     <span>Company</span>
                     <ChevronDown size={14} />
                 </button>
-
                 <button type="button" className="icon-square" aria-label="Edit workspace">
                     <SquarePen size={16} />
                 </button>
@@ -86,8 +94,8 @@ export default function Sidebar({ onNavigate }) {
                 </button>
             </div>
 
-            <NavGroup title="General" items={generalItems} onNavigate={onNavigate} />
-            <NavGroup title="Ventures" items={ventureItems} onNavigate={onNavigate} />
+            <NavGroup title="General" items={generalItems} />
+            <NavGroup title="Ventures" items={ventureItems} />
         </div>
     );
 }
