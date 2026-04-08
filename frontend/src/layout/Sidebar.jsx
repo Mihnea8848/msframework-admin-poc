@@ -100,6 +100,7 @@ function NavGroup({ title, items }) {
 
             <nav className="sidebar-nav">
 
+                {/* eslint-disable-next-line no-unused-vars */}
                 {items.map(({ key, label, badge, path, icon: Icon }) => {
 
                     const isActive = location.pathname === path;
