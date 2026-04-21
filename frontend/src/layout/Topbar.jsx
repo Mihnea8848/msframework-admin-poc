@@ -38,6 +38,7 @@ export default function Topbar({ onOpenSidebar }) {
             </button>
 
             <div className="topbar-actions" aria-label="Navigation actions">
+                {/* eslint-disable-next-line no-unused-vars */}
                 {actions.map(({ label, icon: Icon, onClick, disabled }) => (
                     <button
                         key={label}
