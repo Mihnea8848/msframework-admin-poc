@@ -10,21 +10,11 @@ import {
     UsersRound,
 } from "lucide-react";
 
-function initials(name) {
-    if (!name) return "??";
-    return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-}
 
 export default function Dashboard() {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [search, setSearch] = useState("");
     const [departments, setDepartments] = useState([]);
     const navigate = useNavigate();
 
@@ -59,14 +49,6 @@ export default function Dashboard() {
     const admins = members.filter((u) => u.role === "ADMIN").length;
 
     const departmentCount = departments.length;
-
-    // ===== Filtering =====
-    const filteredMembers = members.filter((m) =>
-        (m.fullName || m.name || "")
-            .toLowerCase()
-            .includes(search.toLowerCase()) ||
-        (m.email || "").toLowerCase().includes(search.toLowerCase())
-    );
 
     if (loading) {
         return (
