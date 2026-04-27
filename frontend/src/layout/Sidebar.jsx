@@ -66,11 +66,11 @@ const ventureItems = [
 
     { key: "authentication", label: "Authentication", icon: BriefcaseBusiness, path: "/auth" },
 
-// Point this to your actual User Management route
+    // Point this to your actual User Management route
 
-    { key: "user-management", label: "User management", icon: UsersRound, path: "/" },
+    { key: "user-management", label: "User management", icon: UsersRound, path: "/users" },
 
-// Point this to your actual Department CRUD route
+    // Point this to your actual Department CRUD route
 
     { key: "departments", label: "Departments", icon: Building2, path: "/departments" },
 
@@ -117,13 +117,13 @@ function NavGroup({ title, items }) {
 
                         >
 
-<span className="sidebar-link-main">
+                            <span className="sidebar-link-main">
 
-<Icon size={18} className="sidebar-icon" />
+                                <Icon size={18} className="sidebar-icon" />
 
-<span>{label}</span>
+                                <span>{label}</span>
 
-</span>
+                            </span>
 
                             {badge ? <span className="sidebar-badge">{badge}</span> : null}
 

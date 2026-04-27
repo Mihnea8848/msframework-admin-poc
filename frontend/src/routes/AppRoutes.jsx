@@ -1,7 +1,8 @@
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, UNSAFE_getTurboStreamSingleFetchDataStrategy } from "react-router-dom";
 import { RequireAuth, RedirectIfAuthed } from "./Guards.jsx";
 import DashboardLayout from "../layout/DashboardLayout.jsx";
 import Dashboard from "../pages/Dashboard.jsx";
+import UserManagement from "../pages/UserManagement.jsx";
 import Departments from "../pages/Departments.jsx"; // 1. IMPORT YOUR COMPONENT
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
@@ -20,13 +21,37 @@ export default function AppRoutes() {
                 </RedirectIfAuthed>
             } />
 
-            {/* User Management (Home) */}
+            {/* Default route */}
             <Route
                 path="/"
                 element={
                     <RequireAuth>
                         <DashboardLayout>
                             <Dashboard />
+                        </DashboardLayout>
+                    </RequireAuth>
+                }
+            />
+            {/* Dashboard (Home) */}
+            <Route
+                path="/dashboard"
+                element={
+                    <RequireAuth>
+                        <DashboardLayout>
+                            <Dashboard />
+                        </DashboardLayout>
+                    </RequireAuth>
+                }
+            />
+
+
+            {/* User management */}
+            <Route
+                path="/users"
+                element={
+                    <RequireAuth>
+                        <DashboardLayout>
+                            <UserManagement />
                         </DashboardLayout>
                     </RequireAuth>
                 }

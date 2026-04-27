@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchUsers } from "../auth/auth";
+import { useNavigate } from "react-router-dom";
 import {
     BadgeCheck,
     Circle,
-    ListFilter,
     Search,
     ShieldCheck,
     TableProperties,
@@ -12,82 +12,146 @@ import {
 
 function initials(name) {
     if (!name) return "??";
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    return name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
 }
 
 export default function Dashboard() {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState("");
+    const [departments, setDepartments] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchUsers()
             .then((data) => {
-                console.log("Users received from DB:", data);
                 setMembers(data);
-                setLoading(false);
             })
             .catch((err) => {
-                console.error("Fetch error:", err);
-                setError("Failed to load users from database.");
-                setLoading(false);
+                console.error("Fetch users error:", err);
+                setError("Failed to load users.");
             });
+
+        fetch("/api/departments")
+            .then((res) => res.json())
+            .then((data) => {
+                setDepartments(data);
+            })
+            .catch((err) => {
+                console.error("Fetch departments error:", err);
+            })
+            .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return <div className="workspace"><h1>Loading team...</h1></div>;
-    if (error) return <div className="workspace"><h1>{error}</h1></div>;
+    // ===== KPIs =====
+    const totalUsers = members.length;
+
+    const activeUsers = members.filter(
+        (u) => (u.status || "").toLowerCase() === "active"
+    ).length;
+
+    const admins = members.filter((u) => u.role === "ADMIN").length;
+
+    const departmentCount = departments.length;
+
+    // ===== Filtering =====
+    const filteredMembers = members.filter((m) =>
+        (m.fullName || m.name || "")
+            .toLowerCase()
+            .includes(search.toLowerCase()) ||
+        (m.email || "").toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (loading) {
+        return (
+            <div className="workspace">
+                <h1>Loading dashboard...</h1>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="workspace">
+                <h1>{error}</h1>
+            </div>
+        );
+    }
 
     return (
         <section className="workspace">
+            {/* ===== Header ===== */}
             <div className="workspace-hero">
                 <div>
-                    <div className="workspace-breadcrumb">Ventures / User management</div>
-                    <div className="workspace-title-row">
-                        <h1>User management</h1>
-                        <span className="workspace-count">{members.length}</span>
+                    <div className="workspace-breadcrumb">
+                        Ventures / Dashboard
                     </div>
+
+                    <div className="workspace-title-row">
+                        <h1>Dashboard</h1>
+                    </div>
+                </div>
+
+                <div className="dashboard-status">
+                    <Circle size={10} className="status-dot green" />
+                    <span>System operational</span>
                 </div>
             </div>
 
-            <div className="workspace-panel">
-                <div className="data-table-shell">
-                    <table className="data-table">
-                        <thead>
-                        <tr>
-                            <th className="checkbox-col"><span className="checkbox" /></th>
-                            <th>Full name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Department</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {members.map((member) => (
-                            <tr key={member.id || member.email}>
-                                <td className="checkbox-col"><span className="checkbox" /></td>
-                                <td>
-                                    <div className="member-cell">
-                                        <div className="avatar avatar-azure">
-                                            {initials(member.fullName || member.name || "User")}
-                                        </div>
-                                        <span>{member.fullName || member.name || "Unnamed User"}</span>
-                                    </div>
-                                </td>
-                                <td>{member.email}</td>
-                                <td>{member.role || "USER"}</td>
-                                <td>
-                                        <span className={`status-pill ${(member.status || "active").toLowerCase()}`}>
-                                            {member.status || "Active"}
-                                        </span>
-                                </td>
-                                <td>{member.department?.name || "None"}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
+            {/* ===== KPI CARDS ===== */}
+            <div className="dashboard-cards">
+
+                <div className="card accent" onClick={() => navigate("/users")}>
+                    <div className="card-icon">
+                        <UsersRound size={18} />
+                    </div>
+                    <div className="card-content">
+                        <div className="card-value">{totalUsers}</div>
+                        <div className="card-label">Total Users</div>
+                        <div className="card-sub">All registered accounts</div>
+                    </div>
                 </div>
+
+                <div className="card success" onClick={() => navigate("/users")}>
+                    <div className="card-icon">
+                        <BadgeCheck size={18} />
+                    </div>
+                    <div className="card-content">
+                        <div className="card-value">{activeUsers}</div>
+                        <div className="card-label">Active Users</div>
+                        <div className="card-sub">Currently enabled</div>
+                    </div>
+                </div>
+
+                <div className="card" onClick={() => navigate("/users")}>
+                    <div className="card-icon">
+                        <ShieldCheck size={18} />
+                    </div>
+                    <div className="card-content">
+                        <div className="card-value">{admins}</div>
+                        <div className="card-label">Admins</div>
+                        <div className="card-sub">Privileged accounts</div>
+                    </div>
+                </div>
+
+                <div className="card" onClick={() => navigate("/departments")}>
+                    <div className="card-icon">
+                        <TableProperties size={18} />
+                    </div>
+                    <div className="card-content">
+                        <div className="card-value">{departmentCount}</div>
+                        <div className="card-label">Departments</div>
+                        <div className="card-sub">Organizational units</div>
+                    </div>
+                </div>
+
             </div>
-        </section>
+        </section >
     );
 }
