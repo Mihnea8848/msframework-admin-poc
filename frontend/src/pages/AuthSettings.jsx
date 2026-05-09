@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../auth/AuthProvider";
 import { validatePassword } from "../utils/validators";
 import { Github, Chrome, Apple } from "lucide-react";
 

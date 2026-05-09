@@ -239,8 +239,12 @@ button {
 
 .topbar {
     border-bottom: 1px solid var(--line);
-    background: rgba(5, 7, 5, 0.9);
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
     backdrop-filter: blur(20px);
+}
+
+[data-theme="light"] .topbar {
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
 .topbar-shell {
@@ -265,6 +269,57 @@ button {
     color: var(--muted-strong);
     font-size: 14px;
     letter-spacing: -0.01em;
+}
+
+.topbar-user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topbar-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1.5px solid var(--accent);
+}
+
+.topbar-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted-strong);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar-user-settings {
+    color: var(--muted) !important;
+}
+
+.topbar-user-settings:hover {
+    color: var(--muted-strong) !important;
+    background: var(--panel-raised) !important;
+}
+
+.topbar-user-logout {
+    color: var(--danger) !important;
+    opacity: 0.8;
+}
+
+.topbar-user-logout:hover {
+    opacity: 1;
+    background: rgba(255, 106, 95, 0.12) !important;
 }
 
 .content {
