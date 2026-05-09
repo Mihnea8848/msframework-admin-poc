@@ -2402,3 +2402,110 @@ button {
 
 .recent-activity-desc { flex: 1; color: var(--muted-strong); }
 .recent-activity-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+/* ===== Connections ===== */
+.connections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.integration-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.integration-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.integration-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.integration-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.integration-cat {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
+.integration-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+}
+
+/* ===== Timezones ===== */
+.timezone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.timezone-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+    transition: border-color 150ms ease;
+}
+
+.timezone-card:hover {
+    border-color: var(--line-strong);
+}
+
+.clock-display {
+    font-size: 28px;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-top: 4px;
+}
+
+.timezone-offset {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--panel-raised);
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.biz-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}

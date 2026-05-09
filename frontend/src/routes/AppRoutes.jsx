@@ -17,6 +17,8 @@ import Security       from "../pages/Security.jsx";
 import Payments       from "../pages/Payments.jsx";
 import ImportData     from "../pages/ImportData.jsx";
 import ExportData     from "../pages/ExportData.jsx";
+import Connections    from "../pages/Connections.jsx";
+import Timezones      from "../pages/Timezones.jsx";
 
 function Protected({ children }) {
     return (
@@ -47,6 +49,9 @@ export default function AppRoutes() {
             <Route path="/payments"     element={<Protected><Payments /></Protected>} />
             <Route path="/import"       element={<Protected><ImportData /></Protected>} />
             <Route path="/export"       element={<Protected><ExportData /></Protected>} />
+
+            <Route path="/connections" element={<Protected><Connections /></Protected>} />
+            <Route path="/timezones"   element={<Protected><Timezones /></Protected>} />
 
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
