@@ -63,7 +63,7 @@ export default function Appearance() {
 
     useEffect(() => {
         applyDensity(density);
-    }, []);
+    }, [density]);
 
     const currentAccent = ACCENTS.find((a) => a.label === accentLabel) || ACCENTS[0];
     const previewAccent = theme === "light" ? currentAccent.light : currentAccent.dark;

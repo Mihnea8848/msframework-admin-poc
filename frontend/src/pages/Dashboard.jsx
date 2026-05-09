@@ -168,12 +168,15 @@ export default function Dashboard() {
                         { label: "Payments",       icon: CreditCard,  path: "/payments"      },
                         { label: "Import",         icon: Upload,      path: "/import"        },
                         { label: "Export",         icon: Download,    path: "/export"        },
-                    ].map(({ label, icon: Icon, path }) => (
-                        <button key={path} type="button" className="quick-link-btn" onClick={() => navigate(path)}>
-                            <Icon size={14} />
-                            {label}
-                        </button>
-                    ))}
+                    ].map((item) => {
+                        const LinkIcon = item.icon;
+                        return (
+                            <button key={item.path} type="button" className="quick-link-btn" onClick={() => navigate(item.path)}>
+                                <LinkIcon size={14} />
+                                {item.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

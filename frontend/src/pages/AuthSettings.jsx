@@ -164,20 +164,23 @@ export default function AuthSettings() {
                         { name: "GitHub",  Icon: Github,  connected: false },
                         { name: "Google",  Icon: Chrome,  connected: false },
                         { name: "Apple",   Icon: Apple,   connected: false },
-                    ].map(({ name, Icon, connected }) => (
-                        <div key={name} className="connected-account-row">
-                            <div className="connected-account-icon">
-                                <Icon size={16} />
+                    ].map((account) => {
+                        const AccountIcon = account.Icon;
+                        return (
+                            <div key={account.name} className="connected-account-row">
+                                <div className="connected-account-icon">
+                                    <AccountIcon size={16} />
+                                </div>
+                                <span className="connected-account-name">{account.name}</span>
+                                <span className="connected-account-status">
+                                    {account.connected ? "Connected" : "Not connected"}
+                                </span>
+                                <button type="button" className="btn-secondary" style={{ padding: "6px 14px", fontSize: 12 }}>
+                                    {account.connected ? "Disconnect" : "Connect"}
+                                </button>
                             </div>
-                            <span className="connected-account-name">{name}</span>
-                            <span className="connected-account-status">
-                                {connected ? "Connected" : "Not connected"}
-                            </span>
-                            <button type="button" className="btn-secondary" style={{ padding: "6px 14px", fontSize: 12 }}>
-                                {connected ? "Disconnect" : "Connect"}
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </section>

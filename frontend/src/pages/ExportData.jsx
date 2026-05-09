@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { fetchUsers } from "../auth/auth";
 import { Download } from "lucide-react";
 
 const ENTITY_OPTIONS = {
@@ -56,10 +55,19 @@ export default function ExportData() {
     const cfg = ENTITY_OPTIONS[entity];
 
     useEffect(() => {
-        setLoading(true);
-        setData([]);
-        cfg.fetchData().then(setData).catch(() => {}).finally(() => setLoading(false));
-        setSelectedCols(cfg.columns.map((c) => c.key));
+        const entityCfg = ENTITY_OPTIONS[entity];
+        const cols = entityCfg.columns.map((c) => c.key);
+        entityCfg.fetchData()
+            .then((result) => {
+                setData(result);
+                setSelectedCols(cols);
+                setLoading(false);
+            })
+            .catch(() => {
+                setData([]);
+                setSelectedCols(cols);
+                setLoading(false);
+            });
     }, [entity]);
 
     function toggleCol(key) {

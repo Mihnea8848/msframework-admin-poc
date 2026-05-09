@@ -61,18 +61,21 @@ export default function Topbar({ onOpenSidebar }) {
             </button>
 
             <div className="topbar-actions" aria-label="Navigation actions">
-                {actions.map(({ label, icon: Icon, onClick, disabled }) => (
-                    <button
-                        key={label}
-                        type="button"
-                        className="topbar-icon-button"
-                        aria-label={label}
-                        onClick={onClick}
-                        disabled={disabled}
-                    >
-                        <Icon size={18} />
-                    </button>
-                ))}
+                {actions.map((action) => {
+                    const NavIcon = action.icon;
+                    return (
+                        <button
+                            key={action.label}
+                            type="button"
+                            className="topbar-icon-button"
+                            aria-label={action.label}
+                            onClick={action.onClick}
+                            disabled={action.disabled}
+                        >
+                            <NavIcon size={18} />
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="topbar-path">Ventures</div>

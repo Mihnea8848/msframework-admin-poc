@@ -333,6 +333,7 @@ button {
     min-height: calc(100vh - 65px);
     display: flex;
     flex-direction: column;
+    padding: 0 28px 40px;
 }
 
 .workspace-hero {
@@ -340,8 +341,9 @@ button {
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
-    padding: 28px 22px 24px;
+    padding: 28px 0 24px;
     border-bottom: 1px solid var(--line);
+    margin: 0 0 24px;
 }
 
 .workspace-breadcrumb {
@@ -647,10 +649,12 @@ button {
 
 @media (max-width: 780px) {
 
-    .topbar-shell,
-    .workspace-hero,
-    .workspace-toolbar,
-    .workspace-filters {
+    .topbar-shell {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .workspace {
         padding-left: 16px;
         padding-right: 16px;
     }
