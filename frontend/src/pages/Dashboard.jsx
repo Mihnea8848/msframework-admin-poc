@@ -3,12 +3,34 @@ import { fetchUsers } from "../auth/auth";
 import { useNavigate } from "react-router-dom";
 import {
     BadgeCheck,
+    Bell,
     Circle,
-    Search,
+    CreditCard,
+    Database,
+    Download,
     ShieldCheck,
     TableProperties,
+    Upload,
     UsersRound,
 } from "lucide-react";
+
+const ACTIVITY_COLORS = ["#28beef", "#2dd881", "#f0a832", "#bb2eb8", "#ff6a5f"];
+
+function generateActivity(users) {
+    const templates = [
+        (u) => `${u.fullName || u.email} signed in`,
+        (u) => `${u.fullName || u.email} profile updated`,
+        (u) => `${u.fullName || u.email} exported data`,
+        (u) => `Admin changed role for ${u.fullName || u.email}`,
+        (u) => `${u.fullName || u.email} changed password`,
+    ];
+    const times = ["just now", "12m ago", "1h ago", "3h ago", "6h ago"];
+    return users.slice(0, 5).map((u, i) => ({
+        desc: templates[i % templates.length](u),
+        time: times[i],
+        color: ACTIVITY_COLORS[i % ACTIVITY_COLORS.length],
+    }));
+}
 
 
 export default function Dashboard() {
@@ -134,6 +156,45 @@ export default function Dashboard() {
                 </div>
 
             </div>
-        </section >
+
+            {/* ===== Quick Links ===== */}
+            <div style={{ marginTop: 20 }}>
+                <div className="workspace-section-title" style={{ marginBottom: 10 }}>Quick Links</div>
+                <div className="dashboard-quick-links">
+                    {[
+                        { label: "Notifications", icon: Bell,       path: "/notifications" },
+                        { label: "Security",       icon: ShieldCheck, path: "/security"      },
+                        { label: "Database",       icon: Database,    path: "/database"      },
+                        { label: "Payments",       icon: CreditCard,  path: "/payments"      },
+                        { label: "Import",         icon: Upload,      path: "/import"        },
+                        { label: "Export",         icon: Download,    path: "/export"        },
+                    ].map((item) => {
+                        const LinkIcon = item.icon;
+                        return (
+                            <button key={item.path} type="button" className="quick-link-btn" onClick={() => navigate(item.path)}>
+                                <LinkIcon size={14} />
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* ===== Recent Activity ===== */}
+            {members.length > 0 && (
+                <div style={{ marginTop: 24 }}>
+                    <div className="workspace-section-title" style={{ marginBottom: 10 }}>Recent Activity</div>
+                    <div className="recent-activity">
+                        {generateActivity(members).map((ev, i) => (
+                            <div key={i} className="recent-activity-row">
+                                <div className="recent-activity-dot" style={{ background: ev.color }} />
+                                <span className="recent-activity-desc">{ev.desc}</span>
+                                <span className="recent-activity-time">{ev.time}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
     );
 }
