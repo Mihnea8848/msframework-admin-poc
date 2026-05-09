@@ -1,4 +1,6 @@
-import { Link, useLocation } from "react-router-dom"; // Add these
+import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import QuickActions from "../ui/QuickActions.jsx";
 
 import {
 
@@ -144,59 +146,48 @@ function NavGroup({ title, items }) {
 
 
 export default function Sidebar() {
+    const [qaOpen, setQaOpen] = useState(false);
+
+    useEffect(() => {
+        function onKey(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                e.preventDefault();
+                setQaOpen(true);
+            }
+        }
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, []);
 
     return (
+        <>
+            <div className="sidebar-inner">
+                <div className="sidebar-brand">
+                    <button type="button" className="brand-pill">
+                        <Building2 size={15} />
+                        <span>Company</span>
+                        <ChevronDown size={14} />
+                    </button>
+                    <button type="button" className="icon-square" aria-label="Edit workspace">
+                        <SquarePen size={16} />
+                    </button>
+                </div>
 
-        <div className="sidebar-inner">
+                <div className="sidebar-actions">
+                    <button type="button" className="quick-action" onClick={() => setQaOpen(true)}>
+                        <span>Quick actions</span>
+                        <kbd>⌘K</kbd>
+                    </button>
+                    <button type="button" className="search-shortcut" aria-label="Search shortcut" onClick={() => setQaOpen(true)}>
+                        /
+                    </button>
+                </div>
 
-            <div className="sidebar-brand">
-
-                <button type="button" className="brand-pill">
-
-                    <Building2 size={15} />
-
-                    <span>Company</span>
-
-                    <ChevronDown size={14} />
-
-                </button>
-
-                <button type="button" className="icon-square" aria-label="Edit workspace">
-
-                    <SquarePen size={16} />
-
-                </button>
-
+                <NavGroup title="General" items={generalItems} />
+                <NavGroup title="Ventures" items={ventureItems} />
             </div>
 
-
-
-            <div className="sidebar-actions">
-
-                <button type="button" className="quick-action">
-
-                    <span>Quick actions</span>
-
-                    <kbd>⌘K</kbd>
-
-                </button>
-
-                <button type="button" className="search-shortcut" aria-label="Search shortcut">
-
-                    /
-
-                </button>
-
-            </div>
-
-
-
-            <NavGroup title="General" items={generalItems} />
-
-            <NavGroup title="Ventures" items={ventureItems} />
-
-        </div>
-
+            <QuickActions open={qaOpen} onClose={() => setQaOpen(false)} />
+        </>
     );
-
 }
