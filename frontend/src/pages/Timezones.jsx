@@ -132,8 +132,21 @@ export default function Timezones() {
         return () => clearInterval(id);
     }, []);
 
+    useEffect(() => {
+        fetch("/api/settings/orgTimezone", { credentials: "include" })
+            .then((r) => { if (r.ok) return r.json(); })
+            .then((data) => { if (data?.value) { setOrgTz(data.value); localStorage.setItem("orgTimezone", data.value); } })
+            .catch(() => {});
+    }, []);
+
     function saveOrgTz() {
         localStorage.setItem("orgTimezone", orgTz);
+        fetch("/api/settings/orgTimezone", {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: orgTz }),
+        }).catch(() => {});
         setSavedMsg(true);
         setTimeout(() => setSavedMsg(false), 2000);
     }

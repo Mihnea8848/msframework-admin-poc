@@ -1,36 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     MessageSquare, Github, Chrome, CreditCard, Layers, Cloud,
     Zap, Mail, BarChart2, Bell, Phone, BookOpen, Trash2, Plus, X,
 } from "lucide-react";
 
-const INITIAL_SERVICES = [
-    { id: "slack",     name: "Slack",             icon: MessageSquare, color: "#4A154B", category: "Messaging",     connected: true  },
-    { id: "github",    name: "GitHub",             icon: Github,        color: "#24292e", category: "Development",   connected: true  },
-    { id: "google",    name: "Google Workspace",   icon: Chrome,        color: "#4285F4", category: "Productivity",  connected: true  },
-    { id: "stripe",    name: "Stripe",             icon: CreditCard,    color: "#635BFF", category: "Payments",      connected: true  },
-    { id: "jira",      name: "Jira",               icon: Layers,        color: "#0052CC", category: "Project Mgmt",  connected: false },
-    { id: "aws",       name: "AWS S3",             icon: Cloud,         color: "#FF9900", category: "Storage",       connected: false },
-    { id: "zapier",    name: "Zapier",             icon: Zap,           color: "#FF4A00", category: "Automation",    connected: false },
-    { id: "sendgrid",  name: "SendGrid",           icon: Mail,          color: "#1A82E2", category: "Email",         connected: false },
-    { id: "datadog",   name: "Datadog",            icon: BarChart2,     color: "#632CA6", category: "Monitoring",    connected: false },
-    { id: "pagerduty", name: "PagerDuty",          icon: Bell,          color: "#06AC38", category: "Alerting",      connected: false },
-    { id: "twilio",    name: "Twilio",             icon: Phone,         color: "#F22F46", category: "Messaging",     connected: false },
-    { id: "notion",    name: "Notion",             icon: BookOpen,      color: "#000000", category: "Productivity",  connected: false },
-];
+const SERVICE_META = {
+    slack:     { name: "Slack",           icon: MessageSquare, color: "#4A154B", category: "Messaging"    },
+    github:    { name: "GitHub",          icon: Github,        color: "#24292e", category: "Development"  },
+    google:    { name: "Google Workspace",icon: Chrome,        color: "#4285F4", category: "Productivity" },
+    stripe:    { name: "Stripe",          icon: CreditCard,    color: "#635BFF", category: "Payments"     },
+    jira:      { name: "Jira",            icon: Layers,        color: "#0052CC", category: "Project Mgmt" },
+    aws:       { name: "AWS S3",          icon: Cloud,         color: "#FF9900", category: "Storage"      },
+    zapier:    { name: "Zapier",          icon: Zap,           color: "#FF4A00", category: "Automation"   },
+    sendgrid:  { name: "SendGrid",        icon: Mail,          color: "#1A82E2", category: "Email"        },
+    datadog:   { name: "Datadog",         icon: BarChart2,     color: "#632CA6", category: "Monitoring"   },
+    pagerduty: { name: "PagerDuty",       icon: Bell,          color: "#06AC38", category: "Alerting"     },
+    twilio:    { name: "Twilio",          icon: Phone,         color: "#F22F46", category: "Messaging"    },
+    notion:    { name: "Notion",          icon: BookOpen,      color: "#6b7568", category: "Productivity" },
+};
 
-const INITIAL_WEBHOOKS = [
-    { id: 1, url: "https://hooks.example.com/events/a8f2c",   events: ["user.created", "user.deleted"], lastTriggered: "12m ago",  active: true  },
-    { id: 2, url: "https://hooks.example.com/events/b91de",   events: ["dept.created"],                 lastTriggered: "2h ago",   active: true  },
-    { id: 3, url: "https://hooks.internal/security-log",      events: ["auth.failed", "role.changed"],  lastTriggered: "1d ago",   active: false },
-    { id: 4, url: "https://hooks.example.com/events/notify",  events: ["export.generated"],             lastTriggered: "3d ago",   active: true  },
-];
-
-const INITIAL_KEYS = [
-    { id: 1, name: "Production API Key",    created: "2026-01-10", lastUsed: "2026-05-09", masked: "sk_live_••••••••••••••••Xk2f" },
-    { id: 2, name: "CI / CD Pipeline",      created: "2026-02-14", lastUsed: "2026-05-08", masked: "sk_live_••••••••••••••••P7nt" },
-    { id: 3, name: "Analytics Integration", created: "2026-03-01", lastUsed: "2026-04-22", masked: "sk_live_••••••••••••••••Wq3m" },
-];
+const SERVICE_ORDER = Object.keys(SERVICE_META);
 
 function Toggle({ on, onToggle, disabled }) {
     return (
@@ -47,47 +36,90 @@ function Toggle({ on, onToggle, disabled }) {
     );
 }
 
+async function apiFetch(path, options = {}) {
+    const res = await fetch(path, { credentials: "include", ...options });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+}
+
 export default function Connections() {
-    const [services, setServices]     = useState(INITIAL_SERVICES);
-    const [webhooks, setWebhooks]     = useState(INITIAL_WEBHOOKS);
-    const [apiKeys, setApiKeys]       = useState(INITIAL_KEYS);
+    const [services, setServices]     = useState([]);
+    const [webhooks, setWebhooks]     = useState([]);
+    const [apiKeys, setApiKeys]       = useState([]);
     const [showWHForm, setShowWHForm] = useState(false);
     const [whUrl, setWhUrl]           = useState("");
     const [generated, setGenerated]   = useState(false);
 
-    function toggleService(id) {
-        setServices((prev) =>
-            prev.map((s) => s.id === id ? { ...s, connected: !s.connected } : s)
-        );
+    useEffect(() => {
+        Promise.all([
+            apiFetch("/api/connections"),
+            apiFetch("/api/webhooks"),
+            apiFetch("/api/keys"),
+        ]).then(([conns, whs, keys]) => {
+            setServices(conns || []);
+            setWebhooks(whs || []);
+            setApiKeys(keys || []);
+        }).catch(() => {});
+    }, []);
+
+    function sortedServices() {
+        return SERVICE_ORDER.map((id) => {
+            const svc = services.find((s) => s.serviceId === id);
+            return svc ? { ...svc, ...SERVICE_META[id] } : { serviceId: id, connected: false, enabled: false, ...SERVICE_META[id] };
+        });
     }
 
-    function removeWebhook(id) {
+    async function toggleService(svc) {
+        const action = svc.connected ? "disconnect" : "connect";
+        try {
+            const updated = await apiFetch(`/api/connections/${svc.serviceId}/${action}`, { method: "POST" });
+            setServices((prev) => {
+                const idx = prev.findIndex((s) => s.serviceId === svc.serviceId);
+                if (idx === -1) return [...prev, updated];
+                const next = [...prev];
+                next[idx] = updated;
+                return next;
+            });
+        } catch { /* optimistic: leave state unchanged on error */ }
+    }
+
+    async function removeWebhook(id) {
+        await apiFetch(`/api/webhooks/${id}`, { method: "DELETE" }).catch(() => {});
         setWebhooks((prev) => prev.filter((w) => w.id !== id));
     }
 
-    function addWebhook(e) {
+    async function addWebhook(e) {
         e.preventDefault();
         if (!whUrl) return;
-        setWebhooks((prev) => [
-            { id: Date.now(), url: whUrl, events: ["*"], lastTriggered: "never", active: true },
-            ...prev,
-        ]);
-        setWhUrl("");
-        setShowWHForm(false);
+        try {
+            const saved = await apiFetch("/api/webhooks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: whUrl, events: ["*"] }),
+            });
+            setWebhooks((prev) => [saved, ...prev]);
+            setWhUrl("");
+            setShowWHForm(false);
+        } catch { /* ignore */ }
     }
 
-    function revokeKey(id) {
+    async function generateKey() {
+        try {
+            const saved = await apiFetch("/api/keys", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: "New API Key" }),
+            });
+            setApiKeys((prev) => [saved, ...prev]);
+            setGenerated(true);
+            setTimeout(() => setGenerated(false), 3000);
+        } catch { /* ignore */ }
+    }
+
+    async function revokeKey(id) {
+        await apiFetch(`/api/keys/${id}`, { method: "DELETE" }).catch(() => {});
         setApiKeys((prev) => prev.filter((k) => k.id !== id));
-    }
-
-    function generateKey() {
-        const rand = Math.random().toString(36).slice(-4).toUpperCase();
-        setApiKeys((prev) => [
-            { id: Date.now(), name: "New API Key", created: new Date().toISOString().slice(0, 10), lastUsed: "never", masked: `sk_live_••••••••••••••••${rand}` },
-            ...prev,
-        ]);
-        setGenerated(true);
-        setTimeout(() => setGenerated(false), 3000);
     }
 
     return (
@@ -107,10 +139,10 @@ export default function Connections() {
             {/* Integrations */}
             <div className="workspace-section-title" style={{ marginBottom: 12 }}>Integrations</div>
             <div className="connections-grid">
-                {services.map((svc) => {
+                {sortedServices().map((svc) => {
                     const Icon = svc.icon;
                     return (
-                        <div key={svc.id} className="integration-card">
+                        <div key={svc.serviceId} className="integration-card">
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                 <div
                                     className="integration-icon"
@@ -133,7 +165,11 @@ export default function Connections() {
                                     {svc.connected ? "Connected" : "Not connected"}
                                 </span>
                                 {svc.connected && (
-                                    <Toggle on={svc.connected} onToggle={() => toggleService(svc.id)} />
+                                    <Toggle on={svc.enabled} onToggle={() => {
+                                        apiFetch(`/api/connections/${svc.serviceId}/toggle`, { method: "PATCH" })
+                                            .then((updated) => setServices((prev) => prev.map((s) => s.serviceId === svc.serviceId ? updated : s)))
+                                            .catch(() => {});
+                                    }} />
                                 )}
                             </div>
 
@@ -142,7 +178,7 @@ export default function Connections() {
                                     type="button"
                                     className="btn-secondary"
                                     style={{ fontSize: 12, padding: "6px 14px" }}
-                                    onClick={() => toggleService(svc.id)}
+                                    onClick={() => toggleService(svc)}
                                 >
                                     {svc.connected ? "Disconnect" : "Connect"}
                                 </button>
@@ -193,13 +229,13 @@ export default function Connections() {
                                     {wh.url}
                                 </div>
                                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                                    {wh.events.map((ev) => (
+                                    {(wh.events || "").split(",").map((ev) => (
                                         <span key={ev} className="event-pill changed" style={{ fontSize: 10 }}>{ev}</span>
                                     ))}
                                 </div>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                                <span style={{ fontSize: 11, color: "var(--muted)" }}>{wh.lastTriggered}</span>
+                                <span style={{ fontSize: 11, color: "var(--muted)" }}>{wh.lastTriggered || "never"}</span>
                                 <span style={{
                                     fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
                                     background: wh.active ? "rgba(45,216,129,0.12)" : "var(--panel-muted)",
@@ -246,12 +282,12 @@ export default function Connections() {
                             <div style={{ flex: 1, minWidth: 200 }}>
                                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{key.name}</div>
                                 <div style={{ fontFamily: "monospace", fontSize: 12, color: "var(--accent)", letterSpacing: "0.04em" }}>
-                                    {key.masked}
+                                    {key.maskedDisplay}
                                 </div>
                             </div>
                             <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "right", flexShrink: 0 }}>
-                                <div>Created {key.created}</div>
-                                <div>Last used {key.lastUsed}</div>
+                                <div>Created {key.createdAt ? key.createdAt.slice(0, 10) : "—"}</div>
+                                <div>Last used {key.lastUsed || "never"}</div>
                             </div>
                             <button
                                 type="button"

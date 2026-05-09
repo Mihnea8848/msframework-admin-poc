@@ -4,6 +4,7 @@ import com.msframework.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,14 +31,19 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
-
                 .securityContext(context -> context
                         .securityContextRepository(new HttpSessionSecurityContextRepository())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/departments/**").permitAll()
-                        .requestMatchers("/api/auth/me").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/me").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/departments/**").permitAll()
+                        .requestMatchers("/api/departments/**").authenticated()
                         .requestMatchers("/api/users/**").authenticated()
+                        .requestMatchers("/api/audit/**").authenticated()
+                        .requestMatchers("/api/connections/**").authenticated()
+                        .requestMatchers("/api/webhooks/**").authenticated()
+                        .requestMatchers("/api/keys/**").authenticated()
+                        .requestMatchers("/api/settings/**").authenticated()
                         .anyRequest().authenticated()
                 );
 

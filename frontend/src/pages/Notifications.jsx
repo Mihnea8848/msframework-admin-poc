@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
-import { fetchUsers } from "../auth/auth";
 import {
-    Building2, Download, LogIn, Shield, UserCheck, UserPlus, Key,
+    Building2, Download, LogIn, LogOut, Shield, UserCheck, UserPlus, Key,
+    Cable, Webhook, RefreshCw,
 } from "lucide-react";
 
-const EVENT_TYPES = [
-    { key: "login",    label: "Login",           pill: "login",    Icon: LogIn,      color: "#28beef" },
-    { key: "created",  label: "User Created",    pill: "created",  Icon: UserPlus,   color: "#2dd881" },
-    { key: "dept",     label: "Dept Created",    pill: "created",  Icon: Building2,  color: "#2dd881" },
-    { key: "password", label: "Password Changed",pill: "changed",  Icon: Key,        color: "#f0a832" },
-    { key: "role",     label: "Role Changed",    pill: "changed",  Icon: UserCheck,  color: "#f0a832" },
-    { key: "export",   label: "Data Exported",   pill: "export",   Icon: Download,   color: "#bb2eb8" },
-    { key: "security", label: "Security Alert",  pill: "security", Icon: Shield,     color: "#ff6a5f" },
-];
+const TYPE_META = {
+    user_login:          { label: "Login",          pill: "login",   Icon: LogIn,      color: "#28beef" },
+    user_logout:         { label: "Logout",          pill: "login",   Icon: LogOut,     color: "#28beef" },
+    user_created:        { label: "User Created",    pill: "created", Icon: UserPlus,   color: "#2dd881" },
+    dept_created:        { label: "Dept Created",    pill: "created", Icon: Building2,  color: "#2dd881" },
+    dept_updated:        { label: "Dept Updated",    pill: "changed", Icon: Building2,  color: "#f0a832" },
+    dept_deleted:        { label: "Dept Deleted",    pill: "security",Icon: Building2,  color: "#ff6a5f" },
+    email_changed:       { label: "Email Changed",   pill: "security",Icon: UserCheck,  color: "#f0a832" },
+    password_changed:    { label: "Password",        pill: "security",Icon: Key,        color: "#f0a832" },
+    key_generated:       { label: "API Key",         pill: "security",Icon: Key,        color: "#bb2eb8" },
+    key_revoked:         { label: "Key Revoked",     pill: "security",Icon: Key,        color: "#ff6a5f" },
+    connection_changed:  { label: "Integration",     pill: "changed", Icon: Cable,      color: "#f0a832" },
+    webhook_added:       { label: "Webhook Added",   pill: "created", Icon: Webhook,    color: "#2dd881" },
+    webhook_removed:     { label: "Webhook Removed", pill: "security",Icon: Webhook,    color: "#ff6a5f" },
+    export_generated:    { label: "Export",          pill: "export",  Icon: Download,   color: "#bb2eb8" },
+    import_completed:    { label: "Import",          pill: "export",  Icon: RefreshCw,  color: "#bb2eb8" },
+    default:             { label: "Event",           pill: "changed", Icon: Shield,     color: "#6b7568" },
+};
 
-function relTime(ms) {
-    const diff = Date.now() - ms;
+function relTime(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
     const m = Math.floor(diff / 60000);
     if (m < 1) return "just now";
     if (m < 60) return `${m}m ago`;
@@ -24,68 +33,31 @@ function relTime(ms) {
     return `${Math.floor(h / 24)}d ago`;
 }
 
-function generateLog(users, departments) {
-    const events = [];
-    const now = Date.now();
-
-    const templates = [
-        (u) => ({ type: "login",    actor: u.fullName || u.email, desc: "signed in" }),
-        (u) => ({ type: "created",  actor: "System",              desc: `user ${u.fullName || u.email} was created` }),
-        (u) => ({ type: "password", actor: u.fullName || u.email, desc: "changed their password" }),
-        (u) => ({ type: "role",     actor: "Admin",               desc: `updated role for ${u.fullName || u.email}` }),
-        (u) => ({ type: "export",   actor: u.fullName || u.email, desc: "exported user data as CSV" }),
-    ];
-
-    const deptTemplates = [
-        (d) => ({ type: "dept",     actor: "Admin",               desc: `department "${d.name}" was created` }),
-        (d) => ({ type: "security", actor: "System",              desc: `unusual access detected in ${d.name}` }),
-    ];
-
-    let t = now - 120000;
-
-    users.slice(0, 7).forEach((u, i) => {
-        const tmpl = templates[i % templates.length];
-        const ev = tmpl(u);
-        events.push({ ...ev, ts: t, id: `u-${i}` });
-        t -= (30 + i * 12) * 60000;
-    });
-
-    departments.slice(0, 3).forEach((d, i) => {
-        const tmpl = deptTemplates[i % deptTemplates.length];
-        const ev = tmpl(d);
-        events.push({ ...ev, ts: t, id: `d-${i}` });
-        t -= (45 + i * 20) * 60000;
-    });
-
-    events.sort((a, b) => b.ts - a.ts);
-    return events;
-}
-
 const FILTERS = ["All", "Login", "Users", "Departments", "Auth"];
 
+function matchesFilter(ev, filter) {
+    if (filter === "All") return true;
+    if (filter === "Login") return ev.eventType === "user_login" || ev.eventType === "user_logout";
+    if (filter === "Users") return ev.eventType.startsWith("user_") && ev.eventType !== "user_login" && ev.eventType !== "user_logout";
+    if (filter === "Departments") return ev.eventType.startsWith("dept_");
+    if (filter === "Auth") return ["email_changed", "password_changed", "key_generated", "key_revoked"].includes(ev.eventType);
+    return true;
+}
+
 export default function Notifications() {
-    const [users, setUsers] = useState([]);
-    const [departments, setDepartments] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("All");
 
     useEffect(() => {
-        fetchUsers().then(setUsers).catch(() => {});
-        fetch("/api/departments").then((r) => r.json()).then(setDepartments).catch(() => {});
+        fetch("/api/audit", { credentials: "include" })
+            .then((r) => r.json())
+            .then(setEvents)
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, []);
 
-    const log = generateLog(users, departments);
-
-    const typeFilter = {
-        All: null,
-        Login: ["login"],
-        Users: ["created", "role", "password", "export"],
-        Departments: ["dept"],
-        Auth: ["password", "security"],
-    };
-
-    const visible = filter === "All"
-        ? log
-        : log.filter((e) => typeFilter[filter]?.includes(e.type));
+    const visible = events.filter((ev) => matchesFilter(ev, filter));
 
     return (
         <section className="workspace">
@@ -94,7 +66,9 @@ export default function Notifications() {
                     <div className="workspace-breadcrumb">General / Notifications</div>
                     <div className="workspace-title-row">
                         <h1>Notifications</h1>
-                        <span className="sidebar-badge" style={{ fontSize: 13, padding: "3px 10px" }}>{log.length}</span>
+                        {events.length > 0 && (
+                            <span className="sidebar-badge" style={{ fontSize: 13, padding: "3px 10px" }}>{events.length}</span>
+                        )}
                     </div>
                     <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
                         Audit trail of all activity across the platform.
@@ -116,26 +90,31 @@ export default function Notifications() {
             </div>
 
             <div className="audit-list">
-                {visible.length === 0 && (
+                {loading && (
+                    <div style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+                        Loading events…
+                    </div>
+                )}
+                {!loading && visible.length === 0 && (
                     <div style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
                         No events in this category yet.
                     </div>
                 )}
                 {visible.map((ev) => {
-                    const evType = EVENT_TYPES.find((t) => t.key === ev.type) || EVENT_TYPES[0];
-                    const Icon = evType.Icon;
+                    const meta = TYPE_META[ev.eventType] || TYPE_META.default;
+                    const Icon = meta.Icon;
                     return (
                         <div key={ev.id} className="audit-row">
-                            <div className="audit-icon" style={{ background: `${evType.color}20`, color: evType.color }}>
+                            <div className="audit-icon" style={{ background: `${meta.color}20`, color: meta.color }}>
                                 <Icon size={14} />
                             </div>
                             <div className="audit-body">
                                 <div className="audit-top">
-                                    <span className="audit-actor">{ev.actor}</span>
-                                    <span className={`event-pill ${evType.pill}`}>{evType.label}</span>
-                                    <span className="audit-time">{relTime(ev.ts)}</span>
+                                    <span className="audit-actor">{ev.actorEmail}</span>
+                                    <span className={`event-pill ${meta.pill}`}>{meta.label}</span>
+                                    <span className="audit-time">{relTime(ev.createdAt)}</span>
                                 </div>
-                                <div className="audit-desc">{ev.desc}</div>
+                                <div className="audit-desc">{ev.description}</div>
                             </div>
                         </div>
                     );

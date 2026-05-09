@@ -72,6 +72,12 @@ export default function ExportData() {
         const csv = toCSV(data, selectedCols, cfg.columns);
         const ts = new Date().toISOString().slice(0, 10);
         download(csv, `${entity}-${ts}.csv`);
+        fetch("/api/audit/event", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventType: "export_generated", description: `Exported ${entity} CSV (${data.length} rows)` }),
+        }).catch(() => {});
     }
 
     return (
