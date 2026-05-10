@@ -3,12 +3,12 @@ package com.msframework.backend.controller;
 import com.msframework.backend.dto.DepartmentResponse;
 import com.msframework.backend.entity.Department;
 import com.msframework.backend.repository.DepartmentRepository;
+import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
 public class DepartmentController {
-
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
 
     private DepartmentResponse toResponse(Department dept) {
-        long memberCount = dept.getUsers() == null ? 0 : dept.getUsers().size();
+        long memberCount = userRepository.countByDepartmentId(dept.getId());
         return new DepartmentResponse(dept.getId(), dept.getName(), dept.getColor(), memberCount);
     }
 
@@ -43,9 +43,7 @@ public class DepartmentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepartmentResponse> updateDepartment(@PathVariable Long id,
-                                                               @RequestBody Department request,
-                                                               Principal principal) {
+    public ResponseEntity<DepartmentResponse> updateDepartment(@PathVariable Long id, @RequestBody Department request, Principal principal) {
         return departmentRepository.findById(id).map(existing -> {
             existing.setName(request.getName());
             existing.setColor(request.getColor());
