@@ -1,6 +1,9 @@
 package com.msframework.backend.controller;
 
+import com.msframework.backend.dto.RegisterRequest;
+import com.msframework.backend.entity.Department;
 import com.msframework.backend.entity.User;
+import com.msframework.backend.repository.DepartmentRepository;
 import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AuditService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +31,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final DepartmentRepository departmentRepository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
 
@@ -65,10 +69,20 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
             return ResponseEntity.badRequest().body("Email already exists");
         }
+        Department dept = departmentRepository.findById(request.departmentId()).orElse(null);
+        User user = User.builder()
+                .fullName(request.fullName())
+                .phone(request.phone())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .role("MEMBER")
+                .status("Active")
+                .department(dept)
+                .build();
         User saved = userRepository.save(user);
         auditService.log("user_created", "system", saved.getFullName() + " registered");
         return ResponseEntity.ok(saved);
