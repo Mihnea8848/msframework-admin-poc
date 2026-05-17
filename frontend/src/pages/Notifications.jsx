@@ -57,31 +57,44 @@ export default function Notifications() {
     const [filter, setFilter] = useState("All");
 
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading || !canReadAudit) return;
 
-        if (!canReadAudit) {
-            setEvents([]);
-            setLoading(false);
-            return;
-        }
+        let alive = true;
 
-        setLoading(true);
+        async function loadAuditEvents() {
+            setLoading(true);
 
-        fetch("/api/audit", { credentials: "include" })
-            .then(async (r) => {
-                if (!r.ok) {
-                    const text = await r.text();
+            try {
+                const res = await fetch("/api/audit", { credentials: "include" });
+
+                if (!res.ok) {
+                    const text = await res.text();
                     throw new Error(text || "Failed to load audit events");
                 }
 
-                return r.json();
-            })
-            .then(setEvents)
-            .catch((err) => {
+                const data = await res.json();
+
+                if (alive) {
+                    setEvents(Array.isArray(data) ? data : []);
+                }
+            } catch (err) {
                 console.error(err);
-                setEvents([]);
-            })
-            .finally(() => setLoading(false));
+
+                if (alive) {
+                    setEvents([]);
+                }
+            } finally {
+                if (alive) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        loadAuditEvents();
+
+        return () => {
+            alive = false;
+        };
     }, [authLoading, canReadAudit]);
 
     const visible = events.filter((ev) => matchesFilter(ev, filter));
