@@ -22,7 +22,10 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,6 +37,10 @@ public class AuthController {
     private final DepartmentRepository departmentRepository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
+
+    private final Map<String, PasswordResetData> passwordResetTokens = new ConcurrentHashMap<>();
+
+    private record PasswordResetData(String email, LocalDateTime expiresAt) {}
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request,
@@ -129,6 +136,76 @@ public class AuthController {
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
             auditService.log("password_changed", user.getEmail(), user.getEmail() + " changed password");
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.getOrDefault("email", "").trim();
+
+        if (email.isBlank()) {
+            return ResponseEntity.badRequest().body("Email is required");
+        }
+
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+
+            passwordResetTokens.put(
+                    token,
+                    new PasswordResetData(email, LocalDateTime.now().plusMinutes(30))
+            );
+
+            String resetLink = "http://localhost:5173/reset-password?token=" + token;
+
+            // For now, print it in the backend console.
+            // Later, send this by email.
+            System.out.println("Password reset link for " + email + ": " + resetLink);
+
+            auditService.log("password_reset_requested", email, email + " requested password reset");
+        });
+
+        // Always return OK, even if email does not exist.
+        // This avoids revealing which emails are registered.
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body.getOrDefault("token", "").trim();
+        String newPassword = body.getOrDefault("newPassword", "");
+
+        if (token.isBlank()) {
+            return ResponseEntity.badRequest().body("Token is required");
+        }
+
+        if (newPassword.length() < 8) {
+            return ResponseEntity.badRequest().body("Password too short");
+        }
+
+        PasswordResetData resetData = passwordResetTokens.get(token);
+
+        if (resetData == null) {
+            return ResponseEntity.badRequest().body("Invalid reset token");
+        }
+
+        if (resetData.expiresAt().isBefore(LocalDateTime.now())) {
+            passwordResetTokens.remove(token);
+            return ResponseEntity.badRequest().body("Reset token expired");
+        }
+
+        return userRepository.findByEmail(resetData.email()).map(user -> {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            passwordResetTokens.remove(token);
+
+            auditService.log(
+                    "password_reset_completed",
+                    user.getEmail(),
+                    user.getEmail() + " reset password"
+            );
+
             return ResponseEntity.ok().build();
         }).orElse(ResponseEntity.notFound().build());
     }

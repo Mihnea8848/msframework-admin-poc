@@ -34,12 +34,20 @@ export default function AuthProvider({ children }) {
         throw new Error("Login failed");
     };
 
+    const forgotPassword = async (email) => {
+        return await authApi.forgotPassword(email);
+    };
+
+    const resetPassword = async (token, newPassword) => {
+        return await authApi.resetPassword(token, newPassword);
+    };
+
     const logout = () => {
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, refresh, forgotPassword, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

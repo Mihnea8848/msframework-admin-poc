@@ -5,22 +5,24 @@ import {
 } from "lucide-react";
 
 const TYPE_META = {
-    user_login:          { label: "Login",          pill: "login",   Icon: LogIn,      color: "#28beef" },
-    user_logout:         { label: "Logout",          pill: "login",   Icon: LogOut,     color: "#28beef" },
-    user_created:        { label: "User Created",    pill: "created", Icon: UserPlus,   color: "#2dd881" },
-    dept_created:        { label: "Dept Created",    pill: "created", Icon: Building2,  color: "#2dd881" },
-    dept_updated:        { label: "Dept Updated",    pill: "changed", Icon: Building2,  color: "#f0a832" },
-    dept_deleted:        { label: "Dept Deleted",    pill: "security",Icon: Building2,  color: "#ff6a5f" },
-    email_changed:       { label: "Email Changed",   pill: "security",Icon: UserCheck,  color: "#f0a832" },
-    password_changed:    { label: "Password",        pill: "security",Icon: Key,        color: "#f0a832" },
-    key_generated:       { label: "API Key",         pill: "security",Icon: Key,        color: "#bb2eb8" },
-    key_revoked:         { label: "Key Revoked",     pill: "security",Icon: Key,        color: "#ff6a5f" },
-    connection_changed:  { label: "Integration",     pill: "changed", Icon: Cable,      color: "#f0a832" },
-    webhook_added:       { label: "Webhook Added",   pill: "created", Icon: Webhook,    color: "#2dd881" },
-    webhook_removed:     { label: "Webhook Removed", pill: "security",Icon: Webhook,    color: "#ff6a5f" },
-    export_generated:    { label: "Export",          pill: "export",  Icon: Download,   color: "#bb2eb8" },
-    import_completed:    { label: "Import",          pill: "export",  Icon: RefreshCw,  color: "#bb2eb8" },
-    default:             { label: "Event",           pill: "changed", Icon: Shield,     color: "#6b7568" },
+    user_login: { label: "Login", pill: "login", Icon: LogIn, color: "#28beef" },
+    user_logout: { label: "Logout", pill: "login", Icon: LogOut, color: "#28beef" },
+    user_created: { label: "User Created", pill: "created", Icon: UserPlus, color: "#2dd881" },
+    dept_created: { label: "Dept Created", pill: "created", Icon: Building2, color: "#2dd881" },
+    dept_updated: { label: "Dept Updated", pill: "changed", Icon: Building2, color: "#f0a832" },
+    dept_deleted: { label: "Dept Deleted", pill: "security", Icon: Building2, color: "#ff6a5f" },
+    email_changed: { label: "Email Changed", pill: "security", Icon: UserCheck, color: "#f0a832" },
+    password_changed: { label: "Password", pill: "security", Icon: Key, color: "#f0a832" },
+    password_reset_requested: { label: "Password reset requested", pill: "security", Icon: Key, color: "#ff6a5f" },
+    password_reset_completed: { label: "Password reset completed", pill: "security", Icon: Key, color: "#f0a832" },
+    key_generated: { label: "API Key", pill: "security", Icon: Key, color: "#bb2eb8" },
+    key_revoked: { label: "Key Revoked", pill: "security", Icon: Key, color: "#ff6a5f" },
+    connection_changed: { label: "Integration", pill: "changed", Icon: Cable, color: "#f0a832" },
+    webhook_added: { label: "Webhook Added", pill: "created", Icon: Webhook, color: "#2dd881" },
+    webhook_removed: { label: "Webhook Removed", pill: "security", Icon: Webhook, color: "#ff6a5f" },
+    export_generated: { label: "Export", pill: "export", Icon: Download, color: "#bb2eb8" },
+    import_completed: { label: "Import", pill: "export", Icon: RefreshCw, color: "#bb2eb8" },
+    default: { label: "Event", pill: "changed", Icon: Shield, color: "#6b7568" },
 };
 
 function relTime(dateStr) {
@@ -40,7 +42,8 @@ function matchesFilter(ev, filter) {
     if (filter === "Login") return ev.eventType === "user_login" || ev.eventType === "user_logout";
     if (filter === "Users") return ev.eventType.startsWith("user_") && ev.eventType !== "user_login" && ev.eventType !== "user_logout";
     if (filter === "Departments") return ev.eventType.startsWith("dept_");
-    if (filter === "Auth") return ["email_changed", "password_changed", "key_generated", "key_revoked"].includes(ev.eventType);
+    if (filter === "Auth") return ["email_changed", "password_changed", "key_generated", "key_revoked", "password_reset_requested"
+        , "password_reset_completed"].includes(ev.eventType);
     return true;
 }
 
@@ -53,7 +56,7 @@ export default function Notifications() {
         fetch("/api/audit", { credentials: "include" })
             .then((r) => r.json())
             .then(setEvents)
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoading(false));
     }, []);
 

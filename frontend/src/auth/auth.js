@@ -19,7 +19,9 @@ async function apiFetch(url, options = {}) {
 
 export async function fetchMe() {
     const res = await apiFetch("/api/auth/me");
+
     if (!res || !res.ok) return null;
+
     const text = await res.text();
     return text ? JSON.parse(text) : null;
 }
@@ -31,12 +33,48 @@ export async function login(email, password) {
         body: JSON.stringify({ email, password }),
     });
 
-    if (!res || !res.ok) throw new Error("Login failed");
+    if (!res || !res.ok) {
+        throw new Error("Login failed");
+    }
+
     return await res.json();
+}
+
+export async function forgotPassword(email) {
+    const res = await apiFetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!res || !res.ok) {
+        throw new Error("Forgot password failed");
+    }
+
+    return true;
+}
+
+export async function resetPassword(token, newPassword) {
+    const res = await apiFetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            token,
+            newPassword,
+        }),
+    });
+
+    if (!res || !res.ok) {
+        throw new Error("Reset password failed");
+    }
+
+    return true;
 }
 
 export async function fetchUsers() {
     const res = await apiFetch("/api/users");
+
     if (!res || !res.ok) return [];
+
     return await res.json();
 }

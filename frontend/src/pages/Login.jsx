@@ -93,6 +93,12 @@ export default function Login() {
                                 placeholder="Password"
                                 required
                             />
+
+                            <div className="auth-forgot-row">
+                                <Link className="auth-link auth-forgot-link" to="/forgot-password">
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </div>
 
                         <button
