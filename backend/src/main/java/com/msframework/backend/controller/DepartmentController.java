@@ -97,6 +97,29 @@ public class DepartmentController {
             return forbidden;
         }
 
+        User currentUser = getCurrentUser(principal);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        boolean currentUserIsAdmin = currentUser.hasRole("ADMIN");
+        boolean currentUserIsManager = currentUser.hasRole("MANAGER");
+
+        if (!currentUserIsAdmin && !currentUserIsManager) {
+            return ResponseEntity.status(403).body("Only admins and managers can edit departments");
+        }
+
+        if (currentUserIsManager) {
+            if (currentUser.getDepartment() == null) {
+                return ResponseEntity.status(403).body("Manager has no assigned department");
+            }
+
+            if (!currentUser.getDepartment().getId().equals(id)) {
+                return ResponseEntity.status(403).body("Managers can only edit their own department");
+            }
+        }
+
         return departmentRepository.findById(id)
                 .map(existing -> {
                     existing.setName(request.getName());
@@ -120,6 +143,16 @@ public class DepartmentController {
         ResponseEntity<?> forbidden = checkPermission(principal, Permission.DEPARTMENT_DELETE);
         if (forbidden != null) {
             return forbidden;
+        }
+
+        User currentUser = getCurrentUser(principal);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        if (!currentUser.hasRole("ADMIN")) {
+            return ResponseEntity.status(403).body("Only admins can delete departments");
         }
 
         if (!departmentRepository.existsById(id)) {

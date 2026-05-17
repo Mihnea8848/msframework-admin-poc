@@ -74,12 +74,31 @@ function ModalOverlay({ children }) {
     );
 }
 
+function getRoleNames(user) {
+    if (!user?.roles?.length) return [];
+
+    return user.roles.map((role) => {
+        if (typeof role === "string") return role;
+        return role.name;
+    });
+}
+
 export default function Departments() {
     const { user, loading: authLoading } = useAuth();
 
-    const canCreateDepartments = hasPermission(user, "DEPARTMENT_CREATE");
-    const canEditDepartments = hasPermission(user, "DEPARTMENT_UPDATE");
-    const canDeleteDepartments = hasPermission(user, "DEPARTMENT_DELETE");
+    const currentUserRoles = getRoleNames(user);
+    const currentUserIsAdmin = currentUserRoles.includes("ADMIN");
+    const currentUserIsManager = currentUserRoles.includes("MANAGER");
+    const currentUserDepartmentId = user?.departmentId;
+
+    const canCreateDepartments =
+        currentUserIsAdmin && hasPermission(user, "DEPARTMENT_CREATE");
+
+    const canEditDepartments =
+        hasPermission(user, "DEPARTMENT_UPDATE");
+
+    const canDeleteDepartments =
+        currentUserIsAdmin && hasPermission(user, "DEPARTMENT_DELETE");
     const [departments, setDepartments] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -178,7 +197,8 @@ export default function Departments() {
                                 <th style={{ width: 220, paddingLeft: 24 }}>Performance</th>
                                 <th style={{ width: 190, paddingLeft: 24 }}>Budget Used</th>
                                 {(canEditDepartments || canDeleteDepartments) && (
-                                    <th style={{ width: 200, paddingLeft: 24 }}>Actions</th>)}
+                                    <th style={{ width: 200, paddingLeft: 24 }}>Actions</th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
@@ -188,6 +208,18 @@ export default function Departments() {
                                 const trendColor = isUp ? "var(--success)" : "var(--danger)";
                                 const avatarCls = dept.color ?? DEFAULT_COLOR;
 
+                                const isOwnDepartment =
+                                    String(dept.id) === String(currentUserDepartmentId);
+
+                                const canEditThisDepartment =
+                                    canEditDepartments &&
+                                    (
+                                        currentUserIsAdmin ||
+                                        (currentUserIsManager && isOwnDepartment)
+                                    );
+
+                                const canDeleteThisDepartment =
+                                    canDeleteDepartments && currentUserIsAdmin;
                                 return (
                                     <tr key={dept.id}>
                                         {/* ID */}
@@ -241,7 +273,7 @@ export default function Departments() {
                                         {(canEditDepartments || canDeleteDepartments) && (
                                             <td style={{ paddingLeft: 24 }}>
                                                 <div style={{ display: "flex", gap: 8 }}>
-                                                    {canEditDepartments && (
+                                                    {canEditThisDepartment ? (
                                                         <button
                                                             onClick={() => openEditModal(dept)}
                                                             className="topbar-icon-button"
@@ -258,9 +290,13 @@ export default function Departments() {
                                                         >
                                                             <Pencil size={13} /> Edit
                                                         </button>
+                                                    ) : (
+                                                        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+                                                            Locked
+                                                        </span>
                                                     )}
 
-                                                    {canDeleteDepartments && (
+                                                    {canDeleteThisDepartment && (
                                                         <button
                                                             onClick={() => openDeleteModal(dept)}
                                                             className="topbar-icon-button"
