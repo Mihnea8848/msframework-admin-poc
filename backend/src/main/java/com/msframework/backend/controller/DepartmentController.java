@@ -2,13 +2,16 @@ package com.msframework.backend.controller;
 
 import com.msframework.backend.dto.DepartmentResponse;
 import com.msframework.backend.entity.Department;
+import com.msframework.backend.entity.User;
 import com.msframework.backend.repository.DepartmentRepository;
 import com.msframework.backend.repository.UserRepository;
+import com.msframework.backend.config.Permission;
 import com.msframework.backend.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
 public class DepartmentController {
+
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
@@ -26,40 +30,110 @@ public class DepartmentController {
         return new DepartmentResponse(dept.getId(), dept.getName(), dept.getColor(), memberCount);
     }
 
-    @GetMapping
-    public ResponseEntity<List<DepartmentResponse>> getAllDepartments() {
-        return ResponseEntity.ok(departmentRepository.findAll().stream()
-                .map(this::toResponse).collect(Collectors.toList()));
+    private User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            return null;
+        }
+
+        return userRepository.findByEmail(principal.getName())
+                .orElse(null);
     }
 
+    private ResponseEntity<?> checkPermission(Principal principal, Permission permission) {
+        User currentUser = getCurrentUser(principal);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+
+        if (!currentUser.hasPermission(permission)) {
+            return ResponseEntity.status(403).body("Missing permission: " + permission);
+        }
+
+        return null;
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllDepartments() {
+        List<DepartmentResponse> departments = departmentRepository.findAll()
+                .stream()
+                .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(departments);
+    }
     @PostMapping
-    public ResponseEntity<DepartmentResponse> createDepartment(@RequestBody Department request, Principal principal) {
+    public ResponseEntity<?> createDepartment(@RequestBody Department request, Principal principal) {
+        ResponseEntity<?> forbidden = checkPermission(principal, Permission.DEPARTMENT_CREATE);
+        if (forbidden != null) {
+            return forbidden;
+        }
+
         Department saved = departmentRepository.save(
-                Department.builder().name(request.getName()).color(request.getColor()).build()
+                Department.builder()
+                        .name(request.getName())
+                        .color(request.getColor())
+                        .build()
         );
-        String actor = principal != null ? principal.getName() : "system";
-        auditService.log("dept_created", actor, "Department created: " + saved.getName());
+
+        auditService.log(
+                "dept_created",
+                principal.getName(),
+                "Department created: " + saved.getName()
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepartmentResponse> updateDepartment(@PathVariable Long id, @RequestBody Department request, Principal principal) {
-        return departmentRepository.findById(id).map(existing -> {
-            existing.setName(request.getName());
-            existing.setColor(request.getColor());
-            Department updated = departmentRepository.save(existing);
-            String actor = principal != null ? principal.getName() : "system";
-            auditService.log("dept_updated", actor, "Department updated: " + updated.getName());
-            return ResponseEntity.ok(toResponse(updated));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> updateDepartment(
+            @PathVariable Long id,
+            @RequestBody Department request,
+            Principal principal
+    ) {
+        ResponseEntity<?> forbidden = checkPermission(principal, Permission.DEPARTMENT_UPDATE);
+        if (forbidden != null) {
+            return forbidden;
+        }
+
+        return departmentRepository.findById(id)
+                .map(existing -> {
+                    existing.setName(request.getName());
+                    existing.setColor(request.getColor());
+
+                    Department updated = departmentRepository.save(existing);
+
+                    auditService.log(
+                            "dept_updated",
+                            principal.getName(),
+                            "Department updated: " + updated.getName()
+                    );
+
+                    return ResponseEntity.ok(toResponse(updated));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartment(@PathVariable Long id, Principal principal) {
-        if (!departmentRepository.existsById(id)) return ResponseEntity.notFound().build();
-        String actor = principal != null ? principal.getName() : "system";
-        auditService.log("dept_deleted", actor, "Department deleted (id: " + id + ")");
+    public ResponseEntity<?> deleteDepartment(@PathVariable Long id, Principal principal) {
+        ResponseEntity<?> forbidden = checkPermission(principal, Permission.DEPARTMENT_DELETE);
+        if (forbidden != null) {
+            return forbidden;
+        }
+
+        if (!departmentRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        auditService.log(
+                "dept_deleted",
+                principal.getName(),
+                "Department deleted (id: " + id + ")"
+        );
+
         departmentRepository.deleteById(id);
+
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission } from "../auth/permissions";
 import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 
 // Curated swatches the user can pick from — each maps to a CSS class + a preview hex
 const COLOR_SWATCHES = [
-    { label: "Azure",   cssClass: "avatar-azure",   hex: "#2952ff" },
-    { label: "Rose",    cssClass: "avatar-rose",     hex: "#cb3a77" },
-    { label: "Cyan",    cssClass: "avatar-cyan",     hex: "#0078c8" },
-    { label: "Magenta", cssClass: "avatar-magenta",  hex: "#bb2eb8" },
-    { label: "Amber",   cssClass: "avatar-amber",    hex: "#f18d1c" },
-    { label: "Gold",    cssClass: "avatar-gold",     hex: "#d59b0b" },
-    { label: "Violet",  cssClass: "avatar-violet",   hex: "#6c32db" },
-    { label: "Jade",    cssClass: "avatar-jade",     hex: "#117d5d" },
-    { label: "Sky",     cssClass: "avatar-sky",      hex: "#1a9ddf" },
-    { label: "Coral",   cssClass: "avatar-coral",    hex: "#dd5a3a" },
-    { label: "Orange",  cssClass: "avatar-orange",   hex: "#df7f12" },
-    { label: "Plum",    cssClass: "avatar-plum",     hex: "#9d3ac0" },
+    { label: "Azure", cssClass: "avatar-azure", hex: "#2952ff" },
+    { label: "Rose", cssClass: "avatar-rose", hex: "#cb3a77" },
+    { label: "Cyan", cssClass: "avatar-cyan", hex: "#0078c8" },
+    { label: "Magenta", cssClass: "avatar-magenta", hex: "#bb2eb8" },
+    { label: "Amber", cssClass: "avatar-amber", hex: "#f18d1c" },
+    { label: "Gold", cssClass: "avatar-gold", hex: "#d59b0b" },
+    { label: "Violet", cssClass: "avatar-violet", hex: "#6c32db" },
+    { label: "Jade", cssClass: "avatar-jade", hex: "#117d5d" },
+    { label: "Sky", cssClass: "avatar-sky", hex: "#1a9ddf" },
+    { label: "Coral", cssClass: "avatar-coral", hex: "#dd5a3a" },
+    { label: "Orange", cssClass: "avatar-orange", hex: "#df7f12" },
+    { label: "Plum", cssClass: "avatar-plum", hex: "#9d3ac0" },
 ];
 
 const DEFAULT_COLOR = "avatar-azure";
@@ -31,8 +33,8 @@ function deptInitials(name) {
 // Deterministic per-dept fake stats (performance + budget) — stable across renders
 function deptStats(dept) {
     const seed = dept.id * 7919;
-    const perfPct  = 40 + (dept.id * 37 + 11) % 55;
-    const isUp     = (dept.id % 3) !== 0;
+    const perfPct = 40 + (dept.id * 37 + 11) % 55;
+    const isUp = (dept.id % 3) !== 0;
     const budgetUsed = 30 + (dept.id * 53 + 7) % 65;
     return { perfPct, isUp, budgetUsed, seed };
 }
@@ -52,7 +54,7 @@ function Sparkline({ seed, isUp }) {
     return (
         <svg width="80" height="28" viewBox="0 0 80 28" fill="none" style={{ display: "block", flexShrink: 0 }}>
             <polyline points={sparklinePath(seed)} stroke={color} strokeWidth="2"
-                      strokeLinejoin="round" strokeLinecap="round" fill="none" opacity="0.85" />
+                strokeLinejoin="round" strokeLinecap="round" fill="none" opacity="0.85" />
         </svg>
     );
 }
@@ -73,29 +75,37 @@ function ModalOverlay({ children }) {
 }
 
 export default function Departments() {
-    const [departments, setDepartments]       = useState([]);
-    const [isModalOpen, setIsModalOpen]       = useState(false);
+    const { user, loading: authLoading } = useAuth();
+
+    const canCreateDepartments = hasPermission(user, "DEPARTMENT_CREATE");
+    const canEditDepartments = hasPermission(user, "DEPARTMENT_UPDATE");
+    const canDeleteDepartments = hasPermission(user, "DEPARTMENT_DELETE");
+    const [departments, setDepartments] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [editingDept, setEditingDept]       = useState(null);
-    const [deptToDelete, setDeptToDelete]     = useState(null);
-    const [nameInput, setNameInput]           = useState("");
-    const [colorInput, setColorInput]         = useState(DEFAULT_COLOR);
-    const [loading, setLoading]               = useState(true);
+    const [editingDept, setEditingDept] = useState(null);
+    const [deptToDelete, setDeptToDelete] = useState(null);
+    const [nameInput, setNameInput] = useState("");
+    const [colorInput, setColorInput] = useState(DEFAULT_COLOR);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => { fetchDepartments(); }, []);
 
     const fetchDepartments = async () => {
         try {
-            const res  = await fetch("/api/departments");
+            const res = await fetch("/api/departments");
             const data = await res.json();
-            setDepartments(data);
+
+            const sorted = [...data].sort((a, b) => a.id - b.id);
+
+            setDepartments(sorted);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const url    = editingDept ? `/api/departments/${editingDept.id}` : "/api/departments";
+        const url = editingDept ? `/api/departments/${editingDept.id}` : "/api/departments";
         const method = editingDept ? "PUT" : "POST";
         const res = await fetch(url, {
             method,
@@ -126,7 +136,13 @@ export default function Departments() {
     const openDeleteModal = (dept) => { setDeptToDelete(dept); setIsDeleteModalOpen(true); };
     const closeModal = () => { setIsModalOpen(false); setEditingDept(null); setNameInput(""); setColorInput(DEFAULT_COLOR); };
 
-    if (loading) return <div className="workspace"><h1 style={{ padding: "40px" }}>Loading departments...</h1></div>;
+    if (loading || authLoading) {
+        return (
+            <div className="workspace">
+                <h1 style={{ padding: "40px" }}>Loading departments...</h1>
+            </div>
+        );
+    }
 
     return (
         <section className="workspace">
@@ -139,10 +155,15 @@ export default function Departments() {
                         <span className="workspace-count">{departments.length}</span>
                     </div>
                 </div>
-                <button onClick={openCreateModal} className="auth-primary"
-                        style={{ padding: "0 24px", minWidth: 160, marginTop: "auto" }}>
-                    + Add Department
-                </button>
+                {canCreateDepartments && (
+                    <button
+                        onClick={openCreateModal}
+                        className="auth-primary"
+                        style={{ padding: "0 24px", minWidth: 160, marginTop: "auto" }}
+                    >
+                        + Add Department
+                    </button>
+                )}
             </div>
 
             {/* ── Table ── */}
@@ -150,87 +171,121 @@ export default function Departments() {
                 <div className="data-table-shell">
                     <table className="data-table">
                         <thead>
-                        <tr>
-                            <th style={{ width: 48 }}>#</th>
-                            <th>Department</th>
-                            <th style={{ width: 140, paddingLeft: 24 }}>Members</th>
-                            <th style={{ width: 220, paddingLeft: 24 }}>Performance</th>
-                            <th style={{ width: 190, paddingLeft: 24 }}>Budget Used</th>
-                            <th style={{ width: 200, paddingLeft: 24 }}>Actions</th>
-                        </tr>
+                            <tr>
+                                <th style={{ width: 48 }}>#</th>
+                                <th>Department</th>
+                                <th style={{ width: 140, paddingLeft: 24 }}>Members</th>
+                                <th style={{ width: 220, paddingLeft: 24 }}>Performance</th>
+                                <th style={{ width: 190, paddingLeft: 24 }}>Budget Used</th>
+                                {(canEditDepartments || canDeleteDepartments) && (
+                                    <th style={{ width: 200, paddingLeft: 24 }}>Actions</th>)}
+                            </tr>
                         </thead>
                         <tbody>
-                        {departments.map((dept) => {
-                            const { perfPct, isUp, budgetUsed, seed } = deptStats(dept);
-                            const TrendIcon  = isUp ? TrendingUp : TrendingDown;
-                            const trendColor = isUp ? "var(--success)" : "var(--danger)";
-                            const avatarCls  = dept.color ?? DEFAULT_COLOR;
+                            {departments.map((dept) => {
+                                const { perfPct, isUp, budgetUsed, seed } = deptStats(dept);
+                                const TrendIcon = isUp ? TrendingUp : TrendingDown;
+                                const trendColor = isUp ? "var(--success)" : "var(--danger)";
+                                const avatarCls = dept.color ?? DEFAULT_COLOR;
 
-                            return (
-                                <tr key={dept.id}>
-                                    {/* ID */}
-                                    <td style={{ color: "var(--muted)", fontFamily: "monospace", fontSize: 12 }}>
-                                        {dept.id}
-                                    </td>
+                                return (
+                                    <tr key={dept.id}>
+                                        {/* ID */}
+                                        <td style={{ color: "var(--muted)", fontFamily: "monospace", fontSize: 12 }}>
+                                            {dept.id}
+                                        </td>
 
-                                    {/* Name + avatar */}
-                                    <td>
-                                        <div className="member-cell">
-                                            <div className={`avatar ${avatarCls}`}>{deptInitials(dept.name)}</div>
-                                            <span style={{ fontWeight: 600 }}>{dept.name}</span>
-                                        </div>
-                                    </td>
-
-                                    {/* Members — real count from DB */}
-                                    <td style={{ paddingLeft: 24 }}>
-                                        <span style={{ fontWeight: 700 }}>{dept.memberCount ?? 0}</span>
-                                        <span style={{ color: "var(--muted)", fontSize: 12, marginLeft: 4 }}>members</span>
-                                    </td>
-
-                                    {/* Performance */}
-                                    <td style={{ paddingLeft: 24 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                            <TrendIcon size={14} color={trendColor} />
-                                            <span style={{ color: trendColor, fontWeight: 700, fontSize: 13, minWidth: 36 }}>
-                                                {perfPct}%
-                                            </span>
-                                            <Sparkline seed={seed} isUp={isUp} />
-                                        </div>
-                                    </td>
-
-                                    {/* Budget used */}
-                                    <td style={{ paddingLeft: 24 }}>
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 120 }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                                                <span style={{ color: "var(--muted-strong)", fontWeight: 600 }}>{budgetUsed}%</span>
-                                                <span style={{ color: "var(--muted)" }}>used</span>
+                                        {/* Name + avatar */}
+                                        <td>
+                                            <div className="member-cell">
+                                                <div className={`avatar ${avatarCls}`}>{deptInitials(dept.name)}</div>
+                                                <span style={{ fontWeight: 600 }}>{dept.name}</span>
                                             </div>
-                                            <div style={{ height: 5, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
-                                                <div style={{
-                                                    height: "100%", width: `${budgetUsed}%`, borderRadius: 999,
-                                                    background: budgetUsed > 80 ? "var(--danger)" : budgetUsed > 60 ? "#f0a832" : "var(--success)",
-                                                    transition: "width 0.4s ease",
-                                                }} />
-                                            </div>
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                    {/* Actions */}
-                                    <td style={{ paddingLeft: 24 }}>
-                                        <div style={{ display: "flex", gap: 8 }}>
-                                            <button onClick={() => openEditModal(dept)} className="topbar-icon-button" aria-label="Edit"
-                                                    style={{ width: "auto", padding: "0 12px", gap: 6, display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 600 }}>
-                                                <Pencil size={13} /> Edit
-                                            </button>
-                                            <button onClick={() => openDeleteModal(dept)} className="topbar-icon-button" aria-label="Delete"
-                                                    style={{ width: "auto", padding: "0 12px", gap: 6, display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 600, color: "var(--danger)", borderColor: "rgba(255,106,95,0.25)" }}>
-                                                <Trash2 size={13} /> Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                        {/* Members — real count from DB */}
+                                        <td style={{ paddingLeft: 24 }}>
+                                            <span style={{ fontWeight: 700 }}>{dept.memberCount ?? 0}</span>
+                                            <span style={{ color: "var(--muted)", fontSize: 12, marginLeft: 4 }}>members</span>
+                                        </td>
+
+                                        {/* Performance */}
+                                        <td style={{ paddingLeft: 24 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                <TrendIcon size={14} color={trendColor} />
+                                                <span style={{ color: trendColor, fontWeight: 700, fontSize: 13, minWidth: 36 }}>
+                                                    {perfPct}%
+                                                </span>
+                                                <Sparkline seed={seed} isUp={isUp} />
+                                            </div>
+                                        </td>
+
+                                        {/* Budget used */}
+                                        <td style={{ paddingLeft: 24 }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 120 }}>
+                                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                                                    <span style={{ color: "var(--muted-strong)", fontWeight: 600 }}>{budgetUsed}%</span>
+                                                    <span style={{ color: "var(--muted)" }}>used</span>
+                                                </div>
+                                                <div style={{ height: 5, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                                                    <div style={{
+                                                        height: "100%", width: `${budgetUsed}%`, borderRadius: 999,
+                                                        background: budgetUsed > 80 ? "var(--danger)" : budgetUsed > 60 ? "#f0a832" : "var(--success)",
+                                                        transition: "width 0.4s ease",
+                                                    }} />
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Actions */}
+                                        {(canEditDepartments || canDeleteDepartments) && (
+                                            <td style={{ paddingLeft: 24 }}>
+                                                <div style={{ display: "flex", gap: 8 }}>
+                                                    {canEditDepartments && (
+                                                        <button
+                                                            onClick={() => openEditModal(dept)}
+                                                            className="topbar-icon-button"
+                                                            aria-label="Edit"
+                                                            style={{
+                                                                width: "auto",
+                                                                padding: "0 12px",
+                                                                gap: 6,
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                fontSize: 12,
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            <Pencil size={13} /> Edit
+                                                        </button>
+                                                    )}
+
+                                                    {canDeleteDepartments && (
+                                                        <button
+                                                            onClick={() => openDeleteModal(dept)}
+                                                            className="topbar-icon-button"
+                                                            aria-label="Delete"
+                                                            style={{
+                                                                width: "auto",
+                                                                padding: "0 12px",
+                                                                gap: 6,
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                fontSize: 12,
+                                                                fontWeight: 600,
+                                                                color: "var(--danger)",
+                                                                borderColor: "rgba(255,106,95,0.25)",
+                                                            }}
+                                                        >
+                                                            <Trash2 size={13} /> Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -252,7 +307,7 @@ export default function Departments() {
                             <div className="auth-field">
                                 <label className="auth-label">Department name</label>
                                 <input autoFocus className="auth-input" placeholder="e.g. Engineering"
-                                       value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+                                    value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
                             </div>
 
                             {/* Colour picker */}
@@ -295,7 +350,7 @@ export default function Departments() {
 
                             <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
                                 <button type="button" onClick={closeModal} className="auth-primary"
-                                        style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
+                                    style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
                                     Cancel
                                 </button>
                                 <button type="submit" className="auth-primary" style={{ flex: 1 }}>
@@ -318,11 +373,11 @@ export default function Departments() {
                         </p>
                         <div style={{ display: "flex", gap: 10 }}>
                             <button onClick={() => setIsDeleteModalOpen(false)} className="auth-primary"
-                                    style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
+                                style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
                                 Keep it
                             </button>
                             <button onClick={confirmDelete} className="auth-primary"
-                                    style={{ flex: 1, background: "rgba(255,106,95,0.15)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
+                                style={{ flex: 1, background: "rgba(255,106,95,0.15)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
                                 Delete
                             </button>
                         </div>

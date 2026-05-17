@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission } from "../auth/permissions";
 import {
     Building2, Download, LogIn, LogOut, Shield, UserCheck, UserPlus, Key,
     Cable, Webhook, RefreshCw,
@@ -48,19 +50,68 @@ function matchesFilter(ev, filter) {
 }
 
 export default function Notifications() {
+    const { user, loading: authLoading } = useAuth();
+    const canReadAudit = hasPermission(user, "AUDIT_READ");
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("All");
 
     useEffect(() => {
+        if (authLoading) return;
+
+        if (!canReadAudit) {
+            setEvents([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+
         fetch("/api/audit", { credentials: "include" })
-            .then((r) => r.json())
+            .then(async (r) => {
+                if (!r.ok) {
+                    const text = await r.text();
+                    throw new Error(text || "Failed to load audit events");
+                }
+
+                return r.json();
+            })
             .then(setEvents)
-            .catch(() => { })
+            .catch((err) => {
+                console.error(err);
+                setEvents([]);
+            })
             .finally(() => setLoading(false));
-    }, []);
+    }, [authLoading, canReadAudit]);
 
     const visible = events.filter((ev) => matchesFilter(ev, filter));
+    if (authLoading || loading) {
+        return (
+            <section className="workspace">
+                <div style={{ padding: 24, color: "var(--muted)", fontSize: 13 }}>
+                    Loading events…
+                </div>
+            </section>
+        );
+    }
+
+    if (!canReadAudit) {
+        return (
+            <section className="workspace">
+                <div className="workspace-hero">
+                    <div>
+                        <div className="workspace-breadcrumb">General / Notifications</div>
+                        <div className="workspace-title-row">
+                            <h1>Notifications</h1>
+                        </div>
+                        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                            You do not have permission to view audit events.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="workspace">

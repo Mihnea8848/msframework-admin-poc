@@ -1,5 +1,5 @@
 import { Route, Routes, Navigate } from "react-router-dom";
-import { RequireAuth, RedirectIfAuthed } from "./Guards.jsx";
+import { RequireAuth, RedirectIfAuthed, RequirePermission } from "./Guards.jsx";
 import DashboardLayout from "../layout/DashboardLayout.jsx";
 
 import Dashboard from "../pages/Dashboard.jsx";
@@ -32,6 +32,18 @@ function Protected({ children }) {
     );
 }
 
+function ProtectedPermission({ permission, children }) {
+    return (
+        <RequireAuth>
+            <RequirePermission permission={permission}>
+                <DashboardLayout>
+                    {children}
+                </DashboardLayout>
+            </RequirePermission>
+        </RequireAuth>
+    );
+}
+
 export default function AppRoutes() {
     return (
         <Routes>
@@ -41,21 +53,90 @@ export default function AppRoutes() {
             <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
 
             <Route path="/" element={<Protected><HomePage /></Protected>} />
-            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/users" element={<Protected><UserManagement /></Protected>} />
-            <Route path="/departments" element={<Protected><Departments /></Protected>} />
-            <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
-            <Route path="/appearance" element={<Protected><Appearance /></Protected>} />
-            <Route path="/database" element={<Protected><DatabasePage /></Protected>} />
-            <Route path="/docs" element={<Protected><Documentation /></Protected>} />
-            <Route path="/auth" element={<Protected><AuthSettings /></Protected>} />
-            <Route path="/security" element={<Protected><Security /></Protected>} />
-            <Route path="/payments" element={<Protected><Payments /></Protected>} />
-            <Route path="/import" element={<Protected><ImportData /></Protected>} />
-            <Route path="/export" element={<Protected><ExportData /></Protected>} />
 
-            <Route path="/connections" element={<Protected><Connections /></Protected>} />
-            <Route path="/timezones" element={<Protected><Timezones /></Protected>} />
+            <Route path="/dashboard" element={
+                <ProtectedPermission permission="DASHBOARD_READ">
+                    <Dashboard />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/users" element={
+                <ProtectedPermission permission="USER_READ">
+                    <UserManagement />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/departments" element={
+                <ProtectedPermission permission="DEPARTMENT_READ">
+                    <Departments />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/notifications" element={
+                <ProtectedPermission permission="AUDIT_READ">
+                    <Notifications />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/appearance" element={
+                <ProtectedPermission permission="APPEARANCE_UPDATE">
+                    <Appearance />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/database" element={
+                <ProtectedPermission permission="DATABASE_READ">
+                    <DatabasePage />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/docs" element={
+                <ProtectedPermission permission="DOCUMENTATION_READ">
+                    <Documentation />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/auth" element={
+                <ProtectedPermission permission="AUTH_SETTINGS_READ">
+                    <AuthSettings />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/security" element={
+                <ProtectedPermission permission="SECURITY_READ">
+                    <Security />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/payments" element={
+                <ProtectedPermission permission="PAYMENTS_READ">
+                    <Payments />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/import" element={
+                <ProtectedPermission permission="IMPORT_DATA">
+                    <ImportData />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/export" element={
+                <ProtectedPermission permission="EXPORT_DATA">
+                    <ExportData />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/connections" element={
+                <ProtectedPermission permission="CONNECTIONS_READ">
+                    <Connections />
+                </ProtectedPermission>
+            } />
+
+            <Route path="/timezones" element={
+                <ProtectedPermission permission="TIMEZONES_READ">
+                    <Timezones />
+                </ProtectedPermission>
+            } />
 
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

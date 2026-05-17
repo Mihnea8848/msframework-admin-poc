@@ -4,13 +4,10 @@ import com.msframework.backend.config.Permission;
 
 import java.util.Set;
 
-public record UserInfoResponse(
+public record CurrentUserDto(
         Long id,
         String fullName,
         String email,
-        String status,
-        Long departmentId,
-        String departmentName,
         Set<String> roles,
         Set<Permission> permissions
 ) {}

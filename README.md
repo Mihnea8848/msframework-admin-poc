@@ -165,6 +165,6 @@ Tables are created automatically by Hibernate on first startup. The `DatabaseSee
 - [x] Topbar user profile with logout
 - [x] LAN-accessible dev server
 - [x] Password reset & email verification flows
-- [ ] Granular RBAC (role-based access control) beyond Admin/Member
+- [x] Granular RBAC (role-based access control) beyond Admin/Member
 - [ ] Real webhook delivery
 - [ ] MFA (two-factor authentication) backend

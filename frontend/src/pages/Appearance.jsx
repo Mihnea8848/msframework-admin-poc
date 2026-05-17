@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 
 const ACCENTS = [
-    { label: "Lime",   dark: "#d2ff72", light: "#7ab800" },
-    { label: "Sky",    dark: "#28beef", light: "#0078c8" },
+    { label: "Lime", dark: "#d2ff72", light: "#7ab800" },
+    { label: "Sky", dark: "#28beef", light: "#0078c8" },
     { label: "Violet", dark: "#a78bfa", light: "#6c32db" },
-    { label: "Rose",   dark: "#fb7185", light: "#cb3a77" },
-    { label: "Amber",  dark: "#fbbf24", light: "#d97706" },
-    { label: "Cyan",   dark: "#67e8f9", light: "#0891b2" },
+    { label: "Rose", dark: "#fb7185", light: "#cb3a77" },
+    { label: "Amber", dark: "#fbbf24", light: "#d97706" },
+    { label: "Cyan", dark: "#67e8f9", light: "#0891b2" },
 ];
 
 function getStoredTheme() {
@@ -151,12 +151,12 @@ export default function Appearance() {
                 <div className="appearance-section-sub">A preview of the current palette.</div>
                 <div className="preview-palette">
                     {[
-                        { label: "BG",      bg: "var(--bg)" },
-                        { label: "Panel",   bg: "var(--panel)" },
-                        { label: "Accent",  bg: previewAccent },
+                        { label: "BG", bg: "var(--bg)" },
+                        { label: "Panel", bg: "var(--panel)" },
+                        { label: "Accent", bg: previewAccent },
                         { label: "Success", bg: "var(--success)" },
-                        { label: "Danger",  bg: "var(--danger)" },
-                        { label: "Muted",   bg: "var(--muted)" },
+                        { label: "Danger", bg: "var(--danger)" },
+                        { label: "Muted", bg: "var(--muted)" },
                     ].map((chip) => (
                         <div key={chip.label} className="palette-chip" style={{ background: chip.bg }}>
                             <span className="palette-chip-label" style={{ color: chip.label === "BG" || chip.label === "Panel" ? "var(--muted)" : "#fff" }}>

@@ -26,12 +26,22 @@ export default function AuthProvider({ children }) {
     }, []);
 
     const login = async (email, password) => {
-        const loggedInUser = await authApi.login(email, password);
-        if (loggedInUser) {
-            setUser(loggedInUser);
-            return loggedInUser;
+        setLoading(true);
+
+        try {
+            await authApi.login(email, password);
+
+            const currentUser = await authApi.fetchMe();
+
+            if (!currentUser) {
+                throw new Error("Login failed");
+            }
+
+            setUser(currentUser);
+            return currentUser;
+        } finally {
+            setLoading(false);
         }
-        throw new Error("Login failed");
     };
 
     const forgotPassword = async (email) => {

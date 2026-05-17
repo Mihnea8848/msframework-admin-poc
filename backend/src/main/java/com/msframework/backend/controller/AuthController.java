@@ -1,11 +1,20 @@
 package com.msframework.backend.controller;
 
 import com.msframework.backend.dto.RegisterRequest;
+import com.msframework.backend.dto.UserInfoResponse;
 import com.msframework.backend.entity.Department;
 import com.msframework.backend.entity.User;
 import com.msframework.backend.repository.DepartmentRepository;
+import com.msframework.backend.repository.RoleRepository;
 import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AuditService;
+import com.msframework.backend.entity.Role;
+
+import java.util.stream.Collectors;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -38,6 +47,8 @@ public class AuthController {
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
 
+    private final RoleRepository roleRepository;
+
     private final Map<String, PasswordResetData> passwordResetTokens = new ConcurrentHashMap<>();
 
     private record PasswordResetData(String email, LocalDateTime expiresAt) {}
@@ -69,9 +80,26 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Principal principal) {
-        if (principal == null) return ResponseEntity.ok().body(null);
+        if (principal == null) {
+            return ResponseEntity.ok().body(null);
+        }
+
         return userRepository.findByEmail(principal.getName())
-                .map(user -> ResponseEntity.ok().body(user))
+                .map(user -> ResponseEntity.ok().body(
+                        new UserInfoResponse(
+                                user.getId(),
+                                user.getFullName(),
+                                user.getEmail(),
+                                user.getStatus(),
+                                user.getDepartment() != null ? user.getDepartment().getId() : null,
+                                user.getDepartment() != null ? user.getDepartment().getName() : null,
+                                user.getRoles()
+                                        .stream()
+                                        .map(Role::getName)
+                                        .collect(Collectors.toSet()),
+                                user.getAllPermissions()
+                        )
+                ))
                 .orElseGet(() -> ResponseEntity.ok().body(null));
     }
 
@@ -81,14 +109,17 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Email already exists");
         }
         Department dept = departmentRepository.findById(request.departmentId()).orElse(null);
+        Role memberRole = roleRepository.findByName("MEMBER")
+                .orElseThrow(() -> new RuntimeException("MEMBER role not found"));
+
         User user = User.builder()
                 .fullName(request.fullName())
                 .phone(request.phone())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .role("MEMBER")
                 .status("Active")
                 .department(dept)
+                .roles(new HashSet<>(Set.of(memberRole)))
                 .build();
         User saved = userRepository.save(user);
         auditService.log("user_created", "system", saved.getFullName() + " registered");
