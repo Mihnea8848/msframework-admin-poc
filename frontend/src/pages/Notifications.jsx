@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { get } from "../api/client.js";
-import { relTime, formatDateTime } from "../utils/format.js";
-import { AUDIT_FILTERS, auditMeta } from "../utils/auditTypes.js";
-import { getLastSeenAuditId, markAuditSeen } from "../utils/auditSeen.js";
+import { get } from "../api/client";
+import { relTime, formatDateTime } from "../utils/format";
+import { AUDIT_FILTERS, auditMeta } from "../utils/auditTypes";
+import { getLastSeenAuditId, markAuditSeen } from "../utils/auditSeen";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const POLL_MS = 15000;

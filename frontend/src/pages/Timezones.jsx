@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { get, put } from "../api/client.js";
-import { readStorage, writeStorage } from "../utils/storage.js";
+import { get, put } from "../api/client";
+import { readStorage, writeStorage } from "../utils/storage";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const IANA_ZONES = [

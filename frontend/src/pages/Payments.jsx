@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, CheckCircle } from "lucide-react";
-import { get } from "../api/client.js";
+import { get } from "../api/client";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 const SPENDING = [3200, 4800, 2900, 5100, 3800, 4200];

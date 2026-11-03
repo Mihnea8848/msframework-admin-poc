@@ -5,8 +5,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { del, get, patch, post } from "../api/client.js";
-import { formatDateTime } from "../utils/format.js";
+import { del, get, patch, post } from "../api/client";
+import { formatDateTime } from "../utils/format";
 import PageHeader from "../ui/PageHeader.jsx";
 import Toggle from "../ui/Toggle.jsx";
 

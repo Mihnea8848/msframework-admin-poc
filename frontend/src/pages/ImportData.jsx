@@ -2,8 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { post } from "../api/client.js";
-import { parseCSV } from "../utils/csv.js";
+import { post } from "../api/client";
+import { parseCSV } from "../utils/csv";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const MAX_ROWS = 1000;

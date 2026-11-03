@@ -2,6 +2,26 @@ import {
     Building2, Cable, Clock3, Download, Key, LogIn, LogOut, RefreshCw, Shield, ShieldAlert,
     UserCheck, UserMinus, UserPlus, UserCog, Webhook,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+/** Filter categories on the Notifications page ("All" is added by AUDIT_FILTERS). */
+export type AuditCategory =
+    | "Login" | "Users" | "Departments" | "Auth" | "Integrations" | "Data" | "Settings" | "Other";
+
+/** CSS modifier for the event pill (`.event-pill.<pill>`). */
+export type AuditPill = "login" | "security" | "created" | "changed" | "export";
+
+/** Severity used by the security alerts list. */
+export type AuditAlert = "fail" | "warn" | "info";
+
+export interface AuditTypeMeta {
+    label: string;
+    pill: AuditPill;
+    Icon: LucideIcon;
+    color: string;
+    category: AuditCategory;
+    alert?: AuditAlert;
+}
 
 /** Display metadata for every audit event type the backend emits. */
 export const AUDIT_TYPES = {
@@ -28,12 +48,21 @@ export const AUDIT_TYPES = {
     setting_changed: { label: "Setting", pill: "changed", Icon: Clock3, color: "#f0a832", category: "Settings" },
     export_generated: { label: "Export", pill: "export", Icon: Download, color: "#bb2eb8", category: "Data" },
     import_completed: { label: "Import", pill: "export", Icon: RefreshCw, color: "#bb2eb8", category: "Data" },
-};
+} as const satisfies Record<string, AuditTypeMeta>;
 
-export const DEFAULT_AUDIT_TYPE = { label: "Event", pill: "changed", Icon: Shield, color: "#6b7568", category: "Other" };
+/** Every event type the backend emits that has display metadata. */
+export type AuditEventType = keyof typeof AUDIT_TYPES;
 
-export function auditMeta(eventType) {
-    return AUDIT_TYPES[eventType] || DEFAULT_AUDIT_TYPE;
+export const DEFAULT_AUDIT_TYPE: AuditTypeMeta = { label: "Event", pill: "changed", Icon: Shield, color: "#6b7568", category: "Other" };
+
+function isKnownType(eventType: string): eventType is AuditEventType {
+    return Object.hasOwn(AUDIT_TYPES, eventType);
 }
 
-export const AUDIT_FILTERS = ["All", "Login", "Users", "Departments", "Auth", "Integrations", "Data", "Settings"];
+export function auditMeta(eventType: string | null | undefined): AuditTypeMeta {
+    return eventType && isKnownType(eventType) ? AUDIT_TYPES[eventType] : DEFAULT_AUDIT_TYPE;
+}
+
+export const AUDIT_FILTERS: readonly ("All" | Exclude<AuditCategory, "Other">)[] = [
+    "All", "Login", "Users", "Departments", "Auth", "Integrations", "Data", "Settings",
+];

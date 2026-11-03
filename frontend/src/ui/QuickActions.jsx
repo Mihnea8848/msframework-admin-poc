@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { PAGES } from "../routes/navigation.js";
+import { PAGES } from "../routes/navigation";
 
 export default function QuickActions({ open, onClose }) {
     const { user } = useAuth();

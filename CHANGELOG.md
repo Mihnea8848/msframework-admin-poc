@@ -22,6 +22,11 @@ section into a version (see `AGENTS.md`, Git workflow).
   through Testcontainers, or on any PostgreSQL given in `TEST_DB_URL`.
 - Contribution workflow: pull request template, changelog, repository
   rulesets for `main` and release tags.
+- Frontend unit tests with Vitest and Testing Library (validators, CSV,
+  formatting, permissions, storage and the API client), run by `npm test`
+  and in CI.
+- Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
+  for now) and `typescript-eslint` in the frontend lint.
 
 ### Fixed
 - Changing your own email no longer logs you out.
@@ -34,3 +39,8 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Account & security and Appearance are available to every role.
 - Backend builds on JDK 21 through 27 (Lombok 1.18.48).
 - `dev-run.sh` checks prerequisites instead of killing processes.
+- The frontend starts moving to TypeScript: the API client, auth helpers,
+  navigation and utilities are typed `.ts` modules, `api/types.ts` mirrors
+  the backend DTOs, and `npm run build` type checks first. Pages stay
+  JavaScript until they are restyled.
+- Removed the unused `bootstrap` dependency.

@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole, primaryRole, ROLES, STATUSES } from "../auth/permissions";
-import { del, get, post, put } from "../api/client.js";
-import { initialsOf } from "../utils/format.js";
-import { passwordProblem, validateEmail } from "../utils/validators.js";
+import { del, get, post, put } from "../api/client";
+import { initialsOf } from "../utils/format";
+import { passwordProblem, validateEmail } from "../utils/validators";
 import Modal, { ModalActions } from "../ui/Modal.jsx";
 import PageHeader from "../ui/PageHeader.jsx";
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Github, Chrome, Apple } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { primaryRole } from "../auth/permissions";
-import { post } from "../api/client.js";
+import { post } from "../api/client";
 import { validateEmail, validatePassword, passwordProblem } from "../utils/validators";
 import PageHeader from "../ui/PageHeader.jsx";
 import Toggle from "../ui/Toggle.jsx";

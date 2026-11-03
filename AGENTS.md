@@ -8,7 +8,7 @@ How to get MSFramework Admin running, how it is put together, and the rules for 
 |---|---|---|---|
 | Database | PostgreSQL 16 in Docker (`docker-compose.yml`, with a healthcheck) | host **5433** → container 5432 | `docker compose up -d --wait` |
 | Backend | Spring Boot 4.0.3 (Spring 7, Security 7, Hibernate 7), Maven wrapper (`backend/`) | **8080** | `./mvnw spring-boot:run` |
-| Frontend | React 19 + Vite 7 (`frontend/`) | **5173** | `npm run dev` |
+| Frontend | React 19 + Vite 7, TypeScript 5 (migrating from JS) (`frontend/`) | **5173** | `npm run dev` |
 
 The browser only talks to Vite. Vite proxies `/api/*` to `http://localhost:8080` (`frontend/vite.config.js`), so the session cookie stays same-origin and no CORS setup is needed. Always open `http://localhost:5173`, never `:8080` directly.
 
@@ -92,9 +92,22 @@ Additional rules, enforced in `UserService`:
 ## Tests and checks (same as CI)
 
 ```bash
-(cd frontend && npm ci && npm run lint && npm run build)
+(cd frontend && npm ci && npm run lint && npm test && npm run build)
 (cd backend && ./mvnw clean verify)
 ```
+
+Frontend scripts (in `frontend/`):
+
+| Script | What it does |
+|---|---|
+| `npm run lint` | ESLint (JS, JSX and TS), then Stylelint (`npm run lint:css`) |
+| `npm test` | Vitest unit tests, once (`npm run test:watch` re-runs on save) |
+| `npm run typecheck` | `tsc -b` on its own |
+| `npm run build` | `tsc -b` type check, then `vite build` |
+
+- Frontend unit tests are `*.test.ts` files next to the module they test (`src/utils/csv.test.ts`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
+- `eslint-plugin-jsx-a11y` reports its recommended rules as **warnings** for now, because the existing pages have legacy issues. Don't add new ones; a later cleanup PR turns them into errors.
+- Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) skips the legacy `src/styles/theme.css`, `src/index.css` and `src/App.css`. Any new CSS file is linted.
 
 - Backend tests (`backend/src/test`) are MockMvc integration tests that go through the real security filter chain, on **real PostgreSQL 16**.
   - By default Testcontainers starts a `postgres:16` container. This needs Docker access (see Prerequisites); the first run pulls the image.
@@ -145,19 +158,28 @@ backend/src/main/java/com/msframework/backend/
   dto/         records for every request/response. Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 frontend/src/
-  api/client.js        the only place that calls fetch(); throws ApiError with the server's message
-  auth/                AuthProvider (user, login, logout, sessionExpired), permissions.js helpers
-  routes/navigation.js every page with its path, icon and required permission (router, sidebar and palette use it)
+  api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
+  api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
+  auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
+  routes/navigation.ts every page with its path, icon and required permission (router, sidebar and palette use it)
   ui/                  Modal, Toggle, PageHeader, QuickActions
-  utils/               validators.js (mirrors backend rules), csv.js, format.js, auditTypes.js
+  utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts
+  test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
+  **/*.test.ts         unit tests, next to the module they cover
 ```
+
+TypeScript migration:
+- `tsconfig.json` is `strict` with `noUncheckedIndexedAccess`, and `allowJs` so `.ts` and `.jsx` files import each other. `checkJs` is off, so `.jsx` files are not type checked yet.
+- **Write new code in TypeScript** (`.ts`, or `.tsx` for components). Shared modules are already converted; each page and component converts to `.tsx` when it is restyled. `allowJs` is dropped once the last one is converted.
+- Import without a file extension (`"../api/client"`). Use `import type` for types (`verbatimModuleSyntax` is on).
+- Response types come from `api/types.ts`, for example `get<UserDto[]>("/api/users")`. The type parameter is not checked at run time, so update `types.ts` in the same PR as a DTO change.
 
 Conventions:
 - **Authorization lives in the backend.** Start each endpoint with `currentUserService.requirePermission(principal, Permission.X)`. Frontend checks only hide UI.
 - **Errors:** throw `ApiException.badRequest/forbidden/notFound/conflict("human message")`. The frontend shows `err.message` as-is, so write the message for an end user.
-- **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.js` so they get a label, icon and filter category.
-- **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start). Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.js`.
-- **New page:** add an entry to `routes/navigation.js` and a component to the `COMPONENTS` map in `routes/AppRoutes.jsx`.
-- **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.js` with relative `/api/...` paths. Don't call `fetch` directly.
-- **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.js`. Keep them in sync.
+- **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
+- **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
+- **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`) and a component to the `COMPONENTS` map in `routes/AppRoutes.jsx`.
+- **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly.
+- **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.ts`. Keep them in sync, and cover a changed rule in `utils/validators.test.ts`.
 - Pages labelled as demo or sample data (Payments, department performance and budget, MFA, SSO) are intentionally not backed by real services. Keep them clearly labelled until they are.

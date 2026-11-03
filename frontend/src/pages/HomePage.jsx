@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchUsers } from "../auth/auth";
-import { get } from "../api/client.js";
+import { get } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole } from "../auth/permissions";
 import {

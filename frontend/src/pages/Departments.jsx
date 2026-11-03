@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole } from "../auth/permissions";
 import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
-import { del, get, post, put } from "../api/client.js";
+import { del, get, post, put } from "../api/client";
 import Modal, { ModalActions } from "../ui/Modal.jsx";
 import PageHeader from "../ui/PageHeader.jsx";
 
