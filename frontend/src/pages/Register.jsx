@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
+import { get, post } from "../api/client.js";
 import {
     validateFullName,
     validateEmail,
-    validatePassword
+    validatePassword,
+    validatePhone,
 } from "../utils/validators.js";
 
 function RequirementMeter({ show, checks, labels }) {
@@ -52,11 +54,13 @@ export default function Register() {
         async function loadDepartments() {
             setDeptLoading(true);
             try {
-                const res = await fetch("/api/departments");
-                const data = await res.json();
+                const data = await get("/api/departments", { authRedirect: false });
                 if (alive) setDepartments(Array.isArray(data) ? data : []);
-            } catch {
-                if (alive) setDepartments([]);
+            } catch (err) {
+                if (alive) {
+                    setDepartments([]);
+                    setServerError(`Could not load departments: ${err.message}`);
+                }
             } finally {
                 if (alive) setDeptLoading(false);
             }
@@ -70,14 +74,7 @@ export default function Register() {
     const passVal = useMemo(() => validatePassword(password), [password]);
     const confirmOk = confirm.length > 0 && confirm === password;
 
-    const phoneVal = useMemo(() => {
-        const v = phone.trim();
-        const nonEmpty = v.length > 0;
-        const formatOk = /^[\d\s+]*$/.test(v);
-        const digitsOnly = v.replace(/\D/g, "");
-        const minDigits = digitsOnly.length >= 7;
-        return { ok: nonEmpty && formatOk && minDigits, checks: { nonEmpty, formatOk, minDigits } };
-    }, [phone]);
+    const phoneVal = useMemo(() => validatePhone(phone), [phone]);
 
     const canSubmit = nameVal.ok && phoneVal.ok && emailVal.ok && departmentId && passVal.ok && confirmOk;
 
@@ -87,25 +84,16 @@ export default function Register() {
         setLoading(true);
         setServerError("");
         try {
-            const res = await fetch("/api/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    fullName,
-                    phone: phone.replace(/\s/g, ""),
-                    email,
-                    departmentId: parseInt(departmentId, 10),
-                    password,
-                }),
-            });
-            if (!res.ok) {
-                const msg = await res.text();
-                setServerError(msg || "Registration failed.");
-                return;
-            }
-            navigate("/login");
-        } catch {
-            setServerError("Unable to contact the server.");
+            await post("/api/auth/register", {
+                fullName: fullName.trim(),
+                phone: phone.replace(/\s/g, ""),
+                email: email.trim(),
+                departmentId: Number(departmentId),
+                password,
+            }, { authRedirect: false });
+            navigate("/login", { state: { notice: "Account created. You can sign in now." } });
+        } catch (err) {
+            setServerError(err.message || "Registration failed.");
         } finally {
             setLoading(false);
         }
@@ -129,12 +117,12 @@ export default function Register() {
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Full name</label>
                                 <input className="auth-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Name Surname" onFocus={() => setFocusField("fullName")} onBlur={() => setFocusField(null)} required />
-                                <RequirementMeter show={focusField === "fullName" && !nameVal.ok} checks={nameVal.checks} labels={{ nonEmpty: "Must not be empty", twoWords: "First and last name required", capitalized: "Words must be capitalized" }} />
+                                <RequirementMeter show={focusField === "fullName" && !nameVal.ok} checks={nameVal.checks} labels={{ nonEmpty: "Must not be empty", twoWords: "First and last name required", capitalized: "Each name must start with a capital letter", maxLen: "At most 100 characters" }} />
                             </div>
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Telephone number</label>
                                 <input className="auth-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+40 7xx xxx xxx" onFocus={() => setFocusField("phone")} onBlur={() => setFocusField(null)} required />
-                                <RequirementMeter show={focusField === "phone" && !phoneVal.ok} checks={phoneVal.checks} labels={{ nonEmpty: "Must not be empty", formatOk: "Use only + and digits", minDigits: "Minimum 7 digits" }} />
+                                <RequirementMeter show={focusField === "phone" && !phoneVal.ok} checks={phoneVal.checks} labels={{ nonEmpty: "Must not be empty", formatOk: "Use digits, spaces, + ( ) or -", minDigits: "Minimum 7 digits" }} />
                             </div>
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Email address</label>
@@ -151,7 +139,7 @@ export default function Register() {
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Password</label>
                                 <input className="auth-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onFocus={() => setFocusField("password")} onBlur={() => setFocusField(null)} required />
-                                <RequirementMeter show={focusField === "password" && !passVal.ok} checks={passVal.checks} labels={{ minLen: "At least 8 characters", hasNumber: "Include a number", hasSymbol: "Include a symbol" }} />
+                                <RequirementMeter show={focusField === "password" && !passVal.ok} checks={passVal.checks} labels={{ minLen: "At least 8 characters", hasNumber: "Include a number", hasSymbol: "Include a symbol", maxLen: "At most 72 bytes" }} />
                             </div>
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Confirm password</label>
@@ -163,10 +151,12 @@ export default function Register() {
                             {!canSubmit && (fullName || email || phone) && (
                                 <div style={{ background: "rgba(255,106,95,0.12)", color: "var(--danger)", padding: "14px 24px", borderRadius: "12px", fontSize: "14px", fontWeight: "700", marginBottom: "24px", textAlign: "center", width: "100%", border: "1px solid rgba(255,106,95,0.3)" }}>
                                     {!nameVal.ok ? "⚠️ Please provide your full name (Name Surname)" :
-                                        !departmentId ? "⚠️ Please select a department" :
-                                            !phoneVal.ok ? "⚠️ Please provide a valid phone number (min 7 digits)" :
-                                                !confirmOk ? "⚠️ Passwords do not match" :
-                                                    "⚠️ Please fix the errors highlighted above"}
+                                        !phoneVal.ok ? "⚠️ Please provide a valid phone number (min 7 digits)" :
+                                            !emailVal.ok ? "⚠️ Please provide a valid email address" :
+                                                !departmentId ? "⚠️ Please select a department" :
+                                                    !passVal.ok ? "⚠️ Password needs 8+ characters, a number and a symbol" :
+                                                        !confirmOk ? "⚠️ Passwords do not match" :
+                                                            "⚠️ Please fix the errors highlighted above"}
                                 </div>
                             )}
                             <button

@@ -1,62 +1,27 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Home, ChevronRight, Menu, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-
-function UserAvatar({ user }) {
-    const initials = user?.fullName
-        ? user.fullName.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
-        : (user?.email?.[0] || "?").toUpperCase();
-    return (
-        <div className="topbar-avatar" aria-hidden="true">
-            {initials}
-        </div>
-    );
-}
+import { primaryRole } from "../auth/permissions";
+import { initialsOf } from "../utils/format.js";
 
 export default function Topbar({ onOpenSidebar }) {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const [forwardAvailable, setForwardAvailable] = useState(false);
-
-    const handleBack = () => {
-        navigate(-1);
-        setForwardAvailable(true);
-    };
-
-    const handleHome = () => {
-        navigate("/");
-        setForwardAvailable(false);
-    };
-
-    const handleForward = () => {
-        navigate(1);
-    };
 
     const handleLogout = async () => {
-        try {
-            await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-        } catch {
-            // ignore network errors — clear local state regardless
-        }
-        logout();
-        navigate("/login");
+        await logout();
+        navigate("/login", { replace: true });
     };
 
     const actions = [
-        { label: "Back",    icon: ChevronLeft,  onClick: handleBack,    disabled: false           },
-        { label: "Home",    icon: Home,          onClick: handleHome,    disabled: false           },
-        { label: "Forward", icon: ChevronRight,  onClick: handleForward, disabled: !forwardAvailable },
+        { label: "Back", icon: ChevronLeft, onClick: () => navigate(-1) },
+        { label: "Home", icon: Home, onClick: () => navigate("/") },
+        { label: "Forward", icon: ChevronRight, onClick: () => navigate(1) },
     ];
 
     return (
         <div className="topbar-shell">
-            <button
-                onClick={onOpenSidebar}
-                className="topbar-mobile-trigger"
-                type="button"
-                aria-label="Open sidebar"
-            >
+            <button onClick={onOpenSidebar} className="topbar-mobile-trigger" type="button" aria-label="Open sidebar">
                 <Menu size={18} />
             </button>
 
@@ -69,8 +34,8 @@ export default function Topbar({ onOpenSidebar }) {
                             type="button"
                             className="topbar-icon-button"
                             aria-label={action.label}
+                            title={action.label}
                             onClick={action.onClick}
-                            disabled={action.disabled}
                         >
                             <NavIcon size={18} />
                         </button>
@@ -83,14 +48,17 @@ export default function Topbar({ onOpenSidebar }) {
             <div className="topbar-user">
                 {user && (
                     <>
-                        <UserAvatar user={user} />
-                        <span className="topbar-user-name">{user.fullName || user.email}</span>
+                        <div className="topbar-avatar" aria-hidden="true">{initialsOf(user.fullName, user.email?.[0] || "?")}</div>
+                        <span className="topbar-user-name" title={`${user.email} · ${primaryRole(user)}`}>
+                            {user.fullName || user.email}
+                        </span>
                     </>
                 )}
                 <button
                     type="button"
                     className="topbar-icon-button topbar-user-settings"
                     aria-label="Account settings"
+                    title="Account settings"
                     onClick={() => navigate("/auth")}
                 >
                     <Settings size={16} />
@@ -99,6 +67,7 @@ export default function Topbar({ onOpenSidebar }) {
                     type="button"
                     className="topbar-icon-button topbar-user-logout"
                     aria-label="Log out"
+                    title="Log out"
                     onClick={handleLogout}
                 >
                     <LogOut size={16} />

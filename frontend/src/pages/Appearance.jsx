@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { readStorage, writeStorage } from "../utils/storage.js";
 
 const ACCENTS = [
     { label: "Lime", dark: "#d2ff72", light: "#7ab800" },
@@ -11,32 +12,32 @@ const ACCENTS = [
 ];
 
 function getStoredTheme() {
-    return localStorage.getItem("theme") || "dark";
+    return readStorage("theme", "dark");
 }
 
 function getStoredAccentLabel() {
-    return localStorage.getItem("accentLabel") || "Lime";
+    return readStorage("accentLabel", "Lime");
 }
 
 function getStoredDensity() {
-    return localStorage.getItem("density") || "comfortable";
+    return readStorage("density", "comfortable");
 }
 
 function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("theme", theme);
+    writeStorage("theme", theme);
 }
 
 function applyAccent(accent, theme) {
     const val = theme === "light" ? accent.light : accent.dark;
     document.documentElement.style.setProperty("--accent", val);
-    localStorage.setItem("accent", val);
-    localStorage.setItem("accentLabel", accent.label);
+    writeStorage("accent", val);
+    writeStorage("accentLabel", accent.label);
 }
 
 function applyDensity(density) {
     document.documentElement.dataset.density = density;
-    localStorage.setItem("density", density);
+    writeStorage("density", density);
 }
 
 export default function Appearance() {
@@ -61,10 +62,6 @@ export default function Appearance() {
         applyDensity(d);
     }
 
-    useEffect(() => {
-        applyDensity(density);
-    }, [density]);
-
     const currentAccent = ACCENTS.find((a) => a.label === accentLabel) || ACCENTS[0];
     const previewAccent = theme === "light" ? currentAccent.light : currentAccent.dark;
 
@@ -77,7 +74,7 @@ export default function Appearance() {
                         <h1>Appearance</h1>
                     </div>
                     <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Personalise the look and feel. Changes are saved automatically.
+                        Personalise the look and feel. Changes are saved automatically in this browser.
                     </p>
                 </div>
             </div>
