@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { primaryRole } from "../auth/permissions";
 import { post } from "../api/client";
 import { validateEmail, validatePassword, passwordProblem } from "../utils/validators";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 import Toggle from "../ui/Toggle.jsx";
 
 export default function AuthSettings() {

@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
 import { post } from "../api/client";
 import { parseCSV } from "../utils/csv";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const MAX_ROWS = 1000;
 

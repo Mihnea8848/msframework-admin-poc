@@ -5,7 +5,7 @@ import { get } from "../api/client";
 import { relTime, formatDateTime } from "../utils/format";
 import { AUDIT_FILTERS, auditMeta } from "../utils/auditTypes";
 import { getLastSeenAuditId, markAuditSeen } from "../utils/auditSeen";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const POLL_MS = 15000;
 const LIMIT = 200;

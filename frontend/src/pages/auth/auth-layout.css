@@ -1,0 +1,345 @@
+/*
+ * The sign-in pages (pages/auth/AuthLayout.tsx and the four pages that use it). From the Chevron
+ * concept: the form column on the left (minmax(440px, 46%)), the logo art on the right. The art
+ * is smaller than in the concept: the whole mark stays visible, about 60% of the viewport high.
+ */
+@layer pages {
+  .ms-auth {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(440px, 46%) 1fr;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--canvas);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Zero specificity, so the classes below can set their own margins */
+  :where(.ms-auth) :where(p, h1) {
+    margin: 0;
+  }
+
+  .ms-auth__main {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-4);
+    min-width: 0;
+    padding: var(--space-12) clamp(24px, 6vw, 104px);
+  }
+
+  .ms-auth__panel {
+    --cut: 12px;
+
+    width: 100%;
+    max-width: 420px;
+    padding: 34px 34px 30px;
+  }
+
+  /* Brand block */
+  .ms-auth__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: 26px;
+  }
+
+  .ms-auth__mark {
+    flex: none;
+    width: 46px;
+    height: 66px;
+    overflow: visible;
+  }
+
+  .ms-auth__mark-upper {
+    fill: var(--logo-upper);
+  }
+
+  .ms-auth__mark-lower {
+    fill: var(--logo-lower);
+  }
+
+  .ms-auth__word {
+    font-size: 21px;
+    font-weight: var(--weight-bold);
+    line-height: 1.1;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .ms-auth__sub {
+    margin-top: 5px;
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps-wide);
+    text-transform: uppercase;
+  }
+
+  /* Logo trace: on the first Login the mark is drawn as an outline, then filled */
+  .ms-auth__mark-fill {
+    transition: opacity 220ms ease;
+  }
+
+  .ms-auth__mark-trace path {
+    fill: none;
+    stroke: var(--trace);
+    stroke-width: 24;
+    stroke-linejoin: miter;
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+
+  .ms-auth__brand-text,
+  .ms-auth__content {
+    transition: opacity var(--duration-slow) ease;
+  }
+
+  .ms-auth__panel--tracing .ms-auth__mark-fill,
+  .ms-auth__panel--tracing .ms-auth__brand-text,
+  .ms-auth__panel--tracing .ms-auth__content {
+    opacity: 0;
+  }
+
+  .ms-auth__panel--tracing .ms-auth__mark-trace path {
+    opacity: 1;
+    animation: ms-auth-trace var(--duration-trace) var(--ease-trace) forwards;
+  }
+
+  .ms-auth__panel--traced .ms-auth__mark-trace path {
+    stroke-dashoffset: 0;
+    opacity: 0;
+    transition: opacity var(--duration-base) ease;
+  }
+
+  .ms-auth__panel--tracing .ms-auth__mark-trace path:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  @keyframes ms-auth-trace {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Between auth pages only the panel content moves: a short fade and a 6px rise */
+  .ms-auth__content--enter {
+    animation: ms-auth-enter var(--duration-base) var(--ease-standard) both;
+  }
+
+  @keyframes ms-auth-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Panel content shared by the pages */
+  .ms-auth__title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+  }
+
+  .ms-auth__lead {
+    margin: 6px 0 22px;
+    color: var(--text-secondary);
+  }
+
+  .ms-auth__form {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .ms-auth__form .ms-btn--primary {
+    margin-top: var(--space-1);
+  }
+
+  .ms-auth__alt {
+    margin-top: 18px;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .ms-auth__or {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 20px 0 14px;
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ms-auth__or::before,
+  .ms-auth__or::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+
+  /* Single sign-on: three disabled secondary buttons, marked as coming soon */
+  .ms-auth__sso {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .ms-auth__sso .ms-btn__face {
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.04em;
+  }
+
+  .ms-auth__sso-note {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: 10px;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-auth__foot {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 420px;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-auth__foot > svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+  }
+
+  /* The art: fixed to the viewport so it stays centred while a long form scrolls */
+  .ms-auth__art-slot {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .ms-auth__art {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: grid;
+    grid-template-columns: minmax(440px, 46%) 1fr;
+    align-items: center;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ms-auth__logo-art {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    width: auto;
+    height: 60vh;
+    max-width: 72%;
+  }
+
+  /* A much fainter grain over the whole screen keeps the flat canvas from looking empty */
+  .ms-auth__wash {
+    position: absolute;
+    inset: 0;
+    opacity: var(--grain-wash);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+    background-size: 180px 180px;
+    mix-blend-mode: var(--grain-blend);
+    pointer-events: none;
+  }
+
+  /* Phones: a centred, compact panel; the art is hidden */
+  @media (width <= 767px) {
+    .ms-auth {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ms-auth__art-slot,
+    .ms-auth__art {
+      display: none;
+    }
+
+    .ms-auth__main {
+      align-items: center;
+      gap: var(--space-3);
+      padding-block: var(--space-4);
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
+
+    .ms-auth__panel {
+      max-width: 400px;
+      padding: 22px 18px 20px;
+    }
+
+    .ms-auth__brand {
+      gap: var(--space-3);
+      margin-bottom: 18px;
+    }
+
+    .ms-auth__mark {
+      width: 36px;
+      height: 52px;
+    }
+
+    .ms-auth__word {
+      font-size: 19px;
+    }
+
+    .ms-auth__sub {
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+    }
+
+    .ms-auth__title {
+      font-size: 19px;
+    }
+
+    .ms-auth__lead {
+      margin: 4px 0 14px;
+      font-size: 13px;
+    }
+
+    .ms-auth__form {
+      gap: var(--space-3);
+    }
+
+    .ms-auth__or {
+      margin: 14px 0 10px;
+    }
+
+    .ms-auth__alt {
+      margin-top: 14px;
+    }
+
+    .ms-auth__foot {
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      font-size: 12px;
+      text-align: center;
+    }
+  }
+}

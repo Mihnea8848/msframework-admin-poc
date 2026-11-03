@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
 import { get, put } from "../api/client";
 import { readStorage, writeStorage } from "../utils/storage";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const IANA_ZONES = [
     { label: "UTC",               tz: "UTC"                    },

@@ -1,0 +1,42 @@
+/* Register: the live checklist under a field while it is focused and not valid yet */
+@layer pages {
+  .ms-auth-meter {
+    display: grid;
+    gap: var(--space-2);
+    padding: 10px var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+  }
+
+  .ms-auth-meter__bar {
+    height: 4px;
+    overflow: hidden;
+    background: var(--border-subtle);
+  }
+
+  .ms-auth-meter__fill {
+    height: 100%;
+    transition: width var(--duration-slow) var(--ease-standard);
+  }
+
+  .ms-auth-meter__fill--danger {
+    background: var(--status-danger-fg);
+  }
+
+  .ms-auth-meter__fill--warn {
+    background: var(--status-warn-fg);
+  }
+
+  .ms-auth-meter__fill--ok {
+    background: var(--status-ok-fg);
+  }
+
+  .ms-auth-meter__list {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}

@@ -6,11 +6,12 @@ export function initialsOf(name: string | null | undefined, fallback: unknown = 
     return parts.slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
-export function relTime(dateStr: DateInput): string {
+/** "just now", "4m ago", "3h ago", "2d ago", then the date. `now` defaults to the current time. */
+export function relTime(dateStr: DateInput, now: number = Date.now()): string {
     if (!dateStr) return "";
     const time = new Date(dateStr).getTime();
     if (Number.isNaN(time)) return "";
-    const diff = Date.now() - time;
+    const diff = now - time;
     const m = Math.floor(diff / 60000);
     if (m < 1) return "just now";
     if (m < 60) return `${m}m ago`;

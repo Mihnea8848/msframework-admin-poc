@@ -1,4 +1,4 @@
-# MSFramework Dashboard
+| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters) |# MSFramework Dashboard
 
 ![CI Pipeline](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
@@ -17,8 +17,9 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Page | Route | Description |
 |---|---|---|
+| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left, the grain-and-gradient logo on the right (hidden on phones). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
 | Home | `/` | Overview grid of every section your role can open, with live counts |
-| Dashboard | `/dashboard` | KPI cards (users, active, admins, departments) + live recent-activity feed from the audit log |
+| Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
 | Departments | `/departments` | Create, rename, recolor and delete departments with live member counts |
 | Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar, category filters) |
@@ -39,7 +40,10 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 - Clear error messages from the server everywhere (no silent failures)
 - Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
 - Chevron visual identity (Multimedia Entertainment Hub): Manrope and Montserrat, self-hosted; clipped-corner buttons; colours from design tokens, checked for WCAG AA contrast in tests
-- Responsive layout with sidebar collapse on mobile
+- App shell mounted once (the sidebar, top bar and unread-notifications poll survive navigation): full sidebar from 1024 px, an icon rail from 768 px, and on phones a bottom tab bar (the first four pages your role may open) with a More sheet for the rest; no horizontal scrolling at 360 px
+- Every page is a lazy-loaded chunk, prefetched on hover or focus and when the browser is idle; a bundle size budget fails the build when it grows
+- Short fade-and-rise page transitions (View Transitions API where supported), all off with reduced motion; a logo-trace splash while the session loads
+- Skip link to the main content, visible focus everywhere, 44 px touch targets on phones
 
 ### Backend (REST API)
 
@@ -123,16 +127,18 @@ msframework-admin-poc/
 ├── scripts/dev-run.sh          # One-command dev environment startup
 ├── docker-compose.yml          # PostgreSQL 16 on port 5433
 ├── frontend/
+│   ├── scripts/check-bundle.mjs  # bundle size budget, run by npm run build
 │   └── src/
+│       ├── app/                # App, data router (router.tsx, routes.tsx), guards, lazy page loaders, splash, transitions
 │       ├── api/client.ts       # fetch wrapper: JSON, error messages, 401 handling
 │       ├── api/types.ts        # TypeScript types for the backend's JSON responses
 │       ├── auth/               # AuthProvider, auth API calls, permission helpers
-│       ├── layout/             # DashboardLayout, Sidebar, Topbar
-│       ├── pages/              # 15 page components + auth pages
-│       ├── routes/             # navigation.ts (single page/permission registry), AppRoutes, Guards
+│       ├── pages/              # 15 page components; auth/ (AuthLayout + sign-in pages), dashboard/
+│       ├── routes/             # navigation.ts (single page/permission registry, bottom bar order)
+│       ├── shell/              # AppShell, Sidebar (and rail), Topbar, BottomNav, MoreSheet
 │       ├── styles/             # index.css entry: tokens/ (colours, seals, scale, motion), base/, legacy/
 │       ├── theme/              # appearance preferences (theme, accent, density, motion)
-│       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, brand/Logo
+│       ├── ui/                 # Button, Alert, PageHeader, Modal, Toggle, QuickActions, brand/Logo and LogoArt
 │       ├── test/setup.ts       # Vitest setup (unit tests live next to their modules as *.test.ts)
 │       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/

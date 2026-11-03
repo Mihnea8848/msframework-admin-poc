@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, primaryRole } from "../auth/permissions";
 import { get, post } from "../api/client";
 import { downloadText, toCSV } from "../utils/csv";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const ENTITY_OPTIONS = {
     users: {

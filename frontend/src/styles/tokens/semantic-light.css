@@ -49,4 +49,7 @@
   --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 14%, transparent);
   --avatar-text: var(--cyan-900);
   --gear: var(--grey-250);
+  --grain-blend: soft-light;
+  --grain-strength: 0.7;
+  --grain-wash: 0.12;
 }
