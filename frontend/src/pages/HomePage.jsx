@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchUsers } from "../auth/auth";
+import { get } from "../api/client.js";
 import { useAuth } from "../auth/AuthProvider";
-import { hasPermission } from "../auth/permissions";
+import { hasPermission, hasRole } from "../auth/permissions";
 import {
     ArrowRight,
     Bell,
@@ -14,15 +15,6 @@ import {
     Upload,
     UsersRound,
 } from "lucide-react";
-
-function getRoleNames(user) {
-    if (!user?.roles?.length) return [];
-
-    return user.roles.map((role) => {
-        if (typeof role === "string") return role;
-        return role.name;
-    });
-}
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -83,15 +75,7 @@ export default function HomePage() {
             setLoadingDepartments(true);
 
             try {
-                const res = await fetch("/api/departments", {
-                    credentials: "include",
-                });
-
-                if (!res.ok) {
-                    throw new Error("Failed to load departments");
-                }
-
-                const data = await res.json();
+                const data = await get("/api/departments");
 
                 if (alive) {
                     setDepartments(Array.isArray(data) ? data : []);
@@ -122,7 +106,7 @@ export default function HomePage() {
         : 0;
 
     const admins = canReadUsers
-        ? users.filter((u) => getRoleNames(u).includes("ADMIN")).length
+        ? users.filter((u) => hasRole(u, "ADMIN")).length
         : 0;
 
     const tiles = [
@@ -130,7 +114,9 @@ export default function HomePage() {
             icon: UsersRound,
             iconColor: "#28beef",
             title: "User Management",
-            desc: "View, invite, and manage all members in your organisation.",
+            desc: hasPermission(user, "USER_UPDATE")
+                ? "View and manage the members of your organisation."
+                : "Browse everyone in your organisation and their roles.",
             metric: `${users.length} total · ${activeUsers} active`,
             path: "/users",
             permission: "USER_READ",
@@ -140,7 +126,7 @@ export default function HomePage() {
             icon: Building2,
             iconColor: "#bb2eb8",
             title: "Departments",
-            desc: "Create and organise departments, track budgets and performance.",
+            desc: "Create and organise departments and see who belongs to each.",
             metric: `${departments.length} department${departments.length !== 1 ? "s" : ""}`,
             path: "/departments",
             permission: "DEPARTMENT_READ",
@@ -160,8 +146,8 @@ export default function HomePage() {
             icon: Database,
             iconColor: "#2dd881",
             title: "Database",
-            desc: "Browse live and mock databases — Users, Departments, Finance.",
-            metric: "3 databases",
+            desc: "Browse the live schema and row counts of every application table.",
+            metric: "Live schema",
             path: "/database",
             permission: "DATABASE_READ",
             allowed: canReadDatabase,
@@ -182,8 +168,8 @@ export default function HomePage() {
             icon: CreditCard,
             iconColor: "#d2ff72",
             title: "Payments",
-            desc: "View balance, send payments, and review transaction history.",
-            metric: "$24,860.00 balance",
+            desc: "Proof-of-concept payments view with sample transactions.",
+            metric: "Demo data",
             path: "/payments",
             permission: "PAYMENTS_READ",
             allowed: canReadPayments,
@@ -192,7 +178,7 @@ export default function HomePage() {
             icon: Upload,
             iconColor: "#6c32db",
             title: "Import Data",
-            desc: "Upload CSV files to import users, departments, and more.",
+            desc: "Upload CSV files to create users and departments in bulk.",
             metric: "CSV supported",
             path: "/import",
             permission: "IMPORT_DATA",

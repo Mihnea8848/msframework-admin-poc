@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, CheckCircle } from "lucide-react";
+import { get } from "../api/client.js";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 const SPENDING = [3200, 4800, 2900, 5100, 3800, 4200];
@@ -23,20 +24,28 @@ export default function Payments() {
     const [form, setForm] = useState({ amount: "", dept: "", memo: "" });
     const [sent, setSent] = useState(false);
     const [sending, setSending] = useState(false);
+    const [formError, setFormError] = useState(null);
+    const timer = useRef(null);
 
     useEffect(() => {
-        fetch("/api/departments").then((r) => r.json()).then(setDepartments).catch(() => {});
+        get("/api/departments").then((d) => setDepartments(Array.isArray(d) ? d : [])).catch(() => setDepartments([]));
+        return () => clearTimeout(timer.current);
     }, []);
 
     async function handleSend(e) {
         e.preventDefault();
-        if (!form.amount || !form.dept) return;
+        setFormError(null);
+        const amount = Number(form.amount);
+        if (!Number.isFinite(amount) || amount <= 0) { setFormError("Enter an amount greater than 0."); return; }
+        if (!form.dept) { setFormError("Choose a recipient department."); return; }
         setSending(true);
-        await new Promise((r) => setTimeout(r, 800));
+        await new Promise((r) => setTimeout(r, 600));
         setSending(false);
-        setSent(true);
+        const dept = departments.find((d) => String(d.id) === String(form.dept));
+        setSent(`Simulated payment of $${amount.toFixed(2)} to ${dept?.name ?? "department"} — no money was moved.`);
         setForm({ amount: "", dept: "", memo: "" });
-        setTimeout(() => setSent(false), 4000);
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => setSent(false), 5000);
     }
 
     const STATUS_PILL = {
@@ -54,7 +63,7 @@ export default function Payments() {
                         <h1>Payments</h1>
                     </div>
                     <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Proof-of-concept payments dashboard.
+                        Proof-of-concept payments dashboard. Balances and transactions are sample data; no payment provider is connected.
                     </p>
                 </div>
             </div>
@@ -121,7 +130,7 @@ export default function Payments() {
 
                 {/* Quick pay */}
                 <form className="payment-form-card" onSubmit={handleSend}>
-                    <div className="payment-form-title">Quick Pay</div>
+                    <div className="payment-form-title">Quick Pay <span className="badge-soon">Demo</span></div>
                     <div className="form-field">
                         <label className="form-label">Amount (USD)</label>
                         <input
@@ -157,13 +166,14 @@ export default function Payments() {
                             onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
                         />
                     </div>
+                    {formError && <div className="inline-error">{formError}</div>}
                     {sent && (
                         <div className="inline-success" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <CheckCircle size={14} /> Payment sent successfully!
+                            <CheckCircle size={14} /> {sent}
                         </div>
                     )}
                     <button type="submit" className="btn-primary" disabled={sending}>
-                        {sending ? "Sending…" : "Send Payment"}
+                        {sending ? "Sending…" : "Simulate Payment"}
                     </button>
                 </form>
             </div>

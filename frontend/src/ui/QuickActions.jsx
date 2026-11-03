@@ -1,58 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import {
-    Bell, BookText, Box, BriefcaseBusiness, Building2, Cable,
-    Clock3, CreditCard, Database, Download, Home, Palette,
-    Search, Shield, Upload, UsersRound,
-} from "lucide-react";
-
-const ALL_ROUTES = [
-    { label: "Home", path: "/", icon: Home, group: "General" },
-    { label: "Dashboard", path: "/dashboard", icon: Box, group: "General" },
-    { label: "Notifications", path: "/notifications", icon: Bell, group: "General" },
-    { label: "Appearance", path: "/appearance", icon: Palette, group: "General" },
-    { label: "Database", path: "/database", icon: Database, group: "General" },
-    { label: "Connections", path: "/connections", icon: Cable, group: "General" },
-    { label: "Timezones", path: "/timezones", icon: Clock3, group: "General" },
-    { label: "Documentation", path: "/docs", icon: BookText, group: "General" },
-    { label: "Authentication", path: "/auth", icon: BriefcaseBusiness, group: "Ventures" },
-    { label: "User Management", path: "/users", icon: UsersRound, group: "Ventures" },
-    { label: "Departments", path: "/departments", icon: Building2, group: "Ventures" },
-    { label: "Security", path: "/security", icon: Shield, group: "Ventures" },
-    { label: "Payments", path: "/payments", icon: CreditCard, group: "Ventures" },
-    { label: "Import Data", path: "/import", icon: Upload, group: "Ventures" },
-    { label: "Export Data", path: "/export", icon: Download, group: "Ventures" },
-];
+import { Search } from "lucide-react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission } from "../auth/permissions";
+import { PAGES } from "../routes/navigation.js";
 
 export default function QuickActions({ open, onClose }) {
+    const { user } = useAuth();
     const [query, setQuery] = useState("");
     const [focusedIdx, setFocusedIdx] = useState(0);
     const inputRef = useRef(null);
     const navigate = useNavigate();
 
-    const filtered = query.trim()
-        ? ALL_ROUTES.filter((r) =>
-            r.label.toLowerCase().includes(query.toLowerCase()) ||
-            r.path.toLowerCase().includes(query.toLowerCase())
-        )
-        : ALL_ROUTES;
+    const allowed = useMemo(() => PAGES.filter((p) => hasPermission(user, p.permission)), [user]);
+
+    const q = query.trim().toLowerCase();
+    const filtered = q
+        ? allowed.filter((r) => r.label.toLowerCase().includes(q) || r.path.toLowerCase().includes(q))
+        : allowed;
 
     useEffect(() => {
-        if (open) {
-            setQuery("");
-            setFocusedIdx(0);
-            setTimeout(() => inputRef.current?.focus(), 30);
-        }
+        if (!open) return undefined;
+        const id = setTimeout(() => inputRef.current?.focus(), 30);
+        return () => clearTimeout(id);
     }, [open]);
 
-    useEffect(() => {
+    function close() {
+        setQuery("");
         setFocusedIdx(0);
-    }, [query]);
+        onClose();
+    }
 
     function go(path) {
         navigate(path);
-        onClose();
+        close();
     }
 
     function handleKey(e) {
@@ -65,7 +47,7 @@ export default function QuickActions({ open, onClose }) {
         } else if (e.key === "Enter" && filtered[focusedIdx]) {
             go(filtered[focusedIdx].path);
         } else if (e.key === "Escape") {
-            onClose();
+            close();
         }
     }
 
@@ -79,8 +61,8 @@ export default function QuickActions({ open, onClose }) {
     let runningIdx = 0;
 
     return createPortal(
-        <div className="qa-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="qa-modal" onKeyDown={handleKey}>
+        <div className="qa-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
+            <div className="qa-modal" onKeyDown={handleKey} role="dialog" aria-label="Quick actions">
                 <div className="qa-search-row">
                     <Search size={16} style={{ color: "var(--muted)", flexShrink: 0 }} />
                     <input
@@ -88,12 +70,13 @@ export default function QuickActions({ open, onClose }) {
                         className="qa-search-input"
                         placeholder="Search pages…"
                         value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => { setQuery(e.target.value); setFocusedIdx(0); }}
                     />
                     {query && (
                         <button
+                            type="button"
                             style={{ fontSize: 11, color: "var(--muted)", padding: "2px 6px", border: "1px solid var(--line)", borderRadius: 6, background: "var(--panel-muted)", cursor: "pointer" }}
-                            onClick={() => setQuery("")}
+                            onClick={() => { setQuery(""); setFocusedIdx(0); }}
                         >
                             Clear
                         </button>

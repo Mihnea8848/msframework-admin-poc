@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission } from "../auth/permissions";
+import { get, put } from "../api/client.js";
+import { readStorage, writeStorage } from "../utils/storage.js";
+import PageHeader from "../ui/PageHeader.jsx";
 
 const IANA_ZONES = [
     { label: "UTC",               tz: "UTC"                    },
@@ -34,14 +39,18 @@ const IANA_ZONES = [
     { label: "Lagos",             tz: "Africa/Lagos"           },
 ];
 
-const DEFAULTS = [
-    { id: "utc",     label: "UTC",      tz: "UTC",                 removable: false },
-    { id: "ny",      label: "New York", tz: "America/New_York",    removable: false },
-    { id: "london",  label: "London",   tz: "Europe/London",       removable: false },
-    { id: "paris",   label: "Paris",    tz: "Europe/Paris",        removable: false },
-    { id: "tokyo",   label: "Tokyo",    tz: "Asia/Tokyo",          removable: false },
-    { id: "sydney",  label: "Sydney",   tz: "Australia/Sydney",    removable: false },
+const DEFAULT_CLOCKS = [
+    { label: "UTC", tz: "UTC" },
+    { label: "New York", tz: "America/New_York" },
+    { label: "London", tz: "Europe/London" },
+    { label: "Paris", tz: "Europe/Paris" },
+    { label: "Tokyo", tz: "Asia/Tokyo" },
+    { label: "Sydney", tz: "Australia/Sydney" },
 ];
+
+function withIds(clocks) {
+    return clocks.map((c, i) => ({ ...c, id: `${c.tz}-${c.label}-${i}` }));
+}
 
 function getOffset(tz) {
     try {
@@ -86,7 +95,7 @@ function getBizStatus(tz, now) {
 const BIZ_COLOR = { open: "var(--success)", edge: "#f0a832", closed: "var(--muted)" };
 const BIZ_TITLE = { open: "Business hours", edge: "Near opening/closing", closed: "Outside business hours" };
 
-function ClockCard({ entry, onRemove, now }) {
+function ClockCard({ entry, onRemove, now, removable }) {
     const biz = getBizStatus(entry.tz, now);
     return (
         <div className="timezone-card">
@@ -98,7 +107,7 @@ function ClockCard({ entry, onRemove, now }) {
                         style={{ background: BIZ_COLOR[biz] }}
                         title={BIZ_TITLE[biz]}
                     />
-                    {entry.removable && (
+                    {removable && (
                         <button
                             type="button"
                             onClick={() => onRemove(entry.id)}
@@ -120,12 +129,18 @@ function ClockCard({ entry, onRemove, now }) {
 }
 
 export default function Timezones() {
-    const [now, setNow]           = useState(new Date());
-    const [clocks, setClocks]     = useState(DEFAULTS);
-    const [orgTz, setOrgTz]       = useState(() => localStorage.getItem("orgTimezone") || "UTC");
-    const [savedMsg, setSavedMsg] = useState(false);
+    const { user } = useAuth();
+    const canEdit = hasPermission(user, "TIMEZONES_UPDATE");
+
+    const [now, setNow] = useState(() => new Date());
+    const [clocks, setClocks] = useState(() => withIds(DEFAULT_CLOCKS));
+    const [orgTz, setOrgTz] = useState(() => readStorage("orgTimezone", "UTC"));
+    const [savedTz, setSavedTz] = useState(null);
+    const [message, setMessage] = useState(null);
+    const [error, setError] = useState(null);
+    const [busy, setBusy] = useState(false);
     const [addLabel, setAddLabel] = useState("");
-    const [addTz, setAddTz]       = useState("UTC");
+    const [addTz, setAddTz] = useState("UTC");
 
     useEffect(() => {
         const id = setInterval(() => setNow(new Date()), 1000);
@@ -133,117 +148,159 @@ export default function Timezones() {
     }, []);
 
     useEffect(() => {
-        fetch("/api/settings/orgTimezone", { credentials: "include" })
-            .then((r) => { if (r.ok) return r.json(); })
-            .then((data) => { if (data?.value) { setOrgTz(data.value); localStorage.setItem("orgTimezone", data.value); } })
-            .catch(() => {});
+        let alive = true;
+        Promise.all([get("/api/settings/orgTimezone"), get("/api/settings/worldClocks")])
+            .then(([tzSetting, clockSetting]) => {
+                if (!alive) return;
+                if (tzSetting?.value) {
+                    setOrgTz(tzSetting.value);
+                    setSavedTz(tzSetting.value);
+                    writeStorage("orgTimezone", tzSetting.value);
+                }
+                if (clockSetting?.value) {
+                    try {
+                        const parsed = JSON.parse(clockSetting.value);
+                        if (Array.isArray(parsed)) setClocks(withIds(parsed));
+                    } catch {
+                        // keep defaults
+                    }
+                }
+            })
+            .catch((err) => { if (alive) setError(err.message); });
+        return () => { alive = false; };
     }, []);
 
-    function saveOrgTz() {
-        localStorage.setItem("orgTimezone", orgTz);
-        fetch("/api/settings/orgTimezone", {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ value: orgTz }),
-        }).catch(() => {});
-        setSavedMsg(true);
-        setTimeout(() => setSavedMsg(false), 2000);
+    function flash(text) {
+        setMessage(text);
+        setTimeout(() => setMessage(null), 2500);
     }
 
-    function addClock(e) {
+    async function saveClocks(next) {
+        setBusy(true);
+        setError(null);
+        try {
+            const payload = next.map(({ label, tz }) => ({ label, tz }));
+            await put("/api/settings/worldClocks", { value: JSON.stringify(payload) });
+            setClocks(withIds(payload));
+            flash("World clocks saved for everyone in the organisation.");
+            return true;
+        } catch (err) {
+            setError(err.message);
+            return false;
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function saveOrgTz() {
+        setBusy(true);
+        setError(null);
+        try {
+            const saved = await put("/api/settings/orgTimezone", { value: orgTz });
+            setSavedTz(saved.value);
+            writeStorage("orgTimezone", saved.value);
+            flash(`Default timezone set to ${saved.value}.`);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function addClock(e) {
         e.preventDefault();
-        if (!addLabel.trim()) return;
-        setClocks((prev) => [
-            ...prev,
-            { id: `custom-${Date.now()}`, label: addLabel.trim(), tz: addTz, removable: true },
-        ]);
-        setAddLabel("");
-        setAddTz("UTC");
+        const label = addLabel.trim();
+        if (!label) return;
+        if (await saveClocks([...clocks, { label, tz: addTz }])) {
+            setAddLabel("");
+            setAddTz("UTC");
+        }
     }
 
     function removeClock(id) {
-        setClocks((prev) => prev.filter((c) => c.id !== id));
+        saveClocks(clocks.filter((c) => c.id !== id));
     }
 
     return (
         <section className="workspace">
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">General / Timezones</div>
-                    <div className="workspace-title-row">
-                        <h1>Timezones</h1>
-                    </div>
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Monitor local times across your organization's locations.
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                breadcrumb="General / Timezones"
+                title="Timezones"
+                subtitle="Monitor local times across your organization's locations."
+            />
 
-            {/* Clock grid */}
+            {error && <div className="inline-error page-banner" role="alert">{error}</div>}
+            {message && <div className="inline-success page-banner" role="status">{message}</div>}
+
             <div className="timezone-grid">
                 {clocks.map((entry) => (
-                    <ClockCard key={entry.id} entry={entry} onRemove={removeClock} now={now} />
+                    <ClockCard key={entry.id} entry={entry} onRemove={removeClock} now={now} removable={canEdit && !busy} />
                 ))}
+                {clocks.length === 0 && <div className="empty-state">No clocks configured.</div>}
             </div>
 
-            {/* Add timezone */}
-            <div style={{ marginTop: 28 }}>
-                <div className="workspace-section-title" style={{ marginBottom: 12 }}>Add a Timezone</div>
-                <form onSubmit={addClock} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                    <input
-                        className="form-input"
-                        style={{ width: 180 }}
-                        placeholder="City label (e.g. Dubai)"
-                        value={addLabel}
-                        onChange={(e) => setAddLabel(e.target.value)}
-                    />
-                    <select
-                        className="form-select"
-                        style={{ width: 220 }}
-                        value={addTz}
-                        onChange={(e) => setAddTz(e.target.value)}
-                    >
-                        {IANA_ZONES.map((z) => (
-                            <option key={z.tz} value={z.tz}>{z.label} — {z.tz}</option>
-                        ))}
-                    </select>
-                    <button
-                        type="submit"
-                        className="btn-primary"
-                        style={{ display: "flex", alignItems: "center", gap: 6 }}
-                        disabled={!addLabel.trim()}
-                    >
-                        <Plus size={14} />
-                        Add
-                    </button>
-                </form>
-            </div>
+            {canEdit && (
+                <div style={{ marginTop: 28 }}>
+                    <div className="workspace-section-title" style={{ marginBottom: 12 }}>Add a Timezone</div>
+                    <form onSubmit={addClock} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                        <input
+                            className="form-input"
+                            style={{ width: 180 }}
+                            placeholder="City label (e.g. Dubai)"
+                            value={addLabel}
+                            maxLength={40}
+                            onChange={(e) => setAddLabel(e.target.value)}
+                        />
+                        <select className="form-select" style={{ width: 240 }} value={addTz} onChange={(e) => setAddTz(e.target.value)}>
+                            {IANA_ZONES.map((z) => (
+                                <option key={z.tz} value={z.tz}>{z.label} — {z.tz}</option>
+                            ))}
+                        </select>
+                        <button
+                            type="submit"
+                            className="btn-primary"
+                            style={{ display: "flex", alignItems: "center", gap: 6 }}
+                            disabled={!addLabel.trim() || busy || clocks.length >= 24}
+                        >
+                            <Plus size={14} />
+                            Add
+                        </button>
+                        <button type="button" className="btn-secondary" disabled={busy} onClick={() => saveClocks(DEFAULT_CLOCKS)}>
+                            Reset to defaults
+                        </button>
+                    </form>
+                </div>
+            )}
 
-            {/* Organization default */}
             <div style={{ marginTop: 28 }}>
                 <div className="workspace-section-title" style={{ marginBottom: 12 }}>Organization Default</div>
                 <div className="settings-card" style={{ maxWidth: 480 }}>
                     <div>
                         <div className="settings-card-title">Default Timezone</div>
-                        <div className="settings-card-sub">Used when displaying timestamps across the platform.</div>
+                        <div className="settings-card-sub">
+                            The organisation&apos;s reference timezone{savedTz ? ` (currently ${savedTz})` : " (not set yet)"}.
+                        </div>
                     </div>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="form-select"
-                            style={{ flex: 1, minWidth: 200 }}
-                            value={orgTz}
-                            onChange={(e) => setOrgTz(e.target.value)}
-                        >
-                            {IANA_ZONES.map((z) => (
-                                <option key={z.tz} value={z.tz}>{z.label} — {z.tz}</option>
-                            ))}
-                        </select>
-                        <button type="button" className="btn-primary" style={{ fontSize: 13, padding: "8px 18px" }} onClick={saveOrgTz}>
-                            Save
-                        </button>
-                    </div>
-                    {savedMsg && <div className="inline-success">Default timezone saved.</div>}
+                    {canEdit ? (
+                        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                            <select
+                                className="form-select"
+                                style={{ flex: 1, minWidth: 200 }}
+                                value={orgTz}
+                                onChange={(e) => setOrgTz(e.target.value)}
+                            >
+                                {!IANA_ZONES.some((z) => z.tz === orgTz) && <option value={orgTz}>{orgTz}</option>}
+                                {IANA_ZONES.map((z) => (
+                                    <option key={z.tz} value={z.tz}>{z.label} — {z.tz}</option>
+                                ))}
+                            </select>
+                            <button type="button" className="btn-primary" style={{ fontSize: 13, padding: "8px 18px" }} onClick={saveOrgTz} disabled={busy || orgTz === savedTz}>
+                                Save
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="muted-note">Only administrators can change the organisation settings.</div>
+                    )}
                 </div>
             </div>
         </section>

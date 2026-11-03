@@ -21,12 +21,11 @@ export default function ForgotPassword() {
         setError(null);
 
         try {
-            await forgotPassword(email);
+            await forgotPassword(email.trim());
 
-            setMessage("If an account exists with this email, a password reset link was sent.");
+            setMessage("If an active account exists for this email, a reset link valid for 30 minutes has been issued. (Development setup: the link is printed in the backend console.)");
         } catch (err) {
-            console.error(err);
-            setError("Could not send password reset email. Please try again.");
+            setError(err.message || "Could not request a password reset. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
-import { hasPermission } from "../auth/permissions";
+import { hasPermission, hasRole } from "../auth/permissions";
 import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { del, get, post, put } from "../api/client.js";
+import Modal, { ModalActions } from "../ui/Modal.jsx";
+import PageHeader from "../ui/PageHeader.jsx";
 
 // Curated swatches the user can pick from — each maps to a CSS class + a preview hex
 const COLOR_SWATCHES = [
@@ -59,46 +62,16 @@ function Sparkline({ seed, isUp }) {
     );
 }
 
-// ── Modal overlay — always on top ──────────────────────────────────────────────
-function ModalOverlay({ children }) {
-    return (
-        <div style={{
-            position: "fixed", inset: 0,
-            zIndex: 9999,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(0,0,0,0.78)",
-            backdropFilter: "blur(10px)",
-        }}>
-            {children}
-        </div>
-    );
-}
-
-function getRoleNames(user) {
-    if (!user?.roles?.length) return [];
-
-    return user.roles.map((role) => {
-        if (typeof role === "string") return role;
-        return role.name;
-    });
-}
-
 export default function Departments() {
     const { user, loading: authLoading } = useAuth();
 
-    const currentUserRoles = getRoleNames(user);
-    const currentUserIsAdmin = currentUserRoles.includes("ADMIN");
-    const currentUserIsManager = currentUserRoles.includes("MANAGER");
+    const currentUserIsAdmin = hasRole(user, "ADMIN");
     const currentUserDepartmentId = user?.departmentId;
 
-    const canCreateDepartments =
-        currentUserIsAdmin && hasPermission(user, "DEPARTMENT_CREATE");
+    const canCreateDepartments = hasPermission(user, "DEPARTMENT_CREATE");
+    const canEditDepartments = hasPermission(user, "DEPARTMENT_UPDATE");
+    const canDeleteDepartments = hasPermission(user, "DEPARTMENT_DELETE");
 
-    const canEditDepartments =
-        hasPermission(user, "DEPARTMENT_UPDATE");
-
-    const canDeleteDepartments =
-        currentUserIsAdmin && hasPermission(user, "DEPARTMENT_DELETE");
     const [departments, setDepartments] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -107,53 +80,96 @@ export default function Departments() {
     const [nameInput, setNameInput] = useState("");
     const [colorInput, setColorInput] = useState(DEFAULT_COLOR);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
+    const [formError, setFormError] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const [notice, setNotice] = useState(null);
 
-    useEffect(() => { fetchDepartments(); }, []);
-
-    const fetchDepartments = async () => {
+    const fetchDepartments = useCallback(async () => {
         try {
-            const res = await fetch("/api/departments");
-            const data = await res.json();
+            const data = await get("/api/departments");
+            setDepartments(Array.isArray(data) ? data : []);
+            setLoadError(null);
+        } catch (err) {
+            setLoadError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-            const sorted = [...data].sort((a, b) => a.id - b.id);
-
-            setDepartments(sorted);
-        } catch (err) { console.error(err); }
-        finally { setLoading(false); }
-    };
+    useEffect(() => { fetchDepartments(); }, [fetchDepartments]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const url = editingDept ? `/api/departments/${editingDept.id}` : "/api/departments";
-        const method = editingDept ? "PUT" : "POST";
-        const res = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: nameInput, color: colorInput }),
-        });
-        if (res.ok) { closeModal(); fetchDepartments(); }
+        setFormError(null);
+        const name = nameInput.trim();
+        if (!name) { setFormError("Department name is required."); return; }
+
+        setBusy(true);
+        try {
+            if (editingDept) {
+                await put(`/api/departments/${editingDept.id}`, { name, color: colorInput });
+                setNotice(`Saved ${name}.`);
+            } else {
+                await post("/api/departments", { name, color: colorInput });
+                setNotice(`Created ${name}.`);
+            }
+            setIsModalOpen(false);
+            setEditingDept(null);
+            await fetchDepartments();
+        } catch (err) {
+            setFormError(err.message);
+        } finally {
+            setBusy(false);
+        }
     };
 
     const confirmDelete = async () => {
         if (!deptToDelete) return;
-        const res = await fetch(`/api/departments/${deptToDelete.id}`, { method: "DELETE" });
-        if (res.ok) { setIsDeleteModalOpen(false); setDeptToDelete(null); fetchDepartments(); }
+        setBusy(true);
+        setFormError(null);
+        try {
+            await del(`/api/departments/${deptToDelete.id}`);
+            setNotice(`Deleted ${deptToDelete.name}.`);
+            setIsDeleteModalOpen(false);
+            setDeptToDelete(null);
+            await fetchDepartments();
+        } catch (err) {
+            setFormError(err.message);
+        } finally {
+            setBusy(false);
+        }
     };
 
     const openEditModal = (dept) => {
         setEditingDept(dept);
         setNameInput(dept.name);
         setColorInput(dept.color ?? DEFAULT_COLOR);
+        setFormError(null);
         setIsModalOpen(true);
     };
     const openCreateModal = () => {
         setEditingDept(null);
         setNameInput("");
         setColorInput(DEFAULT_COLOR);
+        setFormError(null);
         setIsModalOpen(true);
     };
-    const openDeleteModal = (dept) => { setDeptToDelete(dept); setIsDeleteModalOpen(true); };
-    const closeModal = () => { setIsModalOpen(false); setEditingDept(null); setNameInput(""); setColorInput(DEFAULT_COLOR); };
+    const openDeleteModal = (dept) => { setDeptToDelete(dept); setFormError(null); setIsDeleteModalOpen(true); };
+    const closeModal = () => {
+        if (busy) return;
+        setIsModalOpen(false);
+        setEditingDept(null);
+        setNameInput("");
+        setColorInput(DEFAULT_COLOR);
+        setFormError(null);
+    };
+    const closeDeleteModal = () => {
+        if (busy) return;
+        setIsDeleteModalOpen(false);
+        setDeptToDelete(null);
+        setFormError(null);
+    };
 
     if (loading || authLoading) {
         return (
@@ -165,25 +181,30 @@ export default function Departments() {
 
     return (
         <section className="workspace">
-            {/* ── Header ── */}
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">Ventures / Department Management</div>
-                    <div className="workspace-title-row">
-                        <h1>Departments</h1>
-                        <span className="workspace-count">{departments.length}</span>
-                    </div>
-                </div>
-                {canCreateDepartments && (
+            <PageHeader
+                breadcrumb="Ventures / Department Management"
+                title="Departments"
+                count={departments.length}
+                subtitle="Performance and budget figures are illustrative sample data; member counts are live."
+                actions={canCreateDepartments && (
                     <button
+                        type="button"
                         onClick={openCreateModal}
                         className="auth-primary"
-                        style={{ padding: "0 24px", minWidth: 160, marginTop: "auto" }}
+                        style={{ padding: "0 24px", minWidth: 160 }}
                     >
                         + Add Department
                     </button>
                 )}
-            </div>
+            />
+
+            {loadError && (
+                <div className="inline-error page-banner" role="alert">
+                    Failed to load departments: {loadError}{" "}
+                    <button type="button" className="btn-secondary btn-small" onClick={fetchDepartments}>Retry</button>
+                </div>
+            )}
+            {notice && <div className="inline-success page-banner" role="status" onClick={() => setNotice(null)}>{notice}</div>}
 
             {/* ── Table ── */}
             <div className="workspace-panel">
@@ -212,14 +233,9 @@ export default function Departments() {
                                     String(dept.id) === String(currentUserDepartmentId);
 
                                 const canEditThisDepartment =
-                                    canEditDepartments &&
-                                    (
-                                        currentUserIsAdmin ||
-                                        (currentUserIsManager && isOwnDepartment)
-                                    );
+                                    canEditDepartments && (currentUserIsAdmin || isOwnDepartment);
 
-                                const canDeleteThisDepartment =
-                                    canDeleteDepartments && currentUserIsAdmin;
+                                const canDeleteThisDepartment = canDeleteDepartments;
                                 return (
                                     <tr key={dept.id}>
                                         {/* ID */}
@@ -329,96 +345,81 @@ export default function Departments() {
 
             {/* ── Create / Edit Modal ── */}
             {isModalOpen && (
-                <ModalOverlay>
-                    <div style={{ background: "var(--panel)", border: "1px solid var(--line-strong)", borderRadius: 20, padding: "36px 32px", width: "90%", maxWidth: 440 }}>
-                        <h2 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>
-                            {editingDept ? "Edit Department" : "New Department"}
-                        </h2>
-                        <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 28 }}>
-                            Configure the details for this organisation branch.
-                        </p>
+                <Modal
+                    title={editingDept ? "Edit Department" : "New Department"}
+                    subtitle="Configure the details for this organisation branch."
+                    onClose={closeModal}
+                    busy={busy}
+                >
+                    <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: 0 }}>
+                        <div className="auth-field">
+                            <label className="auth-label" htmlFor="dept-name">Department name</label>
+                            <input id="dept-name" autoFocus className="auth-input" placeholder="e.g. Engineering" maxLength={60}
+                                value={nameInput} onChange={(e) => setNameInput(e.target.value)} required />
+                        </div>
 
-                        <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: 0 }}>
-                            {/* Name */}
-                            <div className="auth-field">
-                                <label className="auth-label">Department name</label>
-                                <input autoFocus className="auth-input" placeholder="e.g. Engineering"
-                                    value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
-                            </div>
+                        <div className="auth-field" style={{ marginTop: 16 }}>
+                            <label className="auth-label">Department colour</label>
 
-                            {/* Colour picker */}
-                            <div className="auth-field" style={{ marginTop: 16 }}>
-                                <label className="auth-label">Department colour</label>
-
-                                {/* Live preview */}
-                                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                                    <div className={`avatar ${colorInput}`} style={{ width: 44, height: 44, fontSize: 15, borderRadius: 12, flexShrink: 0 }}>
-                                        {deptInitials(nameInput || "Dept")}
-                                    </div>
-                                    <span style={{ color: "var(--muted-strong)", fontSize: 13 }}>
-                                        {swatchByClass(colorInput).label}
-                                    </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                                <div className={`avatar ${colorInput}`} style={{ width: 44, height: 44, fontSize: 15, borderRadius: 12, flexShrink: 0 }}>
+                                    {deptInitials(nameInput || "Dept")}
                                 </div>
-
-                                {/* Swatch grid */}
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
-                                    {COLOR_SWATCHES.map((sw) => (
-                                        <button
-                                            key={sw.cssClass}
-                                            type="button"
-                                            title={sw.label}
-                                            onClick={() => setColorInput(sw.cssClass)}
-                                            style={{
-                                                width: 36, height: 36, borderRadius: 10,
-                                                background: `linear-gradient(135deg, ${sw.hex}cc, ${sw.hex})`,
-                                                border: colorInput === sw.cssClass
-                                                    ? "2px solid var(--text)"
-                                                    : "2px solid transparent",
-                                                cursor: "pointer",
-                                                outline: "none",
-                                                transition: "border-color 120ms ease, transform 120ms ease",
-                                                transform: colorInput === sw.cssClass ? "scale(1.15)" : "scale(1)",
-                                            }}
-                                        />
-                                    ))}
-                                </div>
+                                <span style={{ color: "var(--muted-strong)", fontSize: 13 }}>
+                                    {swatchByClass(colorInput).label}
+                                </span>
                             </div>
 
-                            <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-                                <button type="button" onClick={closeModal} className="auth-primary"
-                                    style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="auth-primary" style={{ flex: 1 }}>
-                                    Save
-                                </button>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                                {COLOR_SWATCHES.map((sw) => (
+                                    <button
+                                        key={sw.cssClass}
+                                        type="button"
+                                        title={sw.label}
+                                        aria-label={sw.label}
+                                        aria-pressed={colorInput === sw.cssClass}
+                                        onClick={() => setColorInput(sw.cssClass)}
+                                        style={{
+                                            width: 36, height: 36, borderRadius: 10,
+                                            background: `linear-gradient(135deg, ${sw.hex}cc, ${sw.hex})`,
+                                            border: colorInput === sw.cssClass ? "2px solid var(--text)" : "2px solid transparent",
+                                            cursor: "pointer",
+                                            transition: "border-color 120ms ease, transform 120ms ease",
+                                            transform: colorInput === sw.cssClass ? "scale(1.15)" : "scale(1)",
+                                        }}
+                                    />
+                                ))}
                             </div>
-                        </form>
-                    </div>
-                </ModalOverlay>
+                        </div>
+
+                        {formError && <div className="inline-error" role="alert" style={{ marginTop: 14 }}>{formError}</div>}
+
+                        <ModalActions>
+                            <button type="button" onClick={closeModal} className="btn-secondary" disabled={busy}>Cancel</button>
+                            <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                        </ModalActions>
+                    </form>
+                </Modal>
             )}
 
             {/* ── Delete Confirmation Modal ── */}
-            {isDeleteModalOpen && (
-                <ModalOverlay>
-                    <div style={{ background: "var(--panel)", border: "1px solid var(--line-strong)", borderRadius: 20, padding: "36px 32px", width: "90%", maxWidth: 400, textAlign: "center" }}>
-                        <Trash2 size={36} color="var(--danger)" style={{ marginBottom: 16 }} />
-                        <h2 style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 800 }}>Delete Department?</h2>
-                        <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 28 }}>
-                            You are about to remove <strong>{deptToDelete?.name}</strong>. This cannot be undone.
-                        </p>
-                        <div style={{ display: "flex", gap: 10 }}>
-                            <button onClick={() => setIsDeleteModalOpen(false)} className="auth-primary"
-                                style={{ flex: 1, background: "none", border: "1px solid var(--line-strong)" }}>
-                                Keep it
-                            </button>
-                            <button onClick={confirmDelete} className="auth-primary"
-                                style={{ flex: 1, background: "rgba(255,106,95,0.15)", border: "1px solid var(--danger)", color: "var(--danger)" }}>
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </ModalOverlay>
+            {isDeleteModalOpen && deptToDelete && (
+                <Modal title="Delete Department?" onClose={closeDeleteModal} busy={busy} maxWidth={420}>
+                    <p style={{ color: "var(--muted)", fontSize: 14 }}>
+                        You are about to remove <strong style={{ color: "var(--text)" }}>{deptToDelete.name}</strong>.
+                        {deptToDelete.memberCount > 0
+                            ? ` Its ${deptToDelete.memberCount} member${deptToDelete.memberCount === 1 ? "" : "s"} will be kept but left without a department.`
+                            : " It has no members."}{" "}
+                        This cannot be undone.
+                    </p>
+                    {formError && <div className="inline-error" role="alert">{formError}</div>}
+                    <ModalActions>
+                        <button type="button" onClick={closeDeleteModal} className="btn-secondary" disabled={busy}>Keep it</button>
+                        <button type="button" onClick={confirmDelete} className="btn-danger" disabled={busy}>
+                            {busy ? "Deleting…" : "Delete"}
+                        </button>
+                    </ModalActions>
+                </Modal>
             )}
         </section>
     );

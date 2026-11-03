@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
 import { useAuth } from "../auth/AuthProvider";
+import { passwordProblem } from "../utils/validators.js";
 
 export default function ResetPassword() {
     const navigate = useNavigate();
@@ -31,8 +32,9 @@ export default function ResetPassword() {
             return;
         }
 
-        if (password.length < 8) {
-            setError("Password must be at least 6 characters long.");
+        const problem = passwordProblem(password);
+        if (problem) {
+            setError(`Password requirement not met: ${problem.toLowerCase()}.`);
             return;
         }
 
@@ -49,11 +51,10 @@ export default function ResetPassword() {
             setMessage("Password reset successfully. Redirecting to login...");
 
             setTimeout(() => {
-                navigate("/login");
+                navigate("/login", { replace: true, state: { notice: "Password updated. Sign in with your new password." } });
             }, 1500);
         } catch (err) {
-            console.error(err);
-            setError("Could not reset password. The link may be invalid or expired.");
+            setError(err.message || "Could not reset password. The link may be invalid or expired.");
         } finally {
             setLoading(false);
         }
@@ -72,8 +73,15 @@ export default function ResetPassword() {
                     <h1 className="auth-title">Reset Password</h1>
 
                     <div className="auth-subtitle">
-                        Choose a new password for your account.
+                        Choose a new password for your account (8+ characters, with a number and a symbol).
                     </div>
+
+                    {!token && (
+                        <div className="login-error show" style={{ marginTop: 16 }}>
+                            This page needs the link from your reset email.{" "}
+                            <Link className="auth-link" to="/forgot-password">Request a new link</Link>
+                        </div>
+                    )}
 
                     <form className="auth-form" onSubmit={onSubmit}>
                         {message && (
@@ -123,7 +131,7 @@ export default function ResetPassword() {
                         <button
                             className="auth-primary gradient-hover-btn"
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !token || Boolean(message)}
                         >
                             {loading ? "Resetting..." : "Reset password"}
                         </button>
