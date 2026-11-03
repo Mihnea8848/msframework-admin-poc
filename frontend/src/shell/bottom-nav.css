@@ -1,0 +1,100 @@
+/* Phone tab bar, ported from the concept's .tabbar. Only below 768px. */
+@layer shell {
+  .ms-bottom-nav {
+    display: none;
+  }
+
+  @media (width < 768px) {
+    .ms-bottom-nav {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: var(--z-sticky);
+      display: flex;
+      padding-right: env(safe-area-inset-right, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-left: env(safe-area-inset-left, 0);
+      background: var(--surface-1);
+      border-top: 1px solid var(--border-subtle);
+    }
+  }
+
+  .ms-bottom-nav__tab {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: var(--bottom-nav-height);
+    padding: var(--space-1) 2px;
+    border: 0;
+    background: none;
+    color: var(--text-tertiary);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ms-bottom-nav__tab[aria-current="page"],
+  .ms-bottom-nav__tab[data-current="true"] {
+    color: var(--text-primary);
+  }
+
+  .ms-bottom-nav__tab[aria-current="page"]::before,
+  .ms-bottom-nav__tab[data-current="true"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 30px;
+    height: 3px;
+    transform: translateX(-50%);
+    background: var(--notch);
+    clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
+  }
+
+  .ms-bottom-nav__tab:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .ms-bottom-nav__icon-wrap {
+    position: relative;
+    display: inline-grid;
+  }
+
+  .ms-bottom-nav__icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ms-bottom-nav__tab[aria-current="page"] .ms-bottom-nav__icon,
+  .ms-bottom-nav__tab[data-current="true"] .ms-bottom-nav__icon {
+    color: var(--accent-text);
+  }
+
+  .ms-bottom-nav__dot {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-round);
+    background: var(--primary);
+    outline: 2px solid var(--surface-1);
+  }
+
+  .ms-bottom-nav__label {
+    max-width: 100%;
+    font-size: clamp(10px, 2.9vw, var(--font-size-xs));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

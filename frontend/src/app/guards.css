@@ -1,0 +1,6 @@
+@layer shell {
+  .ms-loading {
+    padding: var(--space-6);
+    color: var(--text-tertiary);
+  }
+}

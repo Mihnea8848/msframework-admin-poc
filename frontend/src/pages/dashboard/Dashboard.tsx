@@ -7,7 +7,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { ApiError, get } from "../../api/client";
 import type { AuditEventDto, ApiKeyDto, DepartmentResponse, ServiceConnection, TableInfo, UserDto } from "../../api/types";
-import { useAuthContext } from "../../auth/useAuthContext";
+import { useAuth } from "../../auth/AuthProvider";
 import { hasPermission } from "../../auth/permissions";
 import { PAGES } from "../../routes/navigation";
 import type { PageKey } from "../../routes/navigation";
@@ -87,7 +87,7 @@ function quickLinkMeta(key: PageKey, snapshot: Snapshot | null, unread: number |
 }
 
 export default function Dashboard() {
-    const { user } = useAuthContext();
+    const { user } = useAuth();
 
     const canReadUsers = hasPermission(user, "USER_READ");
     const canReadDepartments = hasPermission(user, "DEPARTMENT_READ");

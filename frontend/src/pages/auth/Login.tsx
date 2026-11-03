@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SiApple, SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { TriangleAlert } from "lucide-react";
-import { useAuthContext } from "../../auth/useAuthContext";
+import { useAuth } from "../../auth/AuthProvider";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
 import AuthLayout from "./AuthLayout";
@@ -14,7 +14,7 @@ export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { login, sessionExpired } = useAuthContext();
+    const { login, sessionExpired } = useAuth();
     const state = location.state as LoginState;
     const notice = state?.notice;
     const from = state?.from;

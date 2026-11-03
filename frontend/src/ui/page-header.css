@@ -8,15 +8,6 @@
     font-family: var(--font-ui);
   }
 
-  /*
-   * Pages not rebuilt yet wrap their content in the legacy .workspace container, which has no
-   * top padding (the old header carried it). Give the header that space there only. Remove
-   * this rule when the last legacy page is rebuilt.
-   */
-  [class~="workspace"] > .ms-page-header:first-child {
-    padding-top: 28px;
-  }
-
   .ms-page-header__row {
     display: flex;
     flex-wrap: wrap;
@@ -130,10 +121,6 @@
   @media (width <= 767px) {
     .ms-page-header {
       margin-bottom: var(--space-3);
-    }
-
-    [class~="workspace"] > .ms-page-header:first-child {
-      padding-top: var(--space-3);
     }
 
     .ms-page-header__row {

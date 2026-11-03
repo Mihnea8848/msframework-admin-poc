@@ -63,6 +63,11 @@
 
   /* Layout */
   --sidebar-width: 256px;
+  --rail-width: 64px;
+  --topbar-height: 56px;
+  --topbar-height-phone: 52px;
+  --bottom-nav-height: 58px;
+  --touch-target: 44px;
   --content-max: 1280px;
 
   /* Stacking order */

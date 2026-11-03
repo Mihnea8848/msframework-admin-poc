@@ -1,0 +1,98 @@
+/*
+ * The start-up splash (#ms-splash in index.html). A dash runs around the logo outline while the
+ * session loads, like the trace in design/concept-chevron.html. It only becomes visible after
+ * --duration-fast, so a fast start shows nothing but the page background. With reduced motion
+ * the logo is drawn still and shown at once.
+ */
+@layer shell {
+  .ms-splash {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-toast);
+    display: grid;
+    place-items: center;
+    background: var(--canvas);
+    transition: opacity var(--duration-base) var(--ease-exit), visibility 0s linear var(--duration-base);
+  }
+
+  .ms-splash[data-state="done"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .ms-splash__logo {
+    width: 56px;
+    height: auto;
+    overflow: visible;
+    opacity: 0;
+    animation: ms-splash-reveal var(--duration-base) var(--ease-standard) var(--duration-fast) forwards;
+  }
+
+  .ms-splash__fill {
+    opacity: 0.22;
+  }
+
+  .ms-splash__upper {
+    fill: var(--logo-upper);
+  }
+
+  .ms-splash__lower {
+    fill: var(--logo-lower);
+  }
+
+  .ms-splash__trace path {
+    fill: none;
+    stroke: var(--trace);
+    stroke-width: 24;
+    stroke-linejoin: miter;
+    stroke-dasharray: 0.24 0.76;
+    stroke-dashoffset: 1;
+    animation: ms-splash-trace calc(var(--duration-trace) * 1.6) linear infinite;
+  }
+
+  .ms-splash__trace path:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  @keyframes ms-splash-reveal {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes ms-splash-trace {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Reduced motion: the still, filled logo */
+  :root[data-motion="reduced"] .ms-splash__logo {
+    opacity: 1;
+    animation: none;
+  }
+
+  :root[data-motion="reduced"] .ms-splash__fill {
+    opacity: 1;
+  }
+
+  :root[data-motion="reduced"] .ms-splash__trace {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ms-splash__logo {
+      opacity: 1;
+      animation: none;
+    }
+
+    .ms-splash__fill {
+      opacity: 1;
+    }
+
+    .ms-splash__trace {
+      display: none;
+    }
+  }
+}

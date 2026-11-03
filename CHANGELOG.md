@@ -41,6 +41,22 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Appearance: System theme, six brand accents, and a Full/Reduced motion
   setting that defaults to the device setting.
 - SVG logo and favicon.
+- App shell in the Chevron design, mounted once for every signed-in page:
+  sidebar with a Quick actions field (Ctrl K / Cmd K), the chevron marker on
+  the current page and the "Multimedia Entertainment Hub" footer; an icon
+  rail with tooltips from 768 to 1023 px; a top bar with back and forward,
+  a "Group / Page" breadcrumb, the user's name and role, settings and Log
+  out; and on phones a bottom tab bar (the first four pages the role may
+  open, ordered by `mobilePriority` in `navigation.ts`) with a More sheet
+  for the rest. A skip link jumps to the main content.
+- Page transitions: a 180 ms fade and 6 px rise of the content only, with
+  the View Transitions API where the browser has it and motion is on, a
+  CSS animation otherwise, and nothing with reduced motion.
+- A logo-trace splash (plain HTML and CSS in `index.html`) while the first
+  session check runs.
+- Bundle size budget (`frontend/scripts/check-bundle.mjs`, part of
+  `npm run build`): entry JS 130 kB, all CSS 25 kB, each lazy chunk 40 kB
+  and the latin fonts 70 kB, gzip.
 - Dashboard System status: API, database, integrations and security score
   cards from live checks (request latency, paused integrations, the
   Security page's checks), a one-line summary, "Checked X ago" and a
@@ -83,6 +99,13 @@ section into a version (see `AGENTS.md`, Git workflow).
   sidebar.
 - Manrope and Montserrat are self-hosted instead of loaded from Google
   Fonts, so no visitor data goes to a third party.
+- The frontend uses a react-router data router (`src/app/router.tsx`).
+  Every page is its own lazy-loaded chunk, prefetched on hover or focus of
+  its link and when the browser is idle. The sidebar and top bar no longer
+  remount on every navigation, so the unread-notifications poll keeps
+  running instead of restarting. New pages open scrolled to the top.
+- Phones no longer scroll sideways: the old top bar and the dashboard
+  cards overflowed a 390 px screen.
 - Sign in, Register, Forgot password and Reset password are rebuilt on the
   Chevron split layout: the form on the left, the grain-and-gradient logo
   on the right (smaller than in the concept, fading toward the form, hidden

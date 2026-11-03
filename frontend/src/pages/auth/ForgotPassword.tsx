@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../../auth/useAuthContext";
+import { useAuth } from "../../auth/AuthProvider";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
 import AuthLayout from "./AuthLayout";
@@ -12,7 +12,7 @@ export default function ForgotPassword() {
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const { forgotPassword } = useAuthContext();
+    const { forgotPassword } = useAuth();
 
     async function onSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
