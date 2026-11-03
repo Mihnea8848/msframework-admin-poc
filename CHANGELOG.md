@@ -18,7 +18,8 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Real CSV import with per-row errors, live database schema page, real
   dashboard activity feed and security checks.
 - Organisation-wide world clocks.
-- Backend integration test suite (MockMvc on H2).
+- Backend integration test suite (MockMvc), running on real PostgreSQL 16
+  through Testcontainers, or on any PostgreSQL given in `TEST_DB_URL`.
 - Contribution workflow: pull request template, changelog, repository
   rulesets for `main` and release tags.
 

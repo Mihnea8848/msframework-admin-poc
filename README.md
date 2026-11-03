@@ -70,7 +70,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Styling | Plain CSS with CSS custom properties (no framework), light/dark theme via `[data-theme]` |
 | Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
 | Database | PostgreSQL 16 (Docker); schema managed by Hibernate `ddl-auto=update` |
-| Tests | JUnit 5 + MockMvc integration tests on in-memory H2 (PostgreSQL mode) |
+| Tests | JUnit 5 + MockMvc integration tests on PostgreSQL 16 via Testcontainers |
 | DevOps | Docker Compose, GitHub Actions CI (frontend lint + build, backend build + tests) |
 
 ---
@@ -139,7 +139,7 @@ msframework-admin-poc/
         │   ├── exception/      # ApiException + GlobalExceptionHandler
         │   ├── repository/     # Spring Data repositories
         │   └── service/        # Users, password reset, import, audit, sessions, DB metadata
-        └── test/               # Integration tests (H2)
+        └── test/               # Integration tests (PostgreSQL via Testcontainers)
 ```
 
 ---
