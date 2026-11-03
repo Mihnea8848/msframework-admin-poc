@@ -389,6 +389,108 @@ class ApiIntegrationTests {
                 .andExpect(status().isNotFound());
     }
 
+    // ------------------------------------------------------------------ typed request bodies
+
+    @Test
+    void apiKeyBodyAndNameAreOptional() throws Exception {
+        MockHttpSession admin = admin();
+        // No body at all, an empty object and a blank name all get the default name.
+        mvc.perform(post("/api/keys").session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("API key"));
+        mvc.perform(json(post("/api/keys"), "{}").session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("API key"));
+        mvc.perform(json(post("/api/keys"), "{\"name\":\"   \"}").session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("API key"));
+        mvc.perform(json(post("/api/keys"), "{\"name\":\"" + "k".repeat(61) + "\"}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Key name must be at most 60 characters"));
+    }
+
+    @Test
+    void webhookEventsDefaultToEverything() throws Exception {
+        MockHttpSession admin = admin();
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/no-events\"}").session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.events").value("*"));
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/empty\",\"events\":[]}").session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.events").value("*"));
+        mvc.perform(json(post("/api/webhooks"),
+                        "{\"url\":\"https://example.com/list\",\"events\":[\"user.created\",\" user.deleted \",\"user.created\"]}")
+                        .session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.events").value("user.created,user.deleted"));
+        // The comma-separated string accepted by the untyped body still works.
+        mvc.perform(json(post("/api/webhooks"),
+                        "{\"url\":\"https://example.com/string\",\"events\":\"user.created, dept.deleted\"}")
+                        .session(admin))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.events").value("user.created,dept.deleted"));
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/bad\",\"events\":[\"Bad Event\"]}")
+                        .session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid event name: Bad Event"));
+        mvc.perform(json(post("/api/webhooks"), "{\"events\":[\"*\"]}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Webhook URL is required"));
+    }
+
+    @Test
+    void missingFieldsGetTheSameMessagesAsBefore() throws Exception {
+        mvc.perform(json(post("/api/auth/forgot-password"), "{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Email is required"));
+        mvc.perform(json(post("/api/auth/forgot-password"), "{\"email\":\"  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Email is required"));
+        // Unknown fields are ignored, as they were with the untyped body.
+        mvc.perform(json(post("/api/auth/forgot-password"), "{\"email\":\"nobody@example.com\",\"extra\":1}"))
+                .andExpect(status().isNoContent());
+
+        MockHttpSession admin = admin();
+        mvc.perform(json(post("/api/auth/password"), "{\"newPassword\":\"Whatever#123\"}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Current password is incorrect"));
+        mvc.perform(json(put("/api/settings/orgTimezone"), "{}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Timezone is required"));
+        mvc.perform(json(post("/api/audit/event"), "{}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unsupported event type"));
+
+        // A missing description falls back to the default text.
+        mvc.perform(json(post("/api/audit/event"), "{\"eventType\":\"export_generated\"}").session(admin))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/audit").param("limit", "1").session(admin))
+                .andExpect(jsonPath("$[0].eventType").value("export_generated"))
+                .andExpect(jsonPath("$[0].description").value("Exported data"));
+    }
+
+    @Test
+    void malformedBodiesGiveA400JsonError() throws Exception {
+        MockHttpSession admin = admin();
+        String[][] requests = {
+                {"/api/auth/forgot-password", "{not json"},
+                {"/api/auth/reset-password", "[1, 2]"},
+                {"/api/auth/email", "{\"email\":{\"nested\":true}}"},
+                {"/api/webhooks", "{\"url\":\"https://example.com/x\",\"events\":{\"a\":1}}"},
+                {"/api/keys", "{\"name\":"},
+        };
+        for (String[] request : requests) {
+            mvc.perform(json(post(request[0]), request[1]).session(admin))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.message").value("Malformed request body"));
+        }
+        mvc.perform(json(put("/api/settings/worldClocks"), "{\"value\":[{\"label\":\"Cluj\"}]}").session(admin))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+    }
+
     // ------------------------------------------------------------------ import, database, audit
 
     @Test

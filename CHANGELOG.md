@@ -27,6 +27,10 @@ section into a version (see `AGENTS.md`, Git workflow).
   and in CI.
 - Migration tests that upgrade real legacy databases (pre-RBAC and the
   last pre-Flyway `main`) and compare them with a fresh database.
+- OpenAPI description of the API at `/v3/api-docs` (springdoc-openapi 3.1.1, no
+  Swagger UI), open without login unless `API_DOCS_ENABLED=false`. The
+  committed contract `api/openapi.json` is checked by `OpenApiContractTest`;
+  regenerate it with `./mvnw verify -Dopenapi.write=true`.
 - Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
   for now) and `typescript-eslint` in the frontend lint.
 
@@ -54,3 +58,7 @@ section into a version (see `AGENTS.md`, Git workflow).
   the backend DTOs, and `npm run build` type checks first. Pages stay
   JavaScript until they are restyled.
 - Removed the unused `bootstrap` dependency.
+- Request bodies that were untyped maps (change email or password, forgot
+  and reset password, client audit events, API keys, webhooks, settings)
+  are typed records. The JSON fields, defaults and error messages are
+  unchanged.

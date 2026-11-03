@@ -8,6 +8,8 @@ import com.msframework.backend.exception.ApiException;
 import com.msframework.backend.repository.ServiceConnectionRepository;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.CurrentUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Tag(name = "Connections", description = "Third-party integrations")
 @RestController
 @RequestMapping("/api/connections")
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class ConnectionsController {
     private final AuditService auditService;
 
     /** Every known integration, in display order (missing rows are reported as not connected). */
+    @Operation(operationId = "listConnections", summary = "Every known integration and its state")
     @GetMapping
     public List<ServiceConnection> list(Principal principal) {
         currentUserService.requirePermission(principal, Permission.CONNECTIONS_READ);
@@ -38,6 +42,7 @@ public class ConnectionsController {
                 .toList();
     }
 
+    @Operation(operationId = "connectIntegration", summary = "Connect an integration")
     @PostMapping("/{serviceId}/connect")
     public ServiceConnection connect(@PathVariable String serviceId, Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.CONNECTIONS_UPDATE);
@@ -52,6 +57,7 @@ public class ConnectionsController {
         return saved;
     }
 
+    @Operation(operationId = "disconnectIntegration", summary = "Disconnect an integration")
     @PostMapping("/{serviceId}/disconnect")
     public ServiceConnection disconnect(@PathVariable String serviceId, Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.CONNECTIONS_UPDATE);
@@ -66,6 +72,7 @@ public class ConnectionsController {
         return saved;
     }
 
+    @Operation(operationId = "toggleIntegration", summary = "Pause or resume a connected integration")
     @PatchMapping("/{serviceId}/toggle")
     public ServiceConnection toggle(@PathVariable String serviceId, Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.CONNECTIONS_UPDATE);
