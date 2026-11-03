@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import logo from "../assets/ms_logo.png";
-import WavyBackground from "../ui/WavyBackground.jsx";
+import Logo from "../ui/brand/Logo";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function ForgotPassword() {
@@ -34,11 +33,13 @@ export default function ForgotPassword() {
     return (
         <div className="auth-bg">
             <div className="auth-circuit">
-                <WavyBackground colorA="#28beef" colorB="#2487cb" />
-
                 <div className="auth-card">
                     <div className="auth-brand">
-                        <img className="auth-logo" src={logo} alt="MSFramework" />
+                        <Logo className="auth-logo" />
+                        <div>
+                            <div className="auth-brand-name">MSFramework</div>
+                            <div className="auth-brand-sub">Multimedia Entertainment Hub</div>
+                        </div>
                     </div>
 
                     <h1 className="auth-title">Forgot Password</h1>
@@ -71,13 +72,13 @@ export default function ForgotPassword() {
                                 autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="email address"
+                                placeholder="name@mehstudios.net"
                                 required
                             />
                         </div>
 
                         <button
-                            className="auth-primary gradient-hover-btn"
+                            className="auth-primary"
                             type="submit"
                             disabled={loading}
                         >

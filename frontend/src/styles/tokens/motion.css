@@ -1,0 +1,23 @@
+/*
+ * Motion. Four durations, the logo trace and two easings. data-motion="reduced" on <html>
+ * (the OS setting, or the user's choice on the Appearance page) sets every duration to 0.
+ * base/reset.css also stops hard-coded transitions in the legacy stylesheet.
+ */
+:root {
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+  --duration-trace: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-trace: cubic-bezier(0.55, 0, 0.35, 1);
+}
+
+:root[data-motion="reduced"] {
+  --duration-instant: 0ms;
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+  --duration-slow: 0ms;
+  --duration-trace: 0ms;
+}

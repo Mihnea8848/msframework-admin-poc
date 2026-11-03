@@ -113,7 +113,8 @@ Frontend scripts (in `frontend/`):
 
 - Frontend unit tests are `*.test.ts` files next to the module they test (`src/utils/csv.test.ts`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
 - `eslint-plugin-jsx-a11y` reports its recommended rules as **warnings** for now, because the existing pages have legacy issues. Don't add new ones; a later cleanup PR turns them into errors.
-- Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) skips the legacy `src/styles/theme.css`, `src/index.css` and `src/App.css`. Any new CSS file is linted.
+- Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) lints every CSS file except the legacy stylesheet in `src/styles/legacy/`. It rejects colour literals (hex, `rgb()`, `hsl()`, named colours) everywhere except `src/styles/tokens/primitives.css`, and requires the `ms-` prefix on class names (see "Frontend styles and design tokens").
+- `src/styles/tokens/contrast.test.ts` resolves the colour tokens for every theme x accent and theme x seal and fails when a pair drops below WCAG AA (4.5:1 for text, 3:1 for the focus ring, control borders and seal outlines). If you change a colour token and it fails, pick a different primitive; don't lower the threshold.
 
 - Backend tests (`backend/src/test`) are MockMvc integration tests that go through the real security filter chain, on **real PostgreSQL 16**.
   - By default Testcontainers starts a `postgres:16` container. This needs Docker access (see Prerequisites); the first run pulls the image.
@@ -161,6 +162,39 @@ Frontend scripts (in `frontend/`):
 | Start-up fails with `Schema-validation: missing column` (or table) | An entity changed without a migration. Add a `V<n>__...sql` that makes the same change. |
 | Start-up fails with `Validate failed: Migrations have failed validation` / checksum mismatch | An applied migration file was edited. Restore it and put the change in a new migration. |
 
+## Frontend styles and design tokens
+
+The approved visual design is **Concept C, Chevron**: `design/concept-chevron.html` (a self-contained prototype with sample data; open it in a browser). It is the reference for tokens, type, shapes and the login look; `design/README.md` lists what the client kept and rejected.
+
+```
+frontend/src/styles/
+  index.css            the only CSS entry (imported once in main.jsx); declares the layers and imports the rest
+  tokens/primitives.css    the raw palette, the only file with colour literals
+  tokens/semantic-dark.css colour roles for dark (the default); semantic-light.css overrides them
+  tokens/accents.css       the 6 accent keys, per theme
+  tokens/seals.css         the 8 department seals, per theme
+  tokens/scale.css         spacing (4px grid), radii and clip shapes, fonts, type scale, control heights, z-index
+  tokens/density.css       [data-density="compact"] overrides
+  tokens/motion.css        durations and easings; all 0 under [data-motion="reduced"]
+  tokens/legacy-aliases.css the old variables (--bg, --panel, --accent, ...) mapped to the new tokens
+  base/                reset.css, fonts.css (self-hosted @font-face), typography.css
+  legacy/              the pre-Chevron stylesheet, kept working through the aliases until pages are rebuilt
+```
+
+- **Cascade layers**, lowest priority first: `legacy, reset, tokens, base, components, shell, pages, utilities`. A later layer always wins, whatever the specificity, so `legacy/` can never override new styles. Because `reset` and `base` sit above `legacy`, keep them minimal and never set there something the legacy CSS relies on.
+- **Hex only in primitives.** `primitives.css` names colours by what they are (`--brand-cyan`, `--charcoal-850`). Everything else uses **semantic tokens** by role: `--canvas`, `--surface-1` to `--surface-3`, `--field`, `--text-primary/secondary/tertiary/disabled`, `--border-faint/subtle/strong/control`, `--focus-ring`, `--primary`, `--primary-hover`, `--on-primary`, `--danger-solid`, `--on-danger`, and `--status-ok|warn|danger|info-fg/bg/border`. To add a colour, add a primitive, point a semantic token at it in both theme files, and add the pair to `contrast.test.ts` if it carries text or a boundary.
+- **Accents** (`data-accent`): `cyan` (default), `cobalt`, `violet`, `jade`, `gold`, `silver`. The selected one fills `--accent-solid`, `--on-accent`, `--accent-text`, `--accent-line` and `--accent-tint`. Maple red (`--danger-solid`) is only for destructive actions and is never an accent.
+- **Seals** (department colours): put `data-seal="administration|development|quality-control|external-affairs|human-resources|ethics-regulations|engineering-innovation|director"` on an element and use `--seal` (ring, glyph and fill), `--seal-fg` (content on a solid seal fill), `--seal-text` (seal-coloured text) and `--seal-border` inside it. The per-theme values live on `:root` as `--seal-<name>-*`. The current departments still store the older `avatar-*` keys (flat colours in `primitives.css`) until they move to seals.
+- **Shape and type:** corners are 0 to 2px (`--radius-2`); the Chevron clipped corner is `clip-path: var(--clip-8)` (controls) or `var(--clip-12)` (panels). A clipped element also clips its focus outline, so drop the clip on `:focus-visible` or put the ring on a wrapper. Manrope (`--font-ui`) is the running text; Montserrat 600/700 uppercase (`--font-cap`) is for labels, buttons and eyebrows.
+- **Class names:** new component classes are global BEM classes with the `ms-` prefix (`ms-logo`, `ms-logo__upper`), one CSS file per component next to it, wrapped in `@layer components { ... }`.
+- **`<html>` attributes**, set before the first paint by `public/theme-init.js` (a blocking `<script src>` in `index.html`, not inline, so a strict CSP works) and changed live by `src/theme/appearance.ts`:
+  - `data-theme`: `dark` or `light`. The stored preference (`theme` in localStorage) can also be `system`, resolved with `matchMedia`; dark is the default.
+  - `data-accent` (stored as `accentKey`), `data-density` (`comfortable` or `compact`) and `data-motion` (`full` or `reduced`; the stored `motion` choice, otherwise the OS setting).
+  - The script also migrates the old `accent`/`accentLabel` keys to `accentKey` and deletes them. It never sets inline styles: those would beat the tokens. Keep `theme-init.js` and `appearance.ts` in sync (`src/theme/themeInit.test.ts` runs the script).
+- **Fonts** are self-hosted from `@fontsource-variable/manrope` and `@fontsource/montserrat` (SIL Open Font License 1.1), latin and latin-ext subsets only, declared in `base/fonts.css`. Don't add Google Fonts or other third-party font URLs.
+- **Logo:** `src/ui/brand/Logo.tsx` is the two-path SVG mark, coloured by `--logo-upper` and `--logo-lower`; pass `title` when it is the only name on screen. The favicon is `public/favicon.svg`.
+- **Brand names:** the product is MSFramework; in UI text the company is "Multimedia Entertainment Hub" ("MEH Studios Inc" in the narrow sidebar label). Example addresses use the `mehstudios.net` domain.
+
 ## Git workflow
 
 The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any commit, push, pull request, merge or tag. In short:
@@ -191,7 +225,9 @@ frontend/src/
   api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
   auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
   routes/navigation.ts every page with its path, icon and required permission (router, sidebar and palette use it)
-  ui/                  Modal, Toggle, PageHeader, QuickActions
+  styles/              index.css (the only CSS entry), tokens/, base/, legacy/ (see "Frontend styles and design tokens")
+  theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
+  ui/                  Modal, Toggle, PageHeader, QuickActions, brand/Logo.tsx
   utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
   **/*.test.ts         unit tests, next to the module they cover

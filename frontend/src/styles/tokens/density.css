@@ -1,0 +1,22 @@
+/*
+ * Density. Comfortable is the default; data-density="compact" on <html> tightens the tokens
+ * that set row and panel spacing. Components size themselves with these, not with raw
+ * spacing values, so one attribute changes the whole UI.
+ */
+:root {
+  --density-row-y: var(--space-3);
+  --density-row-x: var(--space-4);
+  --density-panel: var(--space-5);
+  --density-gap: var(--space-4);
+  --density-control: var(--control-md);
+  --density-field: var(--control-field);
+}
+
+:root[data-density="compact"] {
+  --density-row-y: var(--space-2);
+  --density-row-x: var(--space-3);
+  --density-panel: var(--space-4);
+  --density-gap: var(--space-3);
+  --density-control: var(--control-sm);
+  --density-field: var(--control-sm);
+}

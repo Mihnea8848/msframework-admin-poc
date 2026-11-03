@@ -1,0 +1,136 @@
+/*
+ * Department seals. Each seal has per-theme tokens on :root:
+ *   --seal-X         the seal colour: ring, glyph and solid fill (lighter on charcoal,
+ *                    official or darker in light mode)
+ *   --seal-X-fg      icons and text placed on a solid --seal-X fill
+ *   --seal-X-text    seal-coloured text on surfaces (4.5:1)
+ *   --seal-X-border  the outline of the seal against a surface (3:1). Silver and white get a
+ *                    darker border in light mode, because their fill would vanish on white.
+ * An element picks one with data-seal="X", which sets the generic --seal, --seal-fg,
+ * --seal-text and --seal-border for everything inside it.
+ */
+:root {
+  --seal-administration: var(--crimson-300);
+  --seal-administration-fg: var(--charcoal-900);
+  --seal-administration-text: var(--crimson-250);
+  --seal-administration-border: var(--crimson-300);
+  --seal-development: var(--purple-300);
+  --seal-development-fg: var(--charcoal-900);
+  --seal-development-text: var(--purple-300);
+  --seal-development-border: var(--purple-300);
+  --seal-quality-control: var(--blue-400);
+  --seal-quality-control-fg: var(--charcoal-900);
+  --seal-quality-control-text: var(--blue-400);
+  --seal-quality-control-border: var(--blue-400);
+  --seal-external-affairs: var(--jade-300);
+  --seal-external-affairs-fg: var(--charcoal-900);
+  --seal-external-affairs-text: var(--jade-300);
+  --seal-external-affairs-border: var(--jade-300);
+  --seal-human-resources: var(--orange-300);
+  --seal-human-resources-fg: var(--charcoal-900);
+  --seal-human-resources-text: var(--orange-250);
+  --seal-human-resources-border: var(--orange-300);
+  --seal-ethics-regulations: var(--silver-300);
+  --seal-ethics-regulations-fg: var(--charcoal-900);
+  --seal-ethics-regulations-text: var(--silver-300);
+  --seal-ethics-regulations-border: var(--silver-300);
+  --seal-engineering-innovation: var(--snow-200);
+  --seal-engineering-innovation-fg: var(--charcoal-900);
+  --seal-engineering-innovation-text: var(--snow-200);
+  --seal-engineering-innovation-border: var(--snow-200);
+  --seal-director: var(--gold-300);
+  --seal-director-fg: var(--charcoal-900);
+  --seal-director-text: var(--gold-300);
+  --seal-director-border: var(--gold-300);
+}
+
+:root[data-theme="light"] {
+  --seal-administration: var(--crimson-700);
+  --seal-administration-fg: var(--white);
+  --seal-administration-text: var(--crimson-700);
+  --seal-administration-border: var(--crimson-700);
+  --seal-development: var(--purple-700);
+  --seal-development-fg: var(--white);
+  --seal-development-text: var(--purple-700);
+  --seal-development-border: var(--purple-700);
+  --seal-quality-control: var(--blue-700);
+  --seal-quality-control-fg: var(--white);
+  --seal-quality-control-text: var(--blue-700);
+  --seal-quality-control-border: var(--blue-700);
+  --seal-external-affairs: var(--jade-700);
+  --seal-external-affairs-fg: var(--white);
+  --seal-external-affairs-text: var(--jade-700);
+  --seal-external-affairs-border: var(--jade-700);
+  --seal-human-resources: var(--orange-700);
+  --seal-human-resources-fg: var(--white);
+  --seal-human-resources-text: var(--orange-700);
+  --seal-human-resources-border: var(--orange-700);
+  --seal-ethics-regulations: var(--silver-300);
+  --seal-ethics-regulations-fg: var(--ink);
+  --seal-ethics-regulations-text: var(--silver-600);
+  --seal-ethics-regulations-border: var(--silver-600);
+  --seal-engineering-innovation: var(--white);
+  --seal-engineering-innovation-fg: var(--ink);
+  --seal-engineering-innovation-text: var(--snow-800);
+  --seal-engineering-innovation-border: var(--snow-800);
+  --seal-director: var(--gold-700);
+  --seal-director-fg: var(--white);
+  --seal-director-text: var(--gold-700);
+  --seal-director-border: var(--gold-700);
+}
+
+[data-seal="administration"] {
+  --seal: var(--seal-administration);
+  --seal-fg: var(--seal-administration-fg);
+  --seal-text: var(--seal-administration-text);
+  --seal-border: var(--seal-administration-border);
+}
+
+[data-seal="development"] {
+  --seal: var(--seal-development);
+  --seal-fg: var(--seal-development-fg);
+  --seal-text: var(--seal-development-text);
+  --seal-border: var(--seal-development-border);
+}
+
+[data-seal="quality-control"] {
+  --seal: var(--seal-quality-control);
+  --seal-fg: var(--seal-quality-control-fg);
+  --seal-text: var(--seal-quality-control-text);
+  --seal-border: var(--seal-quality-control-border);
+}
+
+[data-seal="external-affairs"] {
+  --seal: var(--seal-external-affairs);
+  --seal-fg: var(--seal-external-affairs-fg);
+  --seal-text: var(--seal-external-affairs-text);
+  --seal-border: var(--seal-external-affairs-border);
+}
+
+[data-seal="human-resources"] {
+  --seal: var(--seal-human-resources);
+  --seal-fg: var(--seal-human-resources-fg);
+  --seal-text: var(--seal-human-resources-text);
+  --seal-border: var(--seal-human-resources-border);
+}
+
+[data-seal="ethics-regulations"] {
+  --seal: var(--seal-ethics-regulations);
+  --seal-fg: var(--seal-ethics-regulations-fg);
+  --seal-text: var(--seal-ethics-regulations-text);
+  --seal-border: var(--seal-ethics-regulations-border);
+}
+
+[data-seal="engineering-innovation"] {
+  --seal: var(--seal-engineering-innovation);
+  --seal-fg: var(--seal-engineering-innovation-fg);
+  --seal-text: var(--seal-engineering-innovation-text);
+  --seal-border: var(--seal-engineering-innovation-border);
+}
+
+[data-seal="director"] {
+  --seal: var(--seal-director);
+  --seal-fg: var(--seal-director-fg);
+  --seal-text: var(--seal-director-text);
+  --seal-border: var(--seal-director-border);
+}

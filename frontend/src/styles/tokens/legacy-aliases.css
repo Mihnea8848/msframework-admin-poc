@@ -1,0 +1,25 @@
+/*
+ * Bridge for the legacy stylesheet (styles/legacy/). Its 15 variables now point at the
+ * semantic tokens, so every page that has not been migrated yet picks up the Chevron palette,
+ * both themes and the selected accent. This file is in the tokens layer, which beats the
+ * legacy layer. It is deleted together with styles/legacy/ in the cleanup PR.
+ *
+ * New code must not use these names; use the semantic tokens directly.
+ */
+:root {
+  --bg: var(--canvas);
+  --bg-soft: var(--surface-1);
+  --panel: var(--surface-1);
+  --panel-raised: var(--surface-2);
+  --panel-muted: var(--surface-3);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-strong);
+  --text: var(--text-primary);
+  --muted: var(--text-tertiary);
+  --muted-strong: var(--text-secondary);
+  --accent: var(--accent-text);
+  --accent-soft: var(--accent-tint);
+  --success: var(--status-ok-fg);
+  --danger: var(--status-danger-fg);
+  --shadow: none;
+}

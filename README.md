@@ -22,7 +22,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
 | Departments | `/departments` | Create, rename, recolor and delete departments with live member counts |
 | Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar, category filters) |
-| Appearance | `/appearance` | Light/dark theme, 6 accent colors, comfortable/compact density — saved per browser |
+| Appearance | `/appearance` | Dark, light or system theme; 6 brand accents (cyan, cobalt, violet, jade, gold, silver); comfortable or compact density; full or reduced motion (defaults to the device setting); live token preview. Saved per browser |
 | Database | `/database` | Live schema, row counts and sizes of every application table |
 | Documentation | `/docs` | In-app guide, including the role/permission matrix |
 | Account & security | `/auth` | Change your own email (password-confirmed) and password; MFA / SSO marked as coming soon |
@@ -37,7 +37,8 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
 - Quick Actions palette (⌘K / Ctrl+K or `/`) — search and jump to any page you have access to
 - Clear error messages from the server everywhere (no silent failures)
-- Persistent light/dark theme with flash-free restore on page load
+- Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
+- Chevron visual identity (Multimedia Entertainment Hub): Manrope and Montserrat, self-hosted; clipped-corner buttons; colours from design tokens, checked for WCAG AA contrast in tests
 - Responsive layout with sidebar collapse on mobile
 
 ### Backend (REST API)
@@ -68,7 +69,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Layer | Technology |
 |---|---|
 | Frontend | React 19, Vite 7, React Router 7, Lucide Icons, TypeScript 5 (incremental migration from JavaScript) |
-| Styling | Plain CSS with CSS custom properties (no framework), light/dark theme via `[data-theme]` |
+| Styling | Plain CSS in cascade layers with design tokens (CSS custom properties, no framework); theme, accent, density and motion via `data-*` attributes on `<html>`; Manrope and Montserrat self-hosted with Fontsource (OFL-1.1) |
 | Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
 | Database | PostgreSQL 16 (Docker); schema managed by Flyway migrations |
 | Tests | Frontend: Vitest + Testing Library unit tests (jsdom). Backend: JUnit 5 + MockMvc integration tests on PostgreSQL 16 via Testcontainers |
@@ -129,8 +130,9 @@ msframework-admin-poc/
 │       ├── layout/             # DashboardLayout, Sidebar, Topbar
 │       ├── pages/              # 15 page components + auth pages
 │       ├── routes/             # navigation.ts (single page/permission registry), AppRoutes, Guards
-│       ├── styles/theme.css    # CSS variables, components, themes, density
-│       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, WavyBackground
+│       ├── styles/             # index.css entry: tokens/ (colours, seals, scale, motion), base/, legacy/
+│       ├── theme/              # appearance preferences (theme, accent, density, motion)
+│       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, brand/Logo
 │       ├── test/setup.ts       # Vitest setup (unit tests live next to their modules as *.test.ts)
 │       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/
@@ -173,6 +175,7 @@ After the migrations, `DatabaseSeeder`:
 - [x] Full CRUD for Users and Departments
 - [x] Complete all 15 dashboard pages
 - [x] Persistent light/dark theme, accent colors, compact density
+- [x] Chevron brand tokens, self-hosted fonts, SVG logo, reduced-motion setting
 - [x] ⌘K Quick Actions command palette
 - [x] Live audit log with unread badge
 - [x] Connections: integrations, webhooks, API keys — all DB-persisted

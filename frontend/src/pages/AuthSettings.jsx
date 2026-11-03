@@ -71,7 +71,7 @@ export default function AuthSettings() {
         }
     }
 
-    const strengthColor = pwStrength / pwTotal < 0.5 ? "var(--danger)" : pwStrength < pwTotal ? "#f0a832" : "var(--success)";
+    const strengthColor = pwStrength / pwTotal < 0.5 ? "var(--danger)" : pwStrength < pwTotal ? "var(--status-warn-fg)" : "var(--success)";
 
     return (
         <section className="workspace">
@@ -94,7 +94,7 @@ export default function AuthSettings() {
                             className="form-input"
                             type="email"
                             autoComplete="email"
-                            placeholder="name@company.com"
+                            placeholder="name@mehstudios.net"
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
                         />

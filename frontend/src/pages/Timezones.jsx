@@ -92,7 +92,7 @@ function getBizStatus(tz, now) {
     return "closed";
 }
 
-const BIZ_COLOR = { open: "var(--success)", edge: "#f0a832", closed: "var(--muted)" };
+const BIZ_COLOR = { open: "var(--success)", edge: "var(--status-warn-fg)", closed: "var(--muted)" };
 const BIZ_TITLE = { open: "Business hours", edge: "Near opening/closing", closed: "Outside business hours" };
 
 function ClockCard({ entry, onRemove, now, removable }) {

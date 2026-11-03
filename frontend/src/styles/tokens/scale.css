@@ -1,0 +1,77 @@
+/*
+ * Size, shape and type tokens. Spacing sits on a 4px grid. Corners are nearly square (0 to
+ * 2px); the Chevron signature is the clipped corner, --clip-8 for controls and --clip-12 for
+ * large panels, applied with clip-path.
+ */
+:root {
+  /* Spacing, 4px grid */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Corners */
+  --radius-0: 0;
+  --radius-1: 1px;
+  --radius-2: 2px;
+  --radius-round: 50%;
+  --radius-pill: 999px;
+  --clip-8: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  --clip-12: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+
+  /* Font families. Manrope for running text, Montserrat for uppercase labels and buttons. */
+  --font-ui: "Manrope Variable", "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", roboto, arial, sans-serif;
+  --font-cap: "Montserrat", "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", menlo, consolas, "Liberation Mono", monospace;
+
+  /* Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Type scale */
+  --font-size-2xs: 10px;
+  --font-size-xs: 11px;
+  --font-size-sm: 12.5px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 32px;
+  --leading-tight: 1.2;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.6;
+  --tracking-tight: -0.01em;
+  --tracking-caps: 0.08em;
+  --tracking-caps-wide: 0.12em;
+
+  /* Control heights */
+  --control-sm: 32px;
+  --control-md: 38px;
+  --control-field: 40px;
+  --control-lg: 44px;
+
+  /* Layout */
+  --sidebar-width: 256px;
+  --content-max: 1280px;
+
+  /* Stacking order */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-sidebar: 20;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-palette: 300;
+  --z-toast: 400;
+}

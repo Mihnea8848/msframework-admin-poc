@@ -1,0 +1,129 @@
+/*
+ * Primitive colours: the raw palette, and the only file in src/styles that may contain colour
+ * literals (hex or rgb()). Nothing outside src/styles/tokens uses these directly: components
+ * and pages use the semantic tokens in semantic-dark.css / semantic-light.css, which point here.
+ *
+ * Values come from the approved concept (design/concept-chevron.html, "Concept C, Chevron").
+ * Names describe the colour, not its use.
+ */
+:root {
+  /* Brand */
+  --brand-cyan: #2EBFF6;
+  --brand-cobalt: #2689CA;
+  --brand-grey: #6C6C69;
+  --maple-red: #D92A21;
+  --maple-red-700: #B9231B;
+
+  /* Charcoal: the dark neutrals, darkest first */
+  --charcoal-1000: #0F0F0F;
+  --charcoal-900: #171717;
+  --charcoal-850: #1F1F1F;
+  --charcoal-800: #272727;
+  --charcoal-750: #2D2D2D;
+  --charcoal-700: #2E2E2E;
+
+  /* Light neutrals, lightest first */
+  --white: #FFFFFF;
+  --grey-50: #F5F6F7;
+  --grey-75: #F0F1F2;
+  --grey-100: #ECEEF0;
+  --grey-200: #D5D9DD;
+  --grey-250: #C9CDD1;
+  --grey-300: #C4C8CC;
+  --grey-500: #7D838A;
+  --grey-550: #6E7278;
+  --grey-600: #63676D;
+  --grey-700: #4A4D52;
+  --ink: #1E1E1E;
+  --black: #000000;
+
+  /* Translucent white and black (borders, text and washes on charcoal) */
+  --white-a3: rgb(255 255 255 / 3.5%);
+  --white-a5: rgb(255 255 255 / 5%);
+  --white-a7: rgb(255 255 255 / 7%);
+  --white-a16: rgb(255 255 255 / 16%);
+  --white-a20: rgb(255 255 255 / 20%);
+  --white-a40: rgb(255 255 255 / 40%);
+  --white-a50: rgb(255 255 255 / 50%);
+  --white-a56: rgb(255 255 255 / 56%);
+  --white-a72: rgb(255 255 255 / 72%);
+  --white-a95: rgb(255 255 255 / 95%);
+  --black-a3: rgb(0 0 0 / 2.5%);
+  --black-a5: rgb(0 0 0 / 5%);
+  --black-a24: rgb(0 0 0 / 24%);
+  --black-a40: rgb(0 0 0 / 40%);
+  --black-a62: rgb(0 0 0 / 62%);
+  --slate-a45: rgb(24 26 29 / 45%);
+
+  /* Cyan and cobalt steps (accent "cyan" and "cobalt") */
+  --cyan-600: #2176B3;
+  --cyan-700: #1B649A;
+  --cyan-720: #1B629A;
+  --cyan-750: #1F6FA8;
+  --cyan-900: #17507A;
+  --cobalt-300: #6AAEE3;
+  --cobalt-600: #2468A8;
+  --cobalt-700: #1F5E94;
+  --cobalt-750: #1C5F94;
+
+  /* Status hues */
+  --green-400: #4CC38A;
+  --green-800: #186C43;
+  --amber-400: #E8B339;
+  --amber-800: #8A5A00;
+  --red-300: #FF7A6E;
+  --red-500: #C45C55;
+  --red-800: #B3241C;
+  --blue-300: #6AB4EC;
+
+  /* Department seals. "-300" is the lighter tone used on charcoal, "-700" the official or
+     darker tone used in light mode. */
+  --crimson-250: #F47D8A;
+  --crimson-300: #F26473;
+  --crimson-700: #AE0A1C;
+  --purple-300: #B98AD6;
+  --purple-600: #7A4A9E;
+  --purple-650: #6A3F8A;
+  --purple-700: #6D3A8B;
+  --purple-800: #5E3278;
+  --blue-400: #5AA6E6;
+  --blue-700: #2B6FA8;
+  --jade-300: #3FB58E;
+  --jade-600: #1F7A5C;
+  --jade-650: #1A6A50;
+  --jade-700: #21795F;
+  --jade-750: #1C6B54;
+  --jade-800: #185C48;
+  --orange-250: #E88A5E;
+  --orange-300: #E07A4A;
+  --orange-700: #A1441B;
+  --silver-200: #C4C4C4;
+  --silver-300: #B3B3B3;
+  --silver-600: #6B6B6B;
+  --silver-650: #5C5C5C;
+  --silver-700: #555555;
+  --silver-750: #4F4F4F;
+  --silver-800: #474747;
+  --snow-200: #E0E0E0;
+  --snow-800: #3F3F3F;
+  --gold-300: #EBC034;
+  --gold-400: #D9AE2C;
+  --gold-700: #846500;
+  --gold-800: #735800;
+
+  /* Legacy department colours (the avatar-* keys stored in the database). Flat versions of
+     the old gradients, dark enough for white initials (4.5:1). They go away when
+     departments switch to seals. */
+  --dept-azure: #2952FF;
+  --dept-rose: #CB3A77;
+  --dept-cyan: #0078C8;
+  --dept-magenta: #BB2EB8;
+  --dept-amber: #A35F00;
+  --dept-gold: #8C6A00;
+  --dept-violet: #6C32DB;
+  --dept-jade: #117D5D;
+  --dept-sky: #0B78B0;
+  --dept-coral: #C0462A;
+  --dept-orange: #B8500F;
+  --dept-plum: #8A34AA;
+}

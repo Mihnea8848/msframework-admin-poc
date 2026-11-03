@@ -31,7 +31,7 @@ function StatusPill({ on, onLabel, offLabel }) {
     return (
         <span style={{
             fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
-            background: on ? "rgba(45,216,129,0.12)" : "var(--panel-muted)",
+            background: on ? "var(--status-ok-bg)" : "var(--panel-muted)",
             color: on ? "var(--success)" : "var(--muted)",
         }}>
             {on ? onLabel : offLabel}

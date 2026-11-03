@@ -49,9 +49,9 @@ export default function Payments() {
     }
 
     const STATUS_PILL = {
-        completed: { label: "Completed", color: "var(--success)", bg: "rgba(45,216,129,0.12)" },
-        pending:   { label: "Pending",   color: "#f0a832",        bg: "rgba(240,168,50,0.12)" },
-        failed:    { label: "Failed",    color: "var(--danger)",  bg: "rgba(255,106,95,0.12)" },
+        completed: { label: "Completed", color: "var(--success)", bg: "var(--status-ok-bg)" },
+        pending:   { label: "Pending",   color: "var(--status-warn-fg)", bg: "var(--status-warn-bg)" },
+        failed:    { label: "Failed",    color: "var(--danger)",  bg: "var(--status-danger-bg)" },
     };
 
     return (
@@ -103,8 +103,8 @@ export default function Payments() {
                             return (
                                 <div key={tx.id} className="audit-row" style={{ alignItems: "center" }}>
                                     <div className="audit-icon" style={tx.type === "in"
-                                        ? { background: "rgba(45,216,129,0.12)", color: "var(--success)" }
-                                        : { background: "rgba(255,106,95,0.12)", color: "var(--danger)" }
+                                        ? { background: "var(--status-ok-bg)", color: "var(--success)" }
+                                        : { background: "var(--status-danger-bg)", color: "var(--danger)" }
                                     }>
                                         {tx.type === "in" ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
                                     </div>
