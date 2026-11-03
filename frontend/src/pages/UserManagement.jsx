@@ -6,7 +6,7 @@ import { del, get, post, put } from "../api/client";
 import { initialsOf } from "../utils/format";
 import { passwordProblem, validateEmail } from "../utils/validators";
 import Modal, { ModalActions } from "../ui/Modal.jsx";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const EMPTY_FORM = {
     fullName: "",

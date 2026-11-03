@@ -17,8 +17,9 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Page | Route | Description |
 |---|---|---|
+| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left, the grain-and-gradient logo on the right (hidden on phones). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
 | Home | `/` | Overview grid of every section your role can open, with live counts |
-| Dashboard | `/dashboard` | KPI cards (users, active, admins, departments) + live recent-activity feed from the audit log |
+| Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
 | Departments | `/departments` | Create, rename, recolor and delete departments with live member counts |
 | Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar, category filters) |
@@ -128,11 +129,11 @@ msframework-admin-poc/
 │       ├── api/types.ts        # TypeScript types for the backend's JSON responses
 │       ├── auth/               # AuthProvider, auth API calls, permission helpers
 │       ├── layout/             # DashboardLayout, Sidebar, Topbar
-│       ├── pages/              # 15 page components + auth pages
+│       ├── pages/              # 15 page components; auth/ (AuthLayout + sign-in pages), dashboard/
 │       ├── routes/             # navigation.ts (single page/permission registry), AppRoutes, Guards
 │       ├── styles/             # index.css entry: tokens/ (colours, seals, scale, motion), base/, legacy/
 │       ├── theme/              # appearance preferences (theme, accent, density, motion)
-│       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, brand/Logo
+│       ├── ui/                 # Button, Alert, PageHeader, Modal, Toggle, QuickActions, brand/Logo and LogoArt
 │       ├── test/setup.ts       # Vitest setup (unit tests live next to their modules as *.test.ts)
 │       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/

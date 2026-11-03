@@ -193,6 +193,11 @@ frontend/src/styles/
   - The script also migrates the old `accent`/`accentLabel` keys to `accentKey` and deletes them. It never sets inline styles: those would beat the tokens. Keep `theme-init.js` and `appearance.ts` in sync (`src/theme/themeInit.test.ts` runs the script).
 - **Fonts** are self-hosted from `@fontsource-variable/manrope` and `@fontsource/montserrat` (SIL Open Font License 1.1), latin and latin-ext subsets only, declared in `base/fonts.css`. Don't add Google Fonts or other third-party font URLs.
 - **Logo:** `src/ui/brand/Logo.tsx` is the two-path SVG mark, coloured by `--logo-upper` and `--logo-lower`; pass `title` when it is the only name on screen. The favicon is `public/favicon.svg`.
+- **Login art:** `src/ui/brand/LogoArt.tsx` is the large decorative mark behind the sign-in pages: the `Logo.tsx` paths with brand gradients, an alpha mask that fades it toward the form, and an `feTurbulence` grain clipped to the mark. Its ids come from `useId`, it is `aria-hidden`, and the grain follows `--grain-blend`, `--grain-strength` and `--grain-wash` (per theme, in the semantic token files).
+- **Shared controls:** `ui/Button.tsx` (`variant` primary, secondary, ghost or danger; the `<button>` shows the focus ring, the inner face is clipped), `ui/Alert.tsx` (ok, info, warn, danger), and CSS-only blocks you import from the component that uses them: `ui/field.css` (`ms-field`, `ms-field__label`, `ms-field__row`, `ms-input`, `ms-select`, `ms-field__error`, `ms-link`) and `ui/surface.css` (`ms-cut` clipped card, `ms-panel`, `ms-tag`).
+- **Page header:** `ui/PageHeader.tsx` takes `eyebrow`, `title`, `count`, `description` and `actions`, and draws the three-segment stripe (`stripe={false}` hides it; the colours are `--stripe-1` to `--stripe-3`). The older `breadcrumb` ("Group / Page", whose first part becomes the eyebrow) and `subtitle` still work. On phones the eyebrow and stripe are hidden.
+- **Auth pages** live in `src/pages/auth/`. Each page renders `<AuthLayout>` (pass `trace` on Login) with its title, lead and form inside, using the `ms-auth__title`, `ms-auth__lead`, `ms-auth__form` and `ms-auth__alt` classes. The layout keeps the art in one DOM node that moves from page to page, so it is never remounted even though the router renders each auth page separately; only the panel content fades in (`--duration-base`, 6px rise). The logo trace plays once per tab, on the first Login, and is skipped under `[data-motion="reduced"]`. Don't wrap the auth routes in `AuthLayout` in the router as well.
+- **Dashboard** lives in `src/pages/dashboard/`. `status.ts` holds the pure functions that turn the API results into the status cards, the summary line and the figures (tested in `status.test.ts`); the security score comes from `utils/securityChecks.ts`, shared with the Security page. Never show a number the API did not give: a card the role may not read says "Not checked".
 - **Brand names:** the product is MSFramework; in UI text the company is "Multimedia Entertainment Hub" ("MEH Studios Inc" in the narrow sidebar label). Example addresses use the `mehstudios.net` domain.
 
 ## Git workflow
@@ -223,12 +228,17 @@ api/openapi.json       the committed API contract, regenerated with -Dopenapi.wr
 frontend/src/
   api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
   api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
-  auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
+  auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers,
+                       useAuthContext.ts (typed access to the context from .tsx until AuthProvider is converted)
   routes/navigation.ts every page with its path, icon and required permission (router, sidebar and palette use it)
   styles/              index.css (the only CSS entry), tokens/, base/, legacy/ (see "Frontend styles and design tokens")
   theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
-  ui/                  Modal, Toggle, PageHeader, QuickActions, brand/Logo.tsx
-  utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts
+  pages/auth/          AuthLayout (split layout, shared art, motion) + Login, Register, ForgotPassword, ResetPassword
+  pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures)
+  ui/                  Button, Alert, PageHeader, Modal, Toggle, QuickActions, field.css, surface.css,
+                       brand/Logo.tsx, brand/LogoArt.tsx
+  utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts,
+                       securityChecks.ts (Security page and Dashboard)
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
   **/*.test.ts         unit tests, next to the module they cover
 ```

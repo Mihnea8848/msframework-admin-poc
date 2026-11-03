@@ -41,6 +41,11 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Appearance: System theme, six brand accents, and a Full/Reduced motion
   setting that defaults to the device setting.
 - SVG logo and favicon.
+- Dashboard System status: API, database, integrations and security score
+  cards from live checks (request latency, paused integrations, the
+  Security page's checks), a one-line summary, "Checked X ago" and a
+  *Refresh status* button. Anything the role may not read is shown as
+  "Not checked" instead of a number.
 
 ### Fixed
 - Changing your own email no longer logs you out.
@@ -78,6 +83,18 @@ section into a version (see `AGENTS.md`, Git workflow).
   sidebar.
 - Manrope and Montserrat are self-hosted instead of loaded from Google
   Fonts, so no visitor data goes to a third party.
+- Sign in, Register, Forgot password and Reset password are rebuilt on the
+  Chevron split layout: the form on the left, the grain-and-gradient logo
+  on the right (smaller than in the concept, fading toward the form, hidden
+  on phones), and the audit notice under the form. The logo is traced once
+  on the first sign-in screen; between these pages only the form fades in
+  with a small rise, and nothing moves with reduced motion. Behaviour,
+  validation and messages are unchanged.
+- The Dashboard and the page header follow the concept: eyebrow, title,
+  description, the three-segment stripe, clipped-corner cards and panels.
+  The header keeps its old props, so the other pages pick it up as is.
+- The Security page's checks moved to `utils/securityChecks.ts`, shared
+  with the Dashboard, so both show the same score.
 - The theme is applied before the first paint by `public/theme-init.js`
   instead of an inline script. Saved accents from the old palette move to
   the new accent keys (Lime and Rose become Cyan).

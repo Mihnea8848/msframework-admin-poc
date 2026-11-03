@@ -7,7 +7,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
 import { del, get, patch, post } from "../api/client";
 import { formatDateTime } from "../utils/format";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 import Toggle from "../ui/Toggle.jsx";
 
 const SERVICE_META = {

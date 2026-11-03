@@ -1,0 +1,57 @@
+@layer components {
+  .ms-alert {
+    --alert-fg: var(--status-info-fg);
+    --alert-bg: var(--status-info-bg);
+    --alert-border: var(--status-info-border);
+
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: 10px var(--space-3);
+    border: 1px solid var(--alert-border);
+    border-radius: var(--radius-2);
+    background: var(--alert-bg);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-normal);
+  }
+
+  .ms-alert--ok {
+    --alert-fg: var(--status-ok-fg);
+    --alert-bg: var(--status-ok-bg);
+    --alert-border: var(--status-ok-border);
+  }
+
+  .ms-alert--warn {
+    --alert-fg: var(--status-warn-fg);
+    --alert-bg: var(--status-warn-bg);
+    --alert-border: var(--status-warn-border);
+  }
+
+  .ms-alert--danger {
+    --alert-fg: var(--status-danger-fg);
+    --alert-bg: var(--status-danger-bg);
+    --alert-border: var(--status-danger-border);
+  }
+
+  .ms-alert__icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--alert-fg);
+  }
+
+  .ms-alert__body {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-alert__body a {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}

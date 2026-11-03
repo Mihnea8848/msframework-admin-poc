@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock, ShieldAlert, XCircle } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { hasPermission, hasRole } from "../auth/permissions";
+import { hasPermission } from "../auth/permissions";
 import { get } from "../api/client";
 import { auditMeta } from "../utils/auditTypes";
 import { relTime } from "../utils/format";
-import PageHeader from "../ui/PageHeader.jsx";
+import { SECURITY_AUDIT_LIMIT, securityChecks, securityScore } from "../utils/securityChecks";
+import PageHeader from "../ui/PageHeader";
 
 function ScoreRing({ score }) {
     const r = 52;
@@ -37,8 +38,6 @@ function ScoreRing({ score }) {
     );
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 const STATUS_ICON = {
     pass: <CheckCircle size={14} />,
     warn: <AlertTriangle size={14} />,
@@ -62,7 +61,7 @@ export default function Security() {
         let alive = true;
         Promise.allSettled([
             canReadUsers ? get("/api/users") : Promise.resolve([]),
-            canReadAudit ? get("/api/audit?limit=300") : Promise.resolve([]),
+            canReadAudit ? get(`/api/audit?limit=${SECURITY_AUDIT_LIMIT}`) : Promise.resolve([]),
             canReadKeys ? get("/api/keys") : Promise.resolve([]),
         ]).then(([u, a, k]) => {
             if (!alive) return;
@@ -77,53 +76,8 @@ export default function Security() {
         return () => { alive = false; };
     }, [canReadUsers, canReadAudit, canReadKeys]);
 
-    const inactive = users.filter((u) => (u.status || "").toLowerCase() !== "active").length;
-    const admins = users.filter((u) => hasRole(u, "ADMIN")).length;
-    const adminRatio = users.length ? admins / users.length : 0;
-    const noDepartment = users.filter((u) => u.departmentId == null).length;
-    const failedLogins = events.filter((e) => e.eventType === "login_failed" && now - new Date(e.createdAt).getTime() < DAY_MS).length;
-    const oldKeys = keys.filter((k) => k.createdAt && now - new Date(k.createdAt).getTime() > 90 * DAY_MS).length;
-
-    const checks = [];
-    if (canReadUsers) {
-        checks.push({
-            label: "Admin ratio",
-            detail: `${admins} admin${admins !== 1 ? "s" : ""} of ${users.length} users (${(adminRatio * 100).toFixed(0)}%)`,
-            status: admins === 0 ? "fail" : adminRatio <= 0.25 ? "pass" : adminRatio <= 0.5 ? "warn" : "fail",
-        });
-        checks.push({
-            label: "Inactive accounts",
-            detail: inactive === 0 ? "No inactive accounts" : `${inactive} account${inactive !== 1 ? "s are" : " is"} deactivated — delete them if no longer needed`,
-            status: inactive === 0 ? "pass" : inactive < 3 ? "warn" : "fail",
-        });
-        checks.push({
-            label: "Unassigned users",
-            detail: `${noDepartment} user${noDepartment !== 1 ? "s have" : " has"} no department`,
-            status: noDepartment === 0 ? "pass" : "warn",
-        });
-    }
-    if (canReadAudit) {
-        checks.push({
-            label: "Failed sign-ins (24 h)",
-            detail: `${failedLogins} failed attempt${failedLogins !== 1 ? "s" : ""} in the last 24 hours`,
-            status: failedLogins === 0 ? "pass" : failedLogins < 5 ? "warn" : "fail",
-        });
-    }
-    if (canReadKeys) {
-        checks.push({
-            label: "API key age",
-            detail: keys.length === 0 ? "No API keys issued" : `${oldKeys} of ${keys.length} key${keys.length !== 1 ? "s" : ""} older than 90 days`,
-            status: oldKeys === 0 ? "pass" : "warn",
-        });
-    }
-    checks.push({
-        label: "Two-factor authentication",
-        detail: "Not available yet — planned on the roadmap",
-        status: "warn",
-    });
-
-    const points = { pass: 1, warn: 0.5, fail: 0 };
-    const score = checks.length ? Math.round((checks.reduce((sum, c) => sum + points[c.status], 0) / checks.length) * 100) : 0;
+    const checks = securityChecks({ users, events, keys, now, canReadUsers, canReadAudit, canReadKeys });
+    const score = securityScore(checks);
 
     const alerts = events.filter((e) => auditMeta(e.eventType).alert).slice(0, 8);
 

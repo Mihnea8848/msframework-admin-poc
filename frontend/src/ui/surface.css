@@ -1,0 +1,80 @@
+/*
+ * Surfaces: the clipped Chevron card (ms-cut) and the plain panel (ms-panel). CSS only.
+ *
+ * ms-cut draws a 1px outline with the clipped corner: the element itself is the outline colour,
+ * clipped, and ::before is the fill, inset by 1px and clipped the same way. Set --cut for the
+ * corner size, --cut-line and --cut-fill to recolour it.
+ */
+@layer components {
+  .ms-cut {
+    --cut: 10px;
+
+    position: relative;
+    isolation: isolate;
+    background: var(--cut-line, var(--border-subtle));
+    clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+  }
+
+  .ms-cut::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    background: var(--cut-fill, var(--surface-1));
+    clip-path: polygon(0 0, calc(100% - var(--cut) + 0.59px) 0, 100% calc(var(--cut) - 0.59px), 100% 100%, calc(var(--cut) - 0.59px) 100%, 0 calc(100% - var(--cut) + 0.59px));
+  }
+
+  .ms-panel {
+    min-width: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+  }
+
+  .ms-panel__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) 18px var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .ms-panel__title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+  }
+
+  .ms-panel__meta {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  /* A small uppercase label with an outline, for example "Coming soon" */
+  .ms-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  @media (width <= 767px) {
+    .ms-panel__head {
+      padding: 10px var(--space-3) var(--space-2);
+    }
+
+    .ms-panel__meta {
+      font-size: 12px;
+    }
+  }
+}

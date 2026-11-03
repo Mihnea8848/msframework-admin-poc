@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Database, RefreshCw } from "lucide-react";
 import { get } from "../api/client";
 import { formatBytes } from "../utils/format";
-import PageHeader from "../ui/PageHeader.jsx";
+import PageHeader from "../ui/PageHeader";
 
 const DESCRIPTIONS = {
     users: "Accounts that can sign in",

@@ -1,0 +1,20 @@
+@layer components {
+  .ms-logo-art {
+    display: block;
+    overflow: visible;
+  }
+
+  .ms-logo-art__stop-upper {
+    stop-color: var(--logo-upper);
+  }
+
+  .ms-logo-art__stop-lower {
+    stop-color: var(--logo-lower);
+  }
+
+  /* Grey noise blended into the gradient, so the fade breaks up like film grain */
+  .ms-logo-art__grain {
+    opacity: var(--grain-strength);
+    mix-blend-mode: var(--grain-blend);
+  }
+}
