@@ -1,0 +1,189 @@
+/*
+ * Appearance (pages/Appearance.tsx): one panel per preference with pressable option tiles, the
+ * accent swatches and a live preview of the palette tokens.
+ */
+@layer pages {
+  .ms-appearance {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-appearance) :where(h2, p) {
+    margin: 0;
+  }
+
+  .ms-appearance__grid {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .ms-appearance__body {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px 18px;
+  }
+
+  .ms-appearance__sub {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-appearance__options,
+  .ms-appearance__accents {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+    gap: var(--space-2);
+  }
+
+  .ms-appearance__option,
+  .ms-appearance__accent {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    min-height: var(--touch-target);
+    padding: var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ms-appearance__accent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-appearance__option:hover,
+  .ms-appearance__accent:hover {
+    background: var(--row-hover);
+  }
+
+  .ms-appearance__option:focus-visible,
+  .ms-appearance__accent:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ms-appearance__option[aria-pressed="true"],
+  .ms-appearance__accent[aria-pressed="true"] {
+    padding: 11px;
+    border: 2px solid var(--accent-line);
+    background: var(--accent-tint);
+  }
+
+  .ms-appearance__option-icon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: var(--space-1);
+    color: var(--text-secondary);
+  }
+
+  .ms-appearance__option[aria-pressed="true"] .ms-appearance__option-icon {
+    color: var(--accent-text);
+  }
+
+  .ms-appearance__option-label {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-appearance__option-hint {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-appearance__swatch {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-round);
+  }
+
+  .ms-appearance__swatch--cyan { background: var(--accent-cyan-line); }
+  .ms-appearance__swatch--cobalt { background: var(--accent-cobalt-line); }
+  .ms-appearance__swatch--violet { background: var(--accent-violet-line); }
+  .ms-appearance__swatch--jade { background: var(--accent-jade-line); }
+  .ms-appearance__swatch--gold { background: var(--accent-gold-line); }
+  .ms-appearance__swatch--silver { background: var(--accent-silver-line); }
+
+  .ms-appearance__palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(110px, 100%), 1fr));
+    gap: var(--space-2);
+  }
+
+  .ms-appearance__chip {
+    display: flex;
+    align-items: flex-end;
+    min-height: 56px;
+    padding: var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-appearance__chip--canvas { background: var(--canvas); }
+  .ms-appearance__chip--surface { background: var(--surface-1); }
+  .ms-appearance__chip--raised { background: var(--surface-2); }
+
+  .ms-appearance__chip--primary {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+
+  .ms-appearance__chip--accent {
+    background: var(--surface-1);
+    color: var(--accent-text);
+  }
+
+  .ms-appearance__chip--success {
+    background: var(--status-ok-bg);
+    color: var(--status-ok-fg);
+  }
+
+  .ms-appearance__chip--warning {
+    background: var(--status-warn-bg);
+    color: var(--status-warn-fg);
+  }
+
+  .ms-appearance__chip--danger {
+    background: var(--danger-solid);
+    color: var(--on-danger);
+  }
+
+  .ms-appearance__sample {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .ms-appearance__link {
+    color: var(--accent-text);
+    font-weight: var(--weight-semibold);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (width <= 767px) {
+    .ms-appearance__grid {
+      gap: var(--space-3);
+    }
+
+    .ms-appearance__body {
+      padding: var(--space-3);
+    }
+  }
+}

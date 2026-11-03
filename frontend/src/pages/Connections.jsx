@@ -8,7 +8,7 @@ import { hasPermission } from "../auth/permissions";
 import { del, get, patch, post } from "../api/client";
 import { formatDateTime } from "../utils/format";
 import PageHeader from "../ui/PageHeader";
-import Toggle from "../ui/Toggle.jsx";
+import Toggle from "../ui/Toggle";
 
 const SERVICE_META = {
     slack:     { name: "Slack",           icon: MessageSquare, color: "#4A154B", category: "Messaging"    },

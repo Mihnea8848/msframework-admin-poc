@@ -1,0 +1,173 @@
+/*
+ * Security (pages/Security.tsx): the score ring in a clipped card beside the list of checks,
+ * then the recent security events.
+ */
+@layer pages {
+  .ms-security {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-security) :where(h2, p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  :where(.ms-security) :where(ul) {
+    list-style: none;
+  }
+
+  .ms-security__grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .ms-security__score-card {
+    padding: var(--space-5) var(--space-4) var(--space-4);
+    text-align: center;
+  }
+
+  .ms-security__score {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-1);
+  }
+
+  .ms-security__score--ok {
+    color: var(--status-ok-fg);
+  }
+
+  .ms-security__score--warn {
+    color: var(--status-warn-fg);
+  }
+
+  .ms-security__score--danger {
+    color: var(--status-danger-fg);
+  }
+
+  .ms-security__ring-track {
+    stroke: var(--surface-3);
+  }
+
+  .ms-security__ring-value {
+    stroke: currentcolor;
+    transition: stroke-dasharray var(--duration-slow) var(--ease-standard);
+  }
+
+  .ms-security__ring-score {
+    fill: currentcolor;
+    font-family: var(--font-ui);
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .ms-security__ring-max {
+    fill: var(--text-tertiary);
+    font-family: var(--font-ui);
+    font-size: 11px;
+  }
+
+  .ms-security__score-label {
+    font-family: var(--font-cap);
+    font-size: var(--font-size-sm);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-security__score-note {
+    margin-top: var(--space-3);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-security__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-security__row:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-security__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-2);
+  }
+
+  .ms-security__icon > svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .ms-security__icon--pass {
+    background: var(--status-ok-bg);
+    color: var(--status-ok-fg);
+  }
+
+  .ms-security__icon--warn {
+    background: var(--status-warn-bg);
+    color: var(--status-warn-fg);
+  }
+
+  .ms-security__icon--fail {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-fg);
+  }
+
+  .ms-security__label {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-security__detail {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-security__event {
+    font-weight: var(--weight-medium);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-security__time {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .ms-security__empty {
+    padding: var(--space-4) 18px;
+    color: var(--text-secondary);
+  }
+
+  @media (width <= 767px) {
+    .ms-security__grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .ms-security__row {
+      gap: 10px;
+      padding: 10px var(--space-3);
+    }
+
+    .ms-security__empty {
+      padding: var(--space-3);
+    }
+  }
+}

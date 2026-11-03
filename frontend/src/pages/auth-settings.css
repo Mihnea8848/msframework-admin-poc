@@ -1,0 +1,167 @@
+/*
+ * Account & security (pages/AuthSettings.tsx): the email and password forms side by side, then
+ * the two-factor row and the connected accounts, both marked "Coming soon".
+ */
+@layer pages {
+  .ms-account {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-account) :where(h2, p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-account__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .ms-account__body {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-4) 18px 18px;
+  }
+
+  .ms-account__sub {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-account__sub strong {
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-account__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ms-account__strength {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-account__meter {
+    display: flex;
+    gap: 3px;
+  }
+
+  .ms-account__seg {
+    flex: 1;
+    height: 4px;
+    background: var(--border-subtle);
+  }
+
+  .ms-account__strength--ok {
+    color: var(--status-ok-fg);
+  }
+
+  .ms-account__strength--warn {
+    color: var(--status-warn-fg);
+  }
+
+  .ms-account__strength--danger {
+    color: var(--status-danger-fg);
+  }
+
+  .ms-account__seg--on {
+    background: currentcolor;
+  }
+
+  .ms-account__section {
+    margin-bottom: var(--space-4);
+  }
+
+  .ms-account__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) 18px;
+  }
+
+  .ms-account__row-text {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .ms-account__row-title,
+  .ms-account .ms-panel__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
+  }
+
+  .ms-account__accounts {
+    list-style: none;
+  }
+
+  .ms-account__account {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-account__account:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-account__account-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+
+  .ms-account__account-icon > svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ms-account__account-name {
+    flex: 1;
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-account__account-status {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  @media (width <= 767px) {
+    .ms-account__grid {
+      gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .ms-account__body {
+      gap: var(--space-3);
+      padding: var(--space-3);
+    }
+
+    .ms-account__row,
+    .ms-account__account {
+      padding: var(--space-3);
+    }
+  }
+}
