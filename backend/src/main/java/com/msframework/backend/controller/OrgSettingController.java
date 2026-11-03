@@ -1,6 +1,7 @@
 package com.msframework.backend.controller;
 
 import com.msframework.backend.config.Permission;
+import com.msframework.backend.dto.SettingValueRequest;
 import com.msframework.backend.dto.WorldClock;
 import com.msframework.backend.entity.OrgSetting;
 import com.msframework.backend.entity.User;
@@ -8,6 +9,12 @@ import com.msframework.backend.exception.ApiException;
 import com.msframework.backend.repository.OrgSettingRepository;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.CurrentUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,6 +36,7 @@ import java.util.Set;
  *   <li>{@code worldClocks} – JSON array of {"label", "tz"} shown on the Timezones page</li>
  * </ul>
  */
+@Tag(name = "Settings", description = "Organisation-wide settings")
 @RestController
 @RequestMapping("/api/settings")
 @RequiredArgsConstructor
@@ -46,8 +53,13 @@ public class OrgSettingController {
     private final JsonMapper jsonMapper;
 
     /** 200 with the setting, or 204 when it has never been saved. */
+    @Operation(operationId = "getSetting", summary = "Read an organisation setting")
+    @ApiResponse(responseCode = "200", description = "The saved setting")
+    @ApiResponse(responseCode = "204", description = "The setting has never been saved", content = @Content)
     @GetMapping("/{key}")
-    public ResponseEntity<OrgSetting> get(@PathVariable String key, Principal principal) {
+    public ResponseEntity<OrgSetting> get(
+            @Parameter(schema = @Schema(allowableValues = {ORG_TIMEZONE, WORLD_CLOCKS})) @PathVariable String key,
+            Principal principal) {
         currentUserService.require(principal);
         requireKnown(key);
         return orgSettingRepository.findById(key)
@@ -55,13 +67,17 @@ public class OrgSettingController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @Operation(operationId = "saveSetting", summary = "Save an organisation setting")
     @PutMapping("/{key}")
-    public OrgSetting put(@PathVariable String key, @RequestBody Map<String, String> body, Principal principal) {
+    public OrgSetting put(
+            @Parameter(schema = @Schema(allowableValues = {ORG_TIMEZONE, WORLD_CLOCKS})) @PathVariable String key,
+            @RequestBody SettingValueRequest body,
+            Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.TIMEZONES_UPDATE);
         requireKnown(key);
         String value = switch (key) {
-            case ORG_TIMEZONE -> validateZone(body.get("value"));
-            case WORLD_CLOCKS -> normalizeClocks(body.get("value"));
+            case ORG_TIMEZONE -> validateZone(body.value());
+            case WORLD_CLOCKS -> normalizeClocks(body.value());
             default -> throw ApiException.notFound("Unknown setting: " + key);
         };
 

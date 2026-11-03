@@ -58,6 +58,7 @@ Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This
 | `FRONTEND_URL` | `http://localhost:5173` | Base URL used in password-reset links |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@test.com` / `password123` | First admin account, created on an empty database only |
 | `SHOW_SQL` | `false` | Log Hibernate SQL |
+| `API_DOCS_ENABLED` | `true` | Serve the OpenAPI description at `/v3/api-docs` without login. Set it to `false` in production |
 
 ## Roles and permissions
 
@@ -128,6 +129,21 @@ Frontend scripts (in `frontend/`):
   - calling `setState` synchronously inside `useEffect` (do it in a promise or callback instead);
   - calling `Date.now()` during render.
 
+## API contract (OpenAPI)
+
+- The backend describes its API with springdoc-openapi (`springdoc-openapi-starter-webmvc-api`, no Swagger UI). The description is served at `GET /v3/api-docs` without login while `API_DOCS_ENABLED` is `true` (the default for dev and tests). Vite only proxies `/api`, so this is the one URL to fetch from the backend port: `curl http://localhost:8080/v3/api-docs`.
+- A copy is committed as **`api/openapi.json`** at the repository root: pretty-printed, keys sorted, no timestamps, server URL pinned to `/`. The frontend will generate its types from it.
+- `OpenApiContractTest` fetches `/v3/api-docs` during `./mvnw verify`, normalises it and fails when it differs from `api/openapi.json`, naming the first line that differs.
+- **Rule: if you change the API, regenerate `api/openapi.json` in the same pull request** and review its diff:
+  ```bash
+  (cd backend && ./mvnw verify -Dopenapi.write=true)
+  # quicker, only the contract test:
+  (cd backend && ./mvnw test -Dtest=OpenApiContractTest -Dopenapi.write=true)
+  ```
+  `OPENAPI_WRITE=true` in the environment does the same. The test finds the repository root from its own class files, so it works whichever directory Maven runs from.
+- Changes that alter the contract: an endpoint, a path or query parameter, a request or response DTO field, a `@Schema`/`@Operation`/`@Tag` annotation, or the project version in `pom.xml` (it is the `info.version`).
+- How endpoints are documented: every controller has a `@Tag`, every endpoint an `@Operation` with an explicit `operationId` (names must stay unique and stable, because generated clients use them) and a `summary`. Endpoints that answer 201 or 204 declare it with `@ApiResponse`. `config/OpenApiConfig` adds the `ErrorResponse` body as the `4XX` and `5XX` response of every operation, so don't repeat it per endpoint.
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
@@ -140,6 +156,7 @@ Frontend scripts (in `frontend/`):
 | UI says "The backend is not reachable" | The backend isn't running or failed at start-up. Check its console. |
 | Login works but pages show "permission" errors | That's expected for limited roles. Check the user's role on the User management page. |
 | `docker compose up` complains about the name `msframework_db` | A container with that name exists from another checkout: `docker rm -f msframework_db` (the data volume is kept). |
+| `OpenApiContractTest` fails with "The API no longer matches api/openapi.json" | The API changed. If that was intended, regenerate the file (see API contract) and commit it with the change. |
 | Start-up fails with "does not look like an MSFramework schema" | `DB_URL` points at a database that has other tables and no Flyway history. Use an empty database, or this app's own database. |
 | Start-up fails with `Schema-validation: missing column` (or table) | An entity changed without a migration. Add a `V<n>__...sql` that makes the same change. |
 | Start-up fails with `Validate failed: Migrations have failed validation` / checksum mismatch | An applied migration file was edited. Restore it and put the change in a new migration. |
@@ -161,13 +178,14 @@ The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any
 ```
 backend/src/main/java/com/msframework/backend/
   config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations,
-               FlywayConfig (guarded baseline), DatabaseSeeder
+               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses)
 resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schema changes)
   controller/  REST controllers under /api/* (thin: authorize, then delegate)
   service/     CurrentUserService (who is calling + permission checks), UserService (validation + rules),
                PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService
-  dto/         records for every request/response. Entities are never serialized.
+  dto/         records for every request/response (request bodies are never a Map). Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
+api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
 frontend/src/
   api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
   api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
@@ -191,6 +209,8 @@ Conventions:
 - **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
 - **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. No migration is needed: the database deliberately has no CHECK listing permission names. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
 - **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`) and a component to the `COMPONENTS` map in `routes/AppRoutes.jsx`.
+- **Request bodies** are records in `dto/` named after what they carry (`ChangePasswordRequest`), never `Map<String, ...>`, so the contract describes them. Keep field names stable: the frontend sends them as-is.
+- **API changes** go with a regenerated `api/openapi.json` in the same pull request.
 - **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly.
 - **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.ts`. Keep them in sync, and cover a changed rule in `utils/validators.test.ts`.
 - Pages labelled as demo or sample data (Payments, department performance and budget, MFA, SSO) are intentionally not backed by real services. Keep them clearly labelled until they are.

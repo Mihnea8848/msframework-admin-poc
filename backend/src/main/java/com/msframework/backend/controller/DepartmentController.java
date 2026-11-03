@@ -12,6 +12,9 @@ import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.CurrentUserService;
 import com.msframework.backend.service.DepartmentRules;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Departments", description = "Departments and their member counts")
 @RestController
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
@@ -34,6 +38,8 @@ public class DepartmentController {
     private final AuditService auditService;
 
     /** Public: the registration form needs the list of departments. */
+    @Operation(operationId = "listDepartments", summary = "List departments with their member counts",
+            description = "Public, because the registration form needs it.")
     @GetMapping
     public List<DepartmentResponse> list() {
         Map<Long, Long> counts = new HashMap<>();
@@ -45,6 +51,8 @@ public class DepartmentController {
                 .toList();
     }
 
+    @Operation(operationId = "createDepartment", summary = "Create a department")
+    @ApiResponse(responseCode = "201", description = "Created")
     @PostMapping
     public ResponseEntity<DepartmentResponse> create(@RequestBody DepartmentRequest request, Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.DEPARTMENT_CREATE);
@@ -57,6 +65,8 @@ public class DepartmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
+    @Operation(operationId = "updateDepartment", summary = "Rename or recolour a department",
+            description = "Managers can only edit their own department.")
     @PutMapping("/{id}")
     public DepartmentResponse update(@PathVariable Long id, @RequestBody DepartmentRequest request, Principal principal) {
         User actor = currentUserService.requirePermission(principal, Permission.DEPARTMENT_UPDATE);
@@ -89,6 +99,9 @@ public class DepartmentController {
     }
 
     /** Members of the deleted department are kept and simply become unassigned. */
+    @Operation(operationId = "deleteDepartment", summary = "Delete a department",
+            description = "Its members are kept and become unassigned.")
+    @ApiResponse(responseCode = "204", description = "Deleted")
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> delete(@PathVariable Long id, Principal principal) {

@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Spring's error page must be reachable, otherwise every error is reported as 401/403.
                         .requestMatchers("/error").permitAll()
+                        // OpenAPI description; production turns it off (springdoc.api-docs.enabled=false).
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login",
                                 "/api/auth/register",

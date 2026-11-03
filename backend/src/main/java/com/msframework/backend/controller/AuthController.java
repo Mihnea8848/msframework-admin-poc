@@ -1,8 +1,12 @@
 package com.msframework.backend.controller;
 
+import com.msframework.backend.dto.ChangeEmailRequest;
+import com.msframework.backend.dto.ChangePasswordRequest;
 import com.msframework.backend.dto.CurrentUserDto;
+import com.msframework.backend.dto.ForgotPasswordRequest;
 import com.msframework.backend.dto.LoginRequest;
 import com.msframework.backend.dto.RegisterRequest;
+import com.msframework.backend.dto.ResetPasswordRequest;
 import com.msframework.backend.dto.UserDto;
 import com.msframework.backend.entity.User;
 import com.msframework.backend.exception.ApiException;
@@ -12,6 +16,9 @@ import com.msframework.backend.service.AuthSessionService;
 import com.msframework.backend.service.CurrentUserService;
 import com.msframework.backend.service.PasswordResetService;
 import com.msframework.backend.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -25,9 +32,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Map;
 import java.util.Optional;
 
+@Tag(name = "Auth", description = "Sign-in, registration, password reset and the caller's own account")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -41,6 +48,8 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
     private final AuditService auditService;
 
+    @Operation(operationId = "login", summary = "Sign in and start a session",
+            description = "Sets the session cookie. An inactive account gets 403.")
     @PostMapping("/login")
     public CurrentUserDto login(@Valid @RequestBody LoginRequest request,
                                 HttpServletRequest httpRequest,
@@ -70,6 +79,8 @@ public class AuthController {
     }
 
     /** The signed-in user, or an empty 200 response for anonymous visitors. */
+    @Operation(operationId = "getCurrentUser", summary = "The signed-in user",
+            description = "Answers 200 with an empty body when nobody is signed in.")
     @GetMapping("/me")
     public ResponseEntity<CurrentUserDto> me(Principal principal, HttpServletRequest request) {
         Optional<User> user = currentUserService.find(principal);
@@ -83,12 +94,16 @@ public class AuthController {
         return ResponseEntity.ok(userService.toCurrentUserDto(user.get()));
     }
 
+    @Operation(operationId = "register", summary = "Create an account with the MEMBER role")
+    @ApiResponse(responseCode = "201", description = "Created")
     @PostMapping("/register")
     public ResponseEntity<UserDto> register(@Valid @RequestBody RegisterRequest request) {
         User saved = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.toDto(saved));
     }
 
+    @Operation(operationId = "logout", summary = "Sign out and end the session")
+    @ApiResponse(responseCode = "204", description = "Signed out")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, Principal principal) {
         if (principal != null) {
@@ -98,29 +113,36 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(operationId = "changeOwnEmail", summary = "Change the caller's email address",
+            description = "The session stays valid.")
     @PostMapping("/email")
-    public CurrentUserDto changeEmail(@RequestBody Map<String, String> body,
+    public CurrentUserDto changeEmail(@RequestBody ChangeEmailRequest body,
                                       Principal principal,
                                       HttpServletRequest request,
                                       HttpServletResponse response) {
         User user = currentUserService.require(principal);
-        String newEmail = userService.changeOwnEmail(user, body.get("email"), body.get("currentPassword"));
+        String newEmail = userService.changeOwnEmail(user, body.email(), body.currentPassword());
         // The session principal is the email address, so re-bind it or the user would be logged out.
         authSessionService.refreshPrincipal(newEmail, request, response);
         return userService.toCurrentUserDto(user);
     }
 
+    @Operation(operationId = "changeOwnPassword", summary = "Change the caller's password")
+    @ApiResponse(responseCode = "204", description = "Password changed")
     @PostMapping("/password")
-    public ResponseEntity<Void> changePassword(@RequestBody Map<String, String> body, Principal principal) {
+    public ResponseEntity<Void> changePassword(@RequestBody ChangePasswordRequest body, Principal principal) {
         User user = currentUserService.require(principal);
-        userService.changeOwnPassword(user, body.get("currentPassword"), body.get("newPassword"));
+        userService.changeOwnPassword(user, body.currentPassword(), body.newPassword());
         return ResponseEntity.noContent().build();
     }
 
     /** Always answers 204 so the response does not reveal which emails are registered. */
+    @Operation(operationId = "requestPasswordReset", summary = "Request a password reset link",
+            description = "Answers 204 whether or not the email is registered.")
+    @ApiResponse(responseCode = "204", description = "Accepted")
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@RequestBody Map<String, String> body) {
-        String email = body.getOrDefault("email", "");
+    public ResponseEntity<Void> forgotPassword(@RequestBody ForgotPasswordRequest body) {
+        String email = body.email();
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("Email is required");
         }
@@ -128,9 +150,11 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(operationId = "resetPassword", summary = "Set a new password with a reset token")
+    @ApiResponse(responseCode = "204", description = "Password changed")
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody Map<String, String> body) {
-        passwordResetService.resetPassword(body.get("token"), body.get("newPassword"));
+    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest body) {
+        passwordResetService.resetPassword(body.token(), body.newPassword());
         return ResponseEntity.noContent().build();
     }
 }

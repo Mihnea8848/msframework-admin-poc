@@ -58,6 +58,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 - **Role-based access control:** ADMIN, MANAGER, MEMBER and VIEWER roles, permission-checked on every endpoint. Managers can only edit their own department and its members. The system always keeps one active admin.
 - **Audit logging** on every mutating action, including failed and blocked sign-ins.
 - **Security:** BCrypt passwords, session cookies (`HttpOnly`, `SameSite=Lax`), session-id rotation on login, password hashes never leave the server, API keys and reset tokens stored only as SHA-256 hashes, deactivated users lose access immediately.
+- **OpenAPI contract:** the backend serves its OpenAPI 3.1 description at `/v3/api-docs` (springdoc; switched off in production with `API_DOCS_ENABLED=false`), and a copy is committed as [`api/openapi.json`](api/openapi.json). A test fails when the two drift apart; see [`AGENTS.md`](AGENTS.md) (API contract) for how to regenerate it.
 - **Consistent JSON errors:** `{"status": 409, "error": "Conflict", "message": "…"}` with the correct HTTP status.
 
 ---
