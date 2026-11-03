@@ -107,6 +107,12 @@ The Vite server listens on `0.0.0.0`, so the terminal also prints a **Network** 
 
 ---
 
+## Contributing
+
+Every change goes through a pull request that passes CI and is squash merged; `main` is protected. See the Git workflow section of [`AGENTS.md`](AGENTS.md) and record user-visible changes in [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
 ## Project Structure
 
 ```

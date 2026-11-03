@@ -1,6 +1,6 @@
 # AGENTS.md
 
-How to get MSFramework Admin running, how it is put together, and the rules for changing it. This is written for both people and coding agents. The feature overview is in `README.md`.
+How to get MSFramework Admin running, how it is put together, and the rules for changing it (including the git workflow). This is written for both people and coding agents. The feature overview is in `README.md`.
 
 ## What runs where
 
@@ -114,6 +114,18 @@ Additional rules, enforced in `UserService`:
 | UI says "The backend is not reachable" | The backend isn't running or failed at start-up. Check its console. |
 | Login works but pages show "permission" errors | That's expected for limited roles. Check the user's role on the User management page. |
 | `docker compose up` complains about the name `msframework_db` | A container with that name exists from another checkout: `docker rm -f msframework_db` (the data volume is kept). |
+
+## Git workflow
+
+The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any commit, push, pull request, merge or tag. In short:
+
+- Never commit to `main`. Branch from an up-to-date `main`, open a pull request, wait for both CI checks ("Build Frontend (React)" and "Build & Test Backend (Spring Boot)"), then squash merge and delete the branch.
+- Commit as the configured git identity, with GPG-signed commits, pushed over SSH. If signing fails, stop and ask; never commit unsigned.
+- No AI attribution anywhere: no `Co-Authored-By` lines or "Generated with" footers in commits, pull requests, comments or tags.
+- Commit subjects are imperative and at most about 60 characters, followed by a body that says what changed and why. No emojis, em dashes or `feat:`-style prefixes.
+- Pull request bodies have a "What changed" list and a "Testing" checklist (`.github/pull_request_template.md`); tick only what was actually run.
+- Update `README.md`, `AGENTS.md` and the "Unreleased" section of `CHANGELOG.md` in the same pull request as the change.
+- Repository settings back this up: squash merges only, branches deleted after merge, and rulesets that protect `main` (pull requests only, both checks required, linear history, no force push or deletion) and `v*` tags. Repository admins can bypass them. If a CI job is renamed, update the ruleset's check names too.
 
 ## Architecture notes for agents
 
