@@ -7,6 +7,8 @@
 
 A modern, full-stack company administration dashboard. Centralizes user management, department structure, integrations, security monitoring, and audit logging in a single interface — replacing the usual patchwork of disconnected SaaS tools.
 
+> **Setting up a machine?** See [`AGENTS.md`](AGENTS.md) for the full setup guide, troubleshooting and conventions.
+
 ---
 
 ## Features
@@ -15,42 +17,48 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Page | Route | Description |
 |---|---|---|
-| Home | `/` | Overview grid with live KPIs linking to every section |
-| Dashboard | `/dashboard` | KPI cards (users, active, admins, departments) + recent activity feed |
-| User Management | `/users` | Full CRUD for users — create, edit role/status/department, delete |
-| Departments | `/departments` | Create, rename, recolor, and delete departments with member counts |
-| Notifications | `/notifications` | Live audit log fed from the backend — every action by any user appears here |
-| Appearance | `/appearance` | Light/dark theme toggle, 6 accent colors, comfortable/compact density — all persisted |
-| Database | `/database` | Browse live schema and row counts for Users and Departments tables |
-| Documentation | `/docs` | Accordion-style inline docs covering every feature |
-| Authentication | `/auth` | Change email/password (wired to backend), MFA toggle (UI), connected accounts (UI) |
-| Security | `/security` | Security score ring, vulnerability checks computed from live data, recent alerts |
-| Payments | `/payments` | Balance display, transaction history, Quick Pay form (proof of concept) |
-| Import Data | `/import` | CSV upload with drag-and-drop, client-side preview and column mapping |
-| Export Data | `/export` | Column-selectable CSV download generated from live API data |
-| Connections | `/connections` | Manage service integrations (12 services), webhooks, and API keys — all DB-persisted |
-| Timezones | `/timezones` | Live world clocks, add custom timezones, set org default (DB-persisted) |
+| Home | `/` | Overview grid of every section your role can open, with live counts |
+| Dashboard | `/dashboard` | KPI cards (users, active, admins, departments) + live recent-activity feed from the audit log |
+| User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
+| Departments | `/departments` | Create, rename, recolor and delete departments with live member counts |
+| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar, category filters) |
+| Appearance | `/appearance` | Light/dark theme, 6 accent colors, comfortable/compact density — saved per browser |
+| Database | `/database` | Live schema, row counts and sizes of every application table |
+| Documentation | `/docs` | In-app guide, including the role/permission matrix |
+| Account & security | `/auth` | Change your own email (password-confirmed) and password; MFA / SSO marked as coming soon |
+| Security | `/security` | Security score and checks computed from live data + recent security events |
+| Payments | `/payments` | Proof-of-concept view with sample data (no payment provider connected) |
+| Import Data | `/import` | CSV upload with preview; rows are validated and created by the backend, errors reported per row |
+| Export Data | `/export` | Column-selectable UTF-8 CSV of users, departments or the audit log |
+| Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted |
+| Timezones | `/timezones` | Live world clocks and org default timezone, saved organisation-wide |
 
 **Cross-cutting UI features:**
+- Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
+- Quick Actions palette (⌘K / Ctrl+K or `/`) — search and jump to any page you have access to
+- Clear error messages from the server everywhere (no silent failures)
 - Persistent light/dark theme with flash-free restore on page load
-- Quick Actions palette (⌘K / Ctrl+K) — search and navigate to any page via keyboard
-- Topbar shows logged-in user avatar (initials), name, settings shortcut, and logout button
-- Fully responsive layout with sidebar collapse on mobile
+- Responsive layout with sidebar collapse on mobile
 
 ### Backend (REST API)
 
 | Controller | Endpoints |
 |---|---|
-| `AuthController` | `POST /login`, `GET /me`, `POST /register`, `POST /logout`, `POST /email`, `POST /password` |
-| `UserController` | `GET /api/users` |
+| `AuthController` | `POST /api/auth/login`, `GET /me`, `POST /register`, `POST /logout`, `POST /email`, `POST /password`, `POST /forgot-password`, `POST /reset-password` |
+| `UserController` | `GET`, `POST`, `PUT /{id}`, `DELETE /{id}` under `/api/users` |
 | `DepartmentController` | `GET`, `POST`, `PUT /{id}`, `DELETE /{id}` under `/api/departments` |
-| `AuditController` | `GET /api/audit`, `POST /api/audit/event` |
+| `AuditController` | `GET /api/audit?limit=`, `POST /api/audit/event` (export events only) |
 | `ConnectionsController` | `GET /api/connections`, `POST /{id}/connect`, `POST /{id}/disconnect`, `PATCH /{id}/toggle` |
 | `WebhookController` | `GET /api/webhooks`, `POST`, `DELETE /{id}`, `PATCH /{id}/toggle` |
-| `ApiKeyController` | `GET /api/keys`, `POST`, `DELETE /{id}` |
-| `OrgSettingController` | `GET /api/settings/{key}`, `PUT /api/settings/{key}` |
+| `ApiKeyController` | `GET /api/keys`, `POST` (returns the secret once), `DELETE /{id}` |
+| `OrgSettingController` | `GET /api/settings/{key}`, `PUT /api/settings/{key}` (`orgTimezone`, `worldClocks`) |
+| `ImportController` | `POST /api/import/users`, `POST /api/import/departments` |
+| `DatabaseController` | `GET /api/database/tables` |
 
-**Audit logging** is wired into every mutating endpoint. Login, logout, department CRUD, connection toggles, webhook add/remove, API key generate/revoke, email/password changes, and CSV exports all produce rows in the `audit_events` table that appear on the Notifications page in real time for all connected users.
+- **Role-based access control:** ADMIN, MANAGER, MEMBER and VIEWER roles, permission-checked on every endpoint. Managers can only edit their own department and its members. The system always keeps one active admin.
+- **Audit logging** on every mutating action, including failed and blocked sign-ins.
+- **Security:** BCrypt passwords, session cookies (`HttpOnly`, `SameSite=Lax`), session-id rotation on login, password hashes never leave the server, API keys and reset tokens stored only as SHA-256 hashes, deactivated users lose access immediately.
+- **Consistent JSON errors:** `{"status": 409, "error": "Conflict", "message": "…"}` with the correct HTTP status.
 
 ---
 
@@ -58,55 +66,44 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite, React Router v7, Lucide Icons |
+| Frontend | React 19, Vite 7, React Router 7, Lucide Icons |
 | Styling | Plain CSS with CSS custom properties (no framework), light/dark theme via `[data-theme]` |
-| Backend | Java 21, Spring Boot 4.0, Spring Security 6, Spring Data JPA |
-| Database | PostgreSQL 16 (Docker), schema managed by Hibernate `ddl-auto=update` |
-| Auth | Session-based (HTTP-only cookies), BCrypt password hashing |
-| DevOps | Docker Compose, GitHub Actions CI (parallel frontend lint + backend build) |
+| Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
+| Database | PostgreSQL 16 (Docker); schema managed by Hibernate `ddl-auto=update` |
+| Tests | JUnit 5 + MockMvc integration tests on in-memory H2 (PostgreSQL mode) |
+| DevOps | Docker Compose, GitHub Actions CI (frontend lint + build, backend build + tests) |
 
 ---
 
 ## Getting Started
 
-**Prerequisites:** Docker, Node.js v20+, Java 21
-
-### 1. Clone
+**Prerequisites:** Docker with Compose v2 (your user in the `docker` group), JDK 21 or newer, Node.js 20.19+ or 22+.
 
 ```bash
 git clone https://github.com/Mihnea8848/msframework-admin-poc.git
 cd msframework-admin-poc
-```
-
-### 2. Start everything
-
-```bash
 ./scripts/dev-run.sh
 ```
 
-The script:
-1. Starts PostgreSQL in Docker on port **5433**
-2. Starts the Spring Boot backend on port **8080**
-3. Starts the Vite dev server on port **5173** (proxies `/api` → `localhost:8080`)
+The script checks the prerequisites, then starts:
+1. PostgreSQL in Docker on port **5433** (waits until healthy)
+2. The Spring Boot backend on port **8080**
+3. The Vite dev server on port **5173** (proxies `/api` → `localhost:8080`)
 
-Press `Ctrl+C` to cleanly stop all three processes.
+`Ctrl+C` stops the backend and frontend; the database keeps running (`docker compose stop` stops it).
 
-### 3. Open the app
-
-```
-http://localhost:5173
-```
-
-Default credentials seeded on first run:
+Open **http://localhost:5173** and sign in with the seeded admin account:
 
 | Field | Value |
 |---|---|
 | Email | `admin@test.com` |
 | Password | `password123` |
 
-### LAN access (other devices on the same network)
+Manual start, configuration, tests and troubleshooting: [`AGENTS.md`](AGENTS.md).
 
-The Vite server is configured with `host: '0.0.0.0'`, so after starting you'll see a **Network** URL printed in the terminal (e.g. `http://192.168.x.x:5173`). Any device on the same network can use that address.
+### LAN access
+
+The Vite server listens on `0.0.0.0`, so the terminal also prints a **Network** URL (e.g. `http://192.168.x.x:5173`) usable from other devices on the same network.
 
 ---
 
@@ -114,37 +111,40 @@ The Vite server is configured with `host: '0.0.0.0'`, so after starting you'll s
 
 ```
 msframework-admin-poc/
-├── scripts/
-│   └── dev-run.sh              # One-command dev environment startup
+├── scripts/dev-run.sh          # One-command dev environment startup
+├── docker-compose.yml          # PostgreSQL 16 on port 5433
 ├── frontend/
-│   ├── src/
-│   │   ├── auth/               # AuthProvider, useAuth, auth API helpers
-│   │   ├── layout/             # DashboardLayout, Sidebar, Topbar
-│   │   ├── pages/              # 15 page components (one per route)
-│   │   ├── routes/             # AppRoutes, Guards (RequireAuth, RedirectIfAuthed)
-│   │   ├── styles/             # theme.css — all CSS variables, components, dark/light themes
-│   │   ├── ui/                 # QuickActions command palette, WavyBackground
-│   │   └── utils/              # validators.js (password, email, name, phone)
-│   └── vite.config.js
+│   └── src/
+│       ├── api/client.js       # fetch wrapper: JSON, error messages, 401 handling
+│       ├── auth/               # AuthProvider, auth API calls, permission helpers
+│       ├── layout/             # DashboardLayout, Sidebar, Topbar
+│       ├── pages/              # 15 page components + auth pages
+│       ├── routes/             # navigation.js (single page/permission registry), AppRoutes, Guards
+│       ├── styles/theme.css    # CSS variables, components, themes, density
+│       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, WavyBackground
+│       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/
-    └── src/main/java/com/msframework/backend/
-        ├── config/             # SecurityConfig, DatabaseSeeder
-        ├── controller/         # 8 REST controllers
-        ├── dto/                # Request/response DTOs
-        ├── entity/             # User, Department, AuditEvent, ServiceConnection, Webhook, ApiKey, OrgSetting
-        ├── repository/         # JPA repositories for all entities
-        └── service/            # AuditService, AuthService
+    └── src/
+        ├── main/java/com/msframework/backend/
+        │   ├── config/         # SecurityConfig, DatabaseSeeder, Permission, SystemRoles, Integrations
+        │   ├── controller/     # 10 REST controllers
+        │   ├── dto/            # Request/response records (no entity is ever serialized directly)
+        │   ├── entity/         # JPA entities
+        │   ├── exception/      # ApiException + GlobalExceptionHandler
+        │   ├── repository/     # Spring Data repositories
+        │   └── service/        # Users, password reset, import, audit, sessions, DB metadata
+        └── test/               # Integration tests (H2)
 ```
 
 ---
 
 ## Database
 
-Tables are created automatically by Hibernate on first startup. The `DatabaseSeeder` runs once (checks `count() == 0`) to populate:
+Tables are created and updated automatically by Hibernate. On every start-up `DatabaseSeeder`:
 
-- **7 departments** (Administration, Development, Quality Control, External Affairs, Ethics & Regulations, Human Resources, Engineering & Innovation)
-- **1 admin user** (`admin@test.com` / `password123`)
-- **12 service connections** (Slack, GitHub, Google Workspace, Stripe pre-connected; 8 others available)
+- creates the four built-in roles and **syncs their permissions** with `SystemRoles.java`
+- seeds **7 departments**, the **admin user** and **12 service connections** when those tables are empty
+- repairs data from older versions (users without a role get it from the legacy `users.role` column, or MEMBER)
 
 ---
 
@@ -152,19 +152,22 @@ Tables are created automatically by Hibernate on first startup. The `DatabaseSee
 
 - [x] Scaffold React frontend & Spring Boot backend
 - [x] Wire up PostgreSQL via Docker Compose
-- [x] Implement session-based auth (login, register, logout)
-- [x] GitHub Actions CI pipeline (lint + build)
+- [x] Session-based auth (login, register, logout)
+- [x] GitHub Actions CI pipeline (lint + build + tests)
 - [x] Full CRUD for Users and Departments
 - [x] Complete all 15 dashboard pages
-- [x] Persistent light/dark theme + accent color picker
+- [x] Persistent light/dark theme, accent colors, compact density
 - [x] ⌘K Quick Actions command palette
-- [x] Real-time audit log (Notifications page backed by DB)
+- [x] Live audit log with unread badge
 - [x] Connections: integrations, webhooks, API keys — all DB-persisted
-- [x] Org timezone setting persisted in DB
+- [x] Organisation timezone and world clocks persisted in DB
 - [x] Email and password change endpoints
-- [x] Topbar user profile with logout
-- [x] LAN-accessible dev server
-- [x] Password reset & email verification flows
-- [x] Granular RBAC (role-based access control) beyond Admin/Member
+- [x] Password reset (DB-backed single-use tokens)
+- [x] Granular RBAC with manager/department scoping, enforced on every endpoint
+- [x] Real CSV import with per-row validation
+- [x] Backend integration test suite
+- [ ] Email delivery (reset links are printed to the backend log for now)
 - [ ] Real webhook delivery
-- [ ] MFA (two-factor authentication) backend
+- [ ] API-key authentication for the REST API
+- [ ] MFA (two-factor authentication)
+- [ ] Versioned schema migrations (Flyway) instead of `ddl-auto=update`
