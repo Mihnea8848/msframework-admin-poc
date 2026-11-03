@@ -79,12 +79,17 @@ Additional rules, enforced in `UserService`:
 
 ## Data, seeding and migrations
 
-- Hibernate maintains the schema (`ddl-auto=update`): it adds tables and columns but never drops or renames them.
-- `DatabaseSeeder` is idempotent and runs on every start. It:
+- **Flyway owns the schema.** Migrations live in `backend/src/main/resources/db/migration` and run on every start, before anything else touches the database. Hibernate only checks that the entities match (`ddl-auto=validate`); it never creates or changes tables.
+  - `V1__baseline.sql` is the schema of a fresh install. It was generated from what Hibernate created for the entities, and keeps Hibernate's constraint names (`uk...`, `fk...`).
+  - `V2__converge_legacy_schema.sql` brings databases created before Flyway in line with V1 (see below). It changes nothing on a fresh database.
+- **To change the schema**, add a new file `V3__short_description.sql` (next free number, two underscores), change the entity to match, and run `./mvnw verify`: the app refuses to start if the entities and the tables disagree, and `MigrationTests` checks the migrations. Never edit a migration that has been applied anywhere: Flyway validates checksums and stops at start-up if one changed.
+- **Databases from before Flyway** (created by `ddl-auto=update`, with no `flyway_schema_history` table) are handled by `config/FlywayConfig.java`:
+  - if the tables look like an MSFramework schema (`users` and `departments` exist, and every table is one the app has created), it baselines the database at version 1 and runs V2, which adds missing tables, columns and constraints, fills a missing `status`/`created_at`, moves the legacy `users.role` value into `user_roles` (unknown values become MEMBER) and drops the old column. The log says `[FLYWAY] Found an MSFramework database from before Flyway ...`;
+  - any other non-empty database stops the start-up with "The database is not empty and does not look like an MSFramework schema". Nothing is baselined blindly.
+  - This changes the old database in place, so **back it up first**: `pg_dump -h localhost -p 5433 -U msframework msframework > backup.sql`.
+- `DatabaseSeeder` is idempotent and runs on every start, after the migrations, under a PostgreSQL advisory lock (so several instances can start at once). It:
   - syncs role permissions;
-  - seeds departments, the admin and the integrations only when their tables are empty;
-  - gives roleless users from pre-RBAC databases a role from the old `users.role` column (or MEMBER);
-  - sets a missing status to `Active`.
+  - seeds departments, the admin and the integrations only when their tables are empty.
 - **Password reset doesn't send email yet.** The link is written to the backend log (`Password reset link for ...`). Tokens are stored hashed in `password_reset_tokens`, are single-use, last 30 minutes and survive restarts.
 - To wipe everything and start fresh: `docker compose down -v`. This deletes all local data.
 - Connect to the database directly: `psql -h localhost -p 5433 -U msframework msframework` (password `msframework`).
@@ -115,7 +120,8 @@ Frontend scripts (in `frontend/`):
     ```bash
     TEST_DB_URL=jdbc:postgresql://localhost:5433/msframework_test ./mvnw verify
     ```
-    `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` default to `msframework`. The schema is dropped and recreated, so never use your dev database.
+    `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` default to `msframework`. The tests build the schema with the real Flyway migrations, and run Flyway `clean` first so a database left over from an earlier run starts empty. That wipes everything in it, so never use your dev database. `clean` is allowed only in the test profile (`spring.flyway.clean-disabled=false` in `application-test.properties`, strategy in `TestcontainersConfiguration`); it stays disabled in the app.
+  - `MigrationTests` creates and drops extra databases (`msf_mig_*`) on the same server, so the test user needs the `CREATEDB` right. It loads the legacy fixtures in `src/test/resources/db/legacy` (a pre-RBAC database from commit `371775c`, the same database after it was started by the last pre-Flyway `main`, and a database created by that `main`), migrates them, and requires the same columns, constraints and indexes as a database migrated from empty.
 - Every test class is annotated `@IntegrationTest` (`IntegrationTest.java`), so they all share one Spring context and one container. Don't add `@SpringBootTest` directly, or you'll start a second context and database.
 - When you change behaviour, add or adjust a test in `ApiIntegrationTests`. Use unique emails and names, because the tests share one database.
 - ESLint runs the React Compiler rules (`eslint-plugin-react-hooks` v7). Two common failures:
@@ -134,6 +140,9 @@ Frontend scripts (in `frontend/`):
 | UI says "The backend is not reachable" | The backend isn't running or failed at start-up. Check its console. |
 | Login works but pages show "permission" errors | That's expected for limited roles. Check the user's role on the User management page. |
 | `docker compose up` complains about the name `msframework_db` | A container with that name exists from another checkout: `docker rm -f msframework_db` (the data volume is kept). |
+| Start-up fails with "does not look like an MSFramework schema" | `DB_URL` points at a database that has other tables and no Flyway history. Use an empty database, or this app's own database. |
+| Start-up fails with `Schema-validation: missing column` (or table) | An entity changed without a migration. Add a `V<n>__...sql` that makes the same change. |
+| Start-up fails with `Validate failed: Migrations have failed validation` / checksum mismatch | An applied migration file was edited. Restore it and put the change in a new migration. |
 
 ## Git workflow
 
@@ -151,7 +160,9 @@ The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any
 
 ```
 backend/src/main/java/com/msframework/backend/
-  config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations, DatabaseSeeder
+  config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations,
+               FlywayConfig (guarded baseline), DatabaseSeeder
+resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schema changes)
   controller/  REST controllers under /api/* (thin: authorize, then delegate)
   service/     CurrentUserService (who is calling + permission checks), UserService (validation + rules),
                PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService
@@ -178,7 +189,7 @@ Conventions:
 - **Authorization lives in the backend.** Start each endpoint with `currentUserService.requirePermission(principal, Permission.X)`. Frontend checks only hide UI.
 - **Errors:** throw `ApiException.badRequest/forbidden/notFound/conflict("human message")`. The frontend shows `err.message` as-is, so write the message for an end user.
 - **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
-- **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
+- **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. No migration is needed: the database deliberately has no CHECK listing permission names. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
 - **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`) and a component to the `COMPONENTS` map in `routes/AppRoutes.jsx`.
 - **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly.
 - **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.ts`. Keep them in sync, and cover a changed rule in `utils/validators.test.ts`.

@@ -69,7 +69,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Frontend | React 19, Vite 7, React Router 7, Lucide Icons, TypeScript 5 (incremental migration from JavaScript) |
 | Styling | Plain CSS with CSS custom properties (no framework), light/dark theme via `[data-theme]` |
 | Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
-| Database | PostgreSQL 16 (Docker); schema managed by Hibernate `ddl-auto=update` |
+| Database | PostgreSQL 16 (Docker); schema managed by Flyway migrations |
 | Tests | Frontend: Vitest + Testing Library unit tests (jsdom). Backend: JUnit 5 + MockMvc integration tests on PostgreSQL 16 via Testcontainers |
 | Code quality | ESLint (typescript-eslint, React Compiler rules, jsx-a11y), Stylelint, `tsc` type check |
 | DevOps | Docker Compose, GitHub Actions CI (frontend lint + unit tests + type check + build, backend build + tests) |
@@ -135,13 +135,14 @@ msframework-admin-poc/
 └── backend/
     └── src/
         ├── main/java/com/msframework/backend/
-        │   ├── config/         # SecurityConfig, DatabaseSeeder, Permission, SystemRoles, Integrations
+        │   ├── config/         # SecurityConfig, FlywayConfig, DatabaseSeeder, Permission, SystemRoles, Integrations
         │   ├── controller/     # 10 REST controllers
         │   ├── dto/            # Request/response records (no entity is ever serialized directly)
         │   ├── entity/         # JPA entities
         │   ├── exception/      # ApiException + GlobalExceptionHandler
         │   ├── repository/     # Spring Data repositories
         │   └── service/        # Users, password reset, import, audit, sessions, DB metadata
+        ├── main/resources/db/migration/  # Flyway migrations (V1 baseline, V2 legacy upgrade, ...)
         └── test/               # Integration tests (PostgreSQL via Testcontainers)
 ```
 
@@ -149,11 +150,16 @@ msframework-admin-poc/
 
 ## Database
 
-Tables are created and updated automatically by Hibernate. On every start-up `DatabaseSeeder`:
+The schema is created and changed by **Flyway** migrations in `backend/src/main/resources/db/migration`, which run on every start-up. Hibernate only checks that the tables match the entities.
 
-- creates the four built-in roles and **syncs their permissions** with `SystemRoles.java`
+- A new, empty database gets the whole schema from `V1__baseline.sql`.
+- A database created by an older version of the app (before Flyway) is detected and upgraded in place: it is baselined at version 1 and `V2__converge_legacy_schema.sql` adds what is missing and moves old roles from the legacy `users.role` column into the role tables. **Back it up first** with `pg_dump`.
+- A non-empty database that is not an MSFramework database is refused, and the app does not start.
+
+After the migrations, `DatabaseSeeder`:
+
+- **syncs the permissions** of the four built-in roles with `SystemRoles.java`
 - seeds **7 departments**, the **admin user** and **12 service connections** when those tables are empty
-- repairs data from older versions (users without a role get it from the legacy `users.role` column, or MEMBER)
 
 ---
 
@@ -179,4 +185,4 @@ Tables are created and updated automatically by Hibernate. On every start-up `Da
 - [ ] Real webhook delivery
 - [ ] API-key authentication for the REST API
 - [ ] MFA (two-factor authentication)
-- [ ] Versioned schema migrations (Flyway) instead of `ddl-auto=update`
+- [x] Versioned schema migrations (Flyway) instead of `ddl-auto=update`

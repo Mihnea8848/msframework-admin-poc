@@ -25,6 +25,8 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Frontend unit tests with Vitest and Testing Library (validators, CSV,
   formatting, permissions, storage and the API client), run by `npm test`
   and in CI.
+- Migration tests that upgrade real legacy databases (pre-RBAC and the
+  last pre-Flyway `main`) and compare them with a fresh database.
 - Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
   for now) and `typescript-eslint` in the frontend lint.
 
@@ -35,6 +37,14 @@ section into a version (see `AGENTS.md`, Git workflow).
   across restarts; errors reported with the right HTTP status.
 
 ### Changed
+- The database schema is managed by Flyway migrations instead of Hibernate
+  `ddl-auto=update`; Hibernate now only validates it. Databases created by
+  older versions are recognised, baselined and upgraded in place (legacy
+  `users.role` values move into `user_roles`); any other non-empty
+  database is refused at start-up. Back up old databases before upgrading.
+- The start-up seeder runs under a PostgreSQL advisory lock, so several
+  instances can start at the same time. Its legacy data repairs moved into
+  the `V2` migration.
 - MANAGER can no longer create departments and can now view timezones.
 - Account & security and Appearance are available to every role.
 - Backend builds on JDK 21 through 27 (Lombok 1.18.48).
