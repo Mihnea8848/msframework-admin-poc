@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { SiGithub, SiGoogle, SiApple } from "@icons-pack/react-simple-icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
 import { useAuth } from "../auth/AuthProvider";
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const { login } = useAuth();
+    const { login, sessionExpired } = useAuth();
+    const notice = location.state?.notice;
+    const from = location.state?.from;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -24,16 +27,10 @@ export default function Login() {
         setError(null);
 
         try {
-            await login(email, password);
-
-            navigate("/");
+            await login(email.trim(), password);
+            navigate(from && from !== "/login" ? from : "/", { replace: true });
         } catch (err) {
-            setError({
-                type: "auth",
-                message: "Invalid email or password.",
-            });
-            console.error(err);
-        } finally {
+            setError(err.message || "Sign-in failed. Please try again.");
             setLoading(false);
         }
     }
@@ -57,11 +54,11 @@ export default function Login() {
                     </div>
 
                     <form className="auth-form" onSubmit={onSubmit}>
-                        {error && (
-                            <div className="login-error show">
-                                {error.message}
-                            </div>
+                        {notice && !error && <div className="login-success">{notice}</div>}
+                        {sessionExpired && !notice && !error && (
+                            <div className="login-notice">Your session ended. Please sign in again.</div>
                         )}
+                        {error && <div className="login-error show" role="alert">{error}</div>}
 
                         <div className="auth-field">
                             <label className="auth-label" htmlFor="email">
@@ -113,16 +110,19 @@ export default function Login() {
                             <span>OR</span>
                         </div>
 
-                        <div className="auth-social">
-                            <button type="button" className="auth-social-btn">
+                        <div className="auth-social" title="Single sign-on is not available yet">
+                            <button type="button" className="auth-social-btn" disabled aria-label="Sign in with Apple (coming soon)">
                                 <SiApple size={16} />
                             </button>
-                            <button type="button" className="auth-social-btn">
+                            <button type="button" className="auth-social-btn" disabled aria-label="Sign in with Google (coming soon)">
                                 <SiGoogle size={16} />
                             </button>
-                            <button type="button" className="auth-social-btn">
+                            <button type="button" className="auth-social-btn" disabled aria-label="Sign in with GitHub (coming soon)">
                                 <SiGithub size={16} />
                             </button>
+                        </div>
+                        <div className="muted-note" style={{ textAlign: "center", marginTop: 8 }}>
+                            Single sign-on is coming soon.
                         </div>
                     </form>
                 </div>

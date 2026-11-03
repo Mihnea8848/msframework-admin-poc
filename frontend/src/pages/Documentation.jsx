@@ -8,8 +8,25 @@ const SECTIONS = [
         content: (
             <>
                 <p>Welcome to <strong>MSFramework Admin</strong> — your central hub for managing users, departments, and company operations.</p>
-                <p>After logging in, you&apos;ll land on the <strong>Home</strong> page which gives you a bird&apos;s-eye view of every section. Use the sidebar on the left to navigate between pages, or press <code>⌘K</code> to open the Quick Actions palette.</p>
-                <p>Your session is preserved via a secure HTTP-only cookie. You will be automatically redirected to the login page if your session expires.</p>
+                <p>After logging in, you&apos;ll land on the <strong>Home</strong> page which shows every section your role can open. Use the sidebar to navigate, or press <code>⌘K</code> / <code>Ctrl+K</code> (or <code>/</code>) to open the Quick Actions palette.</p>
+                <p>Your session is kept in a secure HTTP-only cookie. If it expires, or an administrator deactivates your account, you are sent back to the login page.</p>
+                <p>Forgot your password? Use <em>Forgot password</em> on the login page. In this development setup the reset link is printed in the backend console instead of being emailed.</p>
+            </>
+        ),
+    },
+    {
+        id: "roles",
+        title: "Roles & Permissions",
+        content: (
+            <>
+                <p>Every user has exactly one role. Pages and buttons you cannot use are hidden, and the server enforces the same rules.</p>
+                <pre>{`ADMIN    — everything, including users, departments, integrations,
+           API keys, organisation settings, import and export
+MANAGER  — dashboard, users and departments (read), edit their own
+           department and its members, notifications, timezones
+MEMBER   — dashboard, users and departments (read), timezones, docs
+VIEWER   — dashboard and documentation only`}</pre>
+                <p>Everyone can change their own email and password under <strong>Account &amp; security</strong> and their look and feel under <strong>Appearance</strong>.</p>
             </>
         ),
     },
@@ -18,11 +35,14 @@ const SECTIONS = [
         title: "User Management",
         content: (
             <>
-                <p>Navigate to <code>/users</code> to see all registered accounts in your organisation.</p>
-                <p>Each row shows the member&apos;s <strong>name</strong>, <strong>email</strong>, <strong>role</strong> (Admin or Member), <strong>status</strong> (Active / Inactive), and their assigned <strong>department</strong>.</p>
-                <p>New users can register via <code>/register</code>. Admins can manage existing users directly from the table.</p>
-                <pre>{`GET  /api/users          — list all users
-POST /api/auth/register — create a new user`}</pre>
+                <p>The <strong>User management</strong> page lists every account with its role, status and department, and has a search box.</p>
+                <p>Admins can <strong>add</strong>, <strong>edit</strong> and <strong>delete</strong> users. Managers can edit members and viewers of their own department, but cannot promote anyone to Admin or Manager or move people to another department.</p>
+                <p>Setting a user to <strong>Inactive</strong> signs them out immediately and blocks sign-in. The system always keeps at least one active admin, and you cannot delete or deactivate yourself.</p>
+                <pre>{`GET    /api/users        — list users
+POST   /api/users        — create user (admin)
+PUT    /api/users/{id}   — update user
+DELETE /api/users/{id}   — delete user (admin)
+POST   /api/auth/register — self-service sign-up (MEMBER role)`}</pre>
             </>
         ),
     },
@@ -31,8 +51,8 @@ POST /api/auth/register — create a new user`}</pre>
         title: "Departments",
         content: (
             <>
-                <p>The <strong>Departments</strong> page (<code>/departments</code>) lets you create, edit, and delete organisational units.</p>
-                <p>Each department can have a <strong>name</strong> and a <strong>colour</strong> (chosen from 12 curated gradients). The table shows live member counts, a performance sparkline, and a budget progress bar.</p>
+                <p>The <strong>Departments</strong> page lets admins create, rename, recolour and delete departments; managers can edit their own department.</p>
+                <p>Member counts are live. The performance and budget columns are illustrative sample data. Deleting a department keeps its members — they simply become unassigned.</p>
                 <pre>{`GET    /api/departments      — list departments
 POST   /api/departments      — create department
 PUT    /api/departments/{id} — update department
@@ -41,19 +61,12 @@ DELETE /api/departments/{id} — delete department`}</pre>
         ),
     },
     {
-        id: "navigation",
-        title: "Navigation & Shortcuts",
+        id: "notifications",
+        title: "Notifications & Audit Log",
         content: (
             <>
-                <p>The sidebar contains two groups:</p>
-                <p><strong>General</strong> — Home, Dashboard, Notifications, Appearance, Database, Documentation.</p>
-                <p><strong>Ventures</strong> — Authentication, User Management, Departments, Security, Payments, Import/Export.</p>
-                <p>Keyboard shortcuts:</p>
-                <pre>{`⌘K  / Ctrl+K  — Open Quick Actions palette
-/              — Open Quick Actions palette
-↑ ↓            — Navigate results in palette
-↵              — Open selected page
-Esc            — Close any overlay`}</pre>
+                <p>Every important action — sign-ins (including failed ones), user and department changes, integration changes, API keys, settings, imports and exports — is written to the audit log.</p>
+                <p>The <strong>Notifications</strong> page refreshes every 15 seconds and highlights events you haven&apos;t seen; the sidebar badge counts unseen events.</p>
             </>
         ),
     },
@@ -62,14 +75,27 @@ Esc            — Close any overlay`}</pre>
         title: "Import & Export",
         content: (
             <>
-                <p><strong>Export</strong> (<code>/export</code>) generates a real CSV file downloaded directly to your browser. Select the dataset (Users or Departments), choose which columns to include, then click <em>Download CSV</em>.</p>
-                <p><strong>Import</strong> (<code>/import</code>) accepts a <code>.csv</code> file. After uploading, you&apos;ll see a preview of the first 5 rows and a column-mapping summary. Click <em>Import</em> to validate the rows.</p>
-                <p>Expected CSV formats:</p>
-                <pre>{`# Users CSV
-full_name,email,role,status,department
+                <p><strong>Export</strong> generates a UTF-8 CSV from live data (users, departments or the audit log). Pick the columns, then click <em>Download CSV</em>.</p>
+                <p><strong>Import</strong> accepts a <code>.csv</code> file with a header row. After a preview, the server validates every row: valid rows are created, invalid ones are listed with the reason. Imported users receive a random password and set their own with <em>Forgot password</em>.</p>
+                <pre>{`# Users CSV (full_name and email required)
+full_name,email,phone,role,status,department
 
-# Departments CSV
-name,color_class`}</pre>
+# Departments CSV (name required)
+name,color`}</pre>
+            </>
+        ),
+    },
+    {
+        id: "navigation",
+        title: "Navigation & Shortcuts",
+        content: (
+            <>
+                <p>The sidebar shows only the pages your role can open, in two groups: <strong>General</strong> and <strong>Ventures</strong>.</p>
+                <pre>{`⌘K / Ctrl+K   — Open Quick Actions palette
+/             — Open Quick Actions palette (when not typing)
+↑ ↓           — Navigate results in palette
+↵             — Open selected page
+Esc           — Close any overlay or dialog`}</pre>
             </>
         ),
     },
@@ -78,20 +104,24 @@ name,color_class`}</pre>
         title: "Appearance & Theming",
         content: (
             <>
-                <p>Visit <code>/appearance</code> to switch between <strong>Dark</strong> and <strong>Light</strong> mode. Your preference is saved in <code>localStorage</code> and applied instantly without a page reload.</p>
-                <p>You can also pick an <strong>accent colour</strong> from six options (Lime, Sky, Violet, Rose, Amber, Cyan) and choose between <strong>Comfortable</strong> and <strong>Compact</strong> density.</p>
-                <p>The theme is restored before the first render via an inline script in <code>index.html</code>, so there is no flash of unstyled content.</p>
+                <p>Visit <strong>Appearance</strong> to switch between <strong>Dark</strong> and <strong>Light</strong> mode, pick one of six accent colours and choose <strong>Comfortable</strong> or <strong>Compact</strong> density.</p>
+                <p>Preferences are stored in this browser and restored before the first render, so there is no flash of the wrong theme.</p>
             </>
         ),
     },
 ];
 
-function AccordionItem({ section }) {
-    const [open, setOpen] = useState(false);
-
+function AccordionItem({ section, open, onToggle }) {
     return (
         <div className="accordion-item" id={section.id}>
-            <div className="accordion-header" onClick={() => setOpen((o) => !o)}>
+            <div
+                className="accordion-header"
+                onClick={onToggle}
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
+            >
                 <BookOpen size={16} style={{ color: "var(--accent)", flexShrink: 0 }} />
                 {section.title}
                 <ChevronDown size={16} className={`accordion-chevron${open ? " open" : ""}`} />
@@ -106,9 +136,22 @@ function AccordionItem({ section }) {
 }
 
 export default function Documentation() {
-    function scrollTo(id) {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        // Also open the accordion
+    const [openIds, setOpenIds] = useState(() => new Set(["getting-started"]));
+
+    function toggle(id) {
+        setOpenIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }
+
+    function jumpTo(id) {
+        setOpenIds((prev) => new Set(prev).add(id));
+        requestAnimationFrame(() => {
+            document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
     }
 
     return (
@@ -127,14 +170,14 @@ export default function Documentation() {
 
             <div className="doc-jump-links">
                 {SECTIONS.map((s) => (
-                    <button key={s.id} type="button" className="doc-jump-link" onClick={() => scrollTo(s.id)}>
+                    <button key={s.id} type="button" className="doc-jump-link" onClick={() => jumpTo(s.id)}>
                         {s.title}
                     </button>
                 ))}
             </div>
 
             {SECTIONS.map((s) => (
-                <AccordionItem key={s.id} section={s} />
+                <AccordionItem key={s.id} section={s} open={openIds.has(s.id)} onToggle={() => toggle(s.id)} />
             ))}
         </section>
     );

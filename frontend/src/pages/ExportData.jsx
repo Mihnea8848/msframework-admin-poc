@@ -1,153 +1,146 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission, primaryRole } from "../auth/permissions";
+import { get, post } from "../api/client.js";
+import { downloadText, toCSV } from "../utils/csv.js";
+import PageHeader from "../ui/PageHeader.jsx";
 
 const ENTITY_OPTIONS = {
     users: {
         label: "Users",
-        fetchData: () => fetch("/api/users", { credentials: "include" }).then((r) => r.json()),
+        permission: "USER_READ",
+        url: "/api/users",
         columns: [
-            { key: "fullName",    label: "Full Name"   },
-            { key: "email",       label: "Email"       },
-            { key: "role",        label: "Role"        },
-            { key: "status",      label: "Status"      },
-            { key: "phoneNumber", label: "Phone"       },
+            { key: "id", label: "ID" },
+            { key: "fullName", label: "Full Name" },
+            { key: "email", label: "Email" },
+            { key: "phone", label: "Phone" },
+            { key: "role", label: "Role", get: (u) => primaryRole(u) },
+            { key: "status", label: "Status" },
+            { key: "departmentName", label: "Department" },
+            { key: "createdAt", label: "Created" },
         ],
     },
     departments: {
         label: "Departments",
-        fetchData: () => fetch("/api/departments", { credentials: "include" }).then((r) => r.json()),
+        permission: "DEPARTMENT_READ",
+        url: "/api/departments",
         columns: [
-            { key: "id",         label: "ID"       },
-            { key: "name",       label: "Name"     },
-            { key: "colorClass", label: "Color"    },
+            { key: "id", label: "ID" },
+            { key: "name", label: "Name" },
+            { key: "color", label: "Color" },
+            { key: "memberCount", label: "Members" },
+        ],
+    },
+    audit: {
+        label: "Audit log",
+        permission: "AUDIT_READ",
+        url: "/api/audit?limit=500",
+        columns: [
+            { key: "createdAt", label: "Time" },
+            { key: "eventType", label: "Event" },
+            { key: "actorEmail", label: "Actor" },
+            { key: "description", label: "Description" },
         ],
     },
 };
 
-function toCSV(rows, selectedCols, colDefs) {
-    const active = colDefs.filter((c) => selectedCols.includes(c.key));
-    const header = active.map((c) => c.label).join(",");
-    const lines = rows.map((row) =>
-        active.map((c) => {
-            const val = row[c.key] ?? "";
-            return String(val).includes(",") ? `"${val}"` : val;
-        }).join(",")
-    );
-    return [header, ...lines].join("\n");
-}
-
-function download(content, filename) {
-    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
 export default function ExportData() {
-    const [entity, setEntity] = useState("users");
+    const { user } = useAuth();
+    const available = useMemo(
+        () => Object.entries(ENTITY_OPTIONS).filter(([, cfg]) => hasPermission(user, cfg.permission)),
+        [user]
+    );
+
+    const [entity, setEntity] = useState(() => available[0]?.[0] || "users");
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedCols, setSelectedCols] = useState(ENTITY_OPTIONS.users.columns.map((c) => c.key));
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedCols, setSelectedCols] = useState(() => ENTITY_OPTIONS[entity].columns.map((c) => c.key));
+    const [message, setMessage] = useState(null);
 
     const cfg = ENTITY_OPTIONS[entity];
 
     useEffect(() => {
-        const entityCfg = ENTITY_OPTIONS[entity];
-        const cols = entityCfg.columns.map((c) => c.key);
-        entityCfg.fetchData()
+        let alive = true;
+        get(ENTITY_OPTIONS[entity].url)
             .then((result) => {
-                setData(result);
-                setSelectedCols(cols);
-                setLoading(false);
+                if (!alive) return;
+                setData(Array.isArray(result) ? result : []);
+                setError(null);
             })
-            .catch(() => {
+            .catch((err) => {
+                if (!alive) return;
                 setData([]);
-                setSelectedCols(cols);
-                setLoading(false);
-            });
+                setError(err.message);
+            })
+            .finally(() => { if (alive) setLoading(false); });
+        return () => { alive = false; };
     }, [entity]);
 
-    function toggleCol(key) {
-        setSelectedCols((prev) =>
-            prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-        );
+    function changeEntity(next) {
+        setEntity(next);
+        setLoading(true);
+        setMessage(null);
+        setSelectedCols(ENTITY_OPTIONS[next].columns.map((c) => c.key));
     }
 
+    function toggleCol(key) {
+        setSelectedCols((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    }
+
+    const fileName = `${entity}-${new Date().toISOString().slice(0, 10)}.csv`;
+
     function handleDownload() {
-        const csv = toCSV(data, selectedCols, cfg.columns);
-        const ts = new Date().toISOString().slice(0, 10);
-        download(csv, `${entity}-${ts}.csv`);
-        fetch("/api/audit/event", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ eventType: "export_generated", description: `Exported ${entity} CSV (${data.length} rows)` }),
+        const columns = cfg.columns.filter((c) => selectedCols.includes(c.key));
+        downloadText(toCSV(data, columns), fileName);
+        setMessage(`Downloaded ${fileName} (${data.length} rows).`);
+        post("/api/audit/event", {
+            eventType: "export_generated",
+            description: `Exported ${cfg.label.toLowerCase()} CSV (${data.length} rows, ${columns.length} columns)`,
         }).catch(() => {});
+    }
+
+    if (available.length === 0) {
+        return (
+            <section className="workspace">
+                <PageHeader breadcrumb="Ventures / Export Data" title="Export Data" subtitle="You don't have access to any dataset that can be exported." />
+            </section>
+        );
     }
 
     return (
         <section className="workspace">
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">Ventures / Export Data</div>
-                    <div className="workspace-title-row">
-                        <h1>Export Data</h1>
-                    </div>
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Download a CSV file from live system data.
-                    </p>
-                </div>
-            </div>
+            <PageHeader breadcrumb="Ventures / Export Data" title="Export Data" subtitle="Download a CSV file generated from live system data." />
 
-            {/* Entity selector */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-strong)" }}>What would you like to export?</div>
-                <select
-                    className="select-entity"
-                    value={entity}
-                    onChange={(e) => setEntity(e.target.value)}
-                >
-                    {Object.entries(ENTITY_OPTIONS).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
-                    ))}
+                <label htmlFor="export-entity" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-strong)" }}>What would you like to export?</label>
+                <select id="export-entity" className="select-entity" value={entity} onChange={(e) => changeEntity(e.target.value)}>
+                    {available.map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
             </div>
 
-            {/* Column picker */}
+            {error && <div className="inline-error page-banner" role="alert">Could not load {cfg.label.toLowerCase()}: {error}</div>}
+
             <div className="workspace-section-title" style={{ marginBottom: 8 }}>Columns to include</div>
             <div className="export-options">
                 {cfg.columns.map((col) => (
                     <label key={col.key} className="export-option-row">
-                        <input
-                            type="checkbox"
-                            checked={selectedCols.includes(col.key)}
-                            onChange={() => toggleCol(col.key)}
-                        />
+                        <input type="checkbox" checked={selectedCols.includes(col.key)} onChange={() => toggleCol(col.key)} />
                         <span>{col.label}</span>
                         <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "monospace", marginLeft: "auto" }}>{col.key}</span>
                     </label>
                 ))}
             </div>
 
-            {/* Date range (UI only) */}
-            <div style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-strong)" }}>Date range</div>
-                <input type="date" className="form-input" style={{ width: 160 }} defaultValue="2026-01-01" />
-                <span style={{ color: "var(--muted)", fontSize: 13 }}>to</span>
-                <input type="date" className="form-input" style={{ width: 160 }} defaultValue="2026-05-09" />
-            </div>
-
-            {/* Summary + download */}
             <div style={{ marginTop: 20, padding: "16px 20px", border: "1px solid var(--line)", borderRadius: 14, background: "var(--panel)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                 <div>
                     <div style={{ fontSize: 14, fontWeight: 700 }}>
                         {loading ? "Loading…" : `${data.length} row${data.length !== 1 ? "s" : ""} · ${selectedCols.length} column${selectedCols.length !== 1 ? "s" : ""}`}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                        File: <code style={{ color: "var(--accent)", fontSize: 11 }}>{entity}-{new Date().toISOString().slice(0, 10)}.csv</code>
+                        File: <code style={{ color: "var(--accent)", fontSize: 11 }}>{fileName}</code> · UTF-8, opens in Excel
                     </div>
                 </div>
                 <button
@@ -161,6 +154,7 @@ export default function ExportData() {
                     Download CSV
                 </button>
             </div>
+            {message && <div className="inline-success" style={{ marginTop: 12 }}>{message}</div>}
         </section>
     );
 }

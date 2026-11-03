@@ -20,6 +20,13 @@ public class ApiKey {
     @Column(name = "masked_display", nullable = false)
     private String maskedDisplay;
 
+    /** SHA-256 of the secret. The secret itself is shown once, at creation, and never stored. */
+    @Column(name = "key_hash", length = 64)
+    private String keyHash;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

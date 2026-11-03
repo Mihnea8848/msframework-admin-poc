@@ -7,10 +7,15 @@
     <title>MSFramework</title>
     <script>
       (function() {
-        var theme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.dataset.theme = theme;
-        var accent = localStorage.getItem('accent');
-        if (accent) document.documentElement.style.setProperty('--accent', accent);
+        try {
+          var root = document.documentElement;
+          root.dataset.theme = localStorage.getItem('theme') || 'dark';
+          root.dataset.density = localStorage.getItem('density') || 'comfortable';
+          var accent = localStorage.getItem('accent');
+          if (accent) root.style.setProperty('--accent', accent);
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark';
+        }
       })();
     </script>
   </head>

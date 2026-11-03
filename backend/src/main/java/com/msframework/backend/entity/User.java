@@ -1,13 +1,13 @@
 package com.msframework.backend.entity;
 
+import com.msframework.backend.config.Permission;
 import jakarta.persistence.*;
 import lombok.*;
 
-import com.msframework.backend.config.Permission;
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Builder
 public class User {
+
+    public static final String STATUS_ACTIVE = "Active";
+    public static final String STATUS_INACTIVE = "Inactive";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,9 +47,25 @@ public class User {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (passwordChangedAt == null) passwordChangedAt = createdAt;
+        if (status == null) status = STATUS_ACTIVE;
+    }
+
+    public boolean isActive() {
+        return STATUS_ACTIVE.equalsIgnoreCase(status);
+    }
+
     public boolean hasRole(String roleName) {
-        return roles.stream()
-                .anyMatch(role -> role.getName().equals(roleName));
+        return roles.stream().anyMatch(role -> role.getName().equals(roleName));
     }
 
     public boolean hasPermission(Permission permission) {
@@ -56,8 +75,16 @@ public class User {
     }
 
     public Set<Permission> getAllPermissions() {
-        return roles.stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .collect(Collectors.toSet());
+        Set<Permission> all = EnumSet.noneOf(Permission.class);
+        roles.forEach(role -> all.addAll(role.getPermissions()));
+        return all;
+    }
+
+    /** The single role shown in the UI (users have exactly one role; the most privileged wins). */
+    public String getPrimaryRoleName() {
+        for (String name : new String[]{"ADMIN", "MANAGER", "MEMBER", "VIEWER"}) {
+            if (hasRole(name)) return name;
+        }
+        return roles.stream().map(Role::getName).sorted().findFirst().orElse(null);
     }
 }

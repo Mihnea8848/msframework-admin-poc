@@ -1,45 +1,104 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Upload } from "lucide-react";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission } from "../auth/permissions";
+import { post } from "../api/client.js";
+import { parseCSV } from "../utils/csv.js";
+import PageHeader from "../ui/PageHeader.jsx";
+
+const MAX_ROWS = 1000;
 
 const ENTITY_CONFIGS = {
     users: {
         label: "Users",
-        expectedCols: ["full_name", "email", "role", "status", "department"],
-        example: "full_name,email,role,status,department\nJane Smith,jane@co.com,MEMBER,active,Engineering\nBob Lee,bob@co.com,ADMIN,active,",
+        permission: "USER_CREATE",
+        endpoint: "/api/import/users",
+        requiredCols: ["full_name", "email"],
+        optionalCols: ["phone", "role", "status", "department"],
+        aliases: {},
+        example: "full_name,email,phone,role,status,department\nJane Smith,jane@co.com,+40712345678,MEMBER,Active,Development\nBob Lee,bob@co.com,,VIEWER,Active,",
+        notes: "Role: ADMIN, MANAGER, MEMBER or VIEWER (default MEMBER). Status: Active or Inactive (default Active). Department must match an existing department name. Imported users get a random password and set their own via “Forgot password”.",
+        toRow: (r) => ({
+            fullName: r.full_name,
+            email: r.email,
+            phone: r.phone || "",
+            role: r.role || "",
+            status: r.status || "",
+            department: r.department || "",
+        }),
     },
     departments: {
         label: "Departments",
-        expectedCols: ["name", "color_class"],
-        example: "name,color_class\nEngineering,avatar-azure\nMarketing,avatar-rose",
+        permission: "DEPARTMENT_CREATE",
+        endpoint: "/api/import/departments",
+        requiredCols: ["name"],
+        optionalCols: ["color"],
+        aliases: { color_class: "color" },
+        example: "name,color\nEngineering,avatar-azure\nMarketing,avatar-rose",
+        notes: "Color is optional: one of avatar-azure, avatar-rose, avatar-cyan, avatar-magenta, avatar-amber, avatar-gold, avatar-violet, avatar-jade, avatar-sky, avatar-coral, avatar-orange, avatar-plum.",
+        toRow: (r) => ({ name: r.name, color: r.color || "" }),
     },
 };
 
-function parseCSV(text) {
-    const lines = text.trim().split("\n").map((l) => l.trim()).filter(Boolean);
-    if (lines.length < 2) return { headers: [], rows: [] };
-    const headers = lines[0].split(",").map((h) => h.trim());
-    const rows = lines.slice(1).map((l) => {
-        const vals = l.split(",").map((v) => v.trim());
-        return Object.fromEntries(headers.map((h, i) => [h, vals[i] || ""]));
-    });
+function applyAliases(parsed, aliases) {
+    const headers = parsed.headers.map((h) => aliases[h] || h);
+    const rows = parsed.rows.map((row) =>
+        Object.fromEntries(Object.entries(row).map(([k, v]) => [aliases[k] || k, v]))
+    );
     return { headers, rows };
 }
 
 export default function ImportData() {
-    const [entity, setEntity] = useState("users");
+    const { user } = useAuth();
+    const available = useMemo(
+        () => Object.entries(ENTITY_CONFIGS).filter(([, cfg]) => hasPermission(user, cfg.permission)),
+        [user]
+    );
+
+    const [entity, setEntity] = useState(() => available[0]?.[0] || "users");
     const [dragOver, setDragOver] = useState(false);
     const [parsed, setParsed] = useState(null);
-    const [imported, setImported] = useState(false);
+    const [fileName, setFileName] = useState(null);
+    const [fileError, setFileError] = useState(null);
+    const [result, setResult] = useState(null);
+    const [importError, setImportError] = useState(null);
+    const [busy, setBusy] = useState(false);
     const [guideOpen, setGuideOpen] = useState(false);
     const fileRef = useRef(null);
 
     const cfg = ENTITY_CONFIGS[entity];
 
+    function reset() {
+        setParsed(null);
+        setFileName(null);
+        setFileError(null);
+        setResult(null);
+        setImportError(null);
+        if (fileRef.current) fileRef.current.value = "";
+    }
+
     function readFile(file) {
-        if (!file || !file.name.endsWith(".csv")) return;
-        setImported(false);
+        reset();
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith(".csv")) {
+            setFileError("Please choose a .csv file.");
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setFileError("The file is larger than 2 MB.");
+            return;
+        }
         const reader = new FileReader();
-        reader.onload = (e) => setParsed(parseCSV(e.target.result));
+        reader.onload = (e) => {
+            const data = applyAliases(parseCSV(String(e.target.result)), cfg.aliases);
+            if (data.headers.length === 0) {
+                setFileError("The file is empty.");
+                return;
+            }
+            setParsed(data);
+            setFileName(file.name);
+        };
+        reader.onerror = () => setFileError("The file could not be read.");
         reader.readAsText(file);
     }
 
@@ -49,110 +108,109 @@ export default function ImportData() {
         readFile(e.dataTransfer.files[0]);
     }
 
-    function handleImport() {
-        setImported(true);
+    async function handleImport() {
+        setBusy(true);
+        setImportError(null);
+        try {
+            const rows = parsed.rows.map(cfg.toRow);
+            setResult(await post(cfg.endpoint, { rows }));
+        } catch (err) {
+            setImportError(err.message);
+        } finally {
+            setBusy(false);
+        }
     }
 
-    const missingCols = cfg.expectedCols.filter((c) => !parsed?.headers.includes(c));
-    const extraCols   = parsed?.headers.filter((h) => !cfg.expectedCols.includes(h)) || [];
-    const validRows   = parsed?.rows.filter((r) => cfg.expectedCols.every((c) => !["full_name", "email", "name"].includes(c) || r[c])) || [];
+    if (available.length === 0) {
+        return (
+            <section className="workspace">
+                <PageHeader breadcrumb="Ventures / Import Data" title="Import Data" subtitle="Your role cannot create users or departments, so there is nothing you can import." />
+            </section>
+        );
+    }
+
+    const missingCols = parsed ? cfg.requiredCols.filter((c) => !parsed.headers.includes(c)) : [];
+    const knownCols = [...cfg.requiredCols, ...cfg.optionalCols];
+    const extraCols = parsed ? parsed.headers.filter((h) => !knownCols.includes(h)) : [];
+    const tooMany = parsed && parsed.rows.length > MAX_ROWS;
 
     return (
         <section className="workspace">
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">Ventures / Import Data</div>
-                    <div className="workspace-title-row">
-                        <h1>Import Data</h1>
-                    </div>
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Upload a CSV to import records into the system.
-                    </p>
-                </div>
-            </div>
+            <PageHeader breadcrumb="Ventures / Import Data" title="Import Data" subtitle="Upload a CSV to create records in bulk. Every row is validated by the server." />
 
-            {/* Entity selector */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-strong)" }}>What would you like to import?</div>
-                <div style={{ position: "relative" }}>
-                    <select
-                        className="select-entity"
-                        value={entity}
-                        onChange={(e) => { setEntity(e.target.value); setParsed(null); setImported(false); }}
-                    >
-                        {Object.entries(ENTITY_CONFIGS).map(([k, v]) => (
-                            <option key={k} value={k}>{v.label}</option>
-                        ))}
-                    </select>
-                </div>
+                <label htmlFor="import-entity" style={{ fontSize: 13, fontWeight: 600, color: "var(--muted-strong)" }}>What would you like to import?</label>
+                <select
+                    id="import-entity"
+                    className="select-entity"
+                    value={entity}
+                    onChange={(e) => { setEntity(e.target.value); reset(); }}
+                >
+                    {available.map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
             </div>
 
-            {/* Upload zone */}
             <div
                 className={`upload-zone${dragOver ? " drag-over" : ""}`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileRef.current?.click(); } }}
             >
-                <div className="upload-zone-icon">
-                    <Upload size={22} />
-                </div>
-                <div className="upload-zone-title">Drop your CSV here or click to browse</div>
-                <div className="upload-zone-sub">Accepts .csv files · {cfg.label} format</div>
-                <input
-                    ref={fileRef}
-                    type="file"
-                    accept=".csv"
-                    style={{ display: "none" }}
-                    onChange={(e) => readFile(e.target.files[0])}
-                />
+                <div className="upload-zone-icon"><Upload size={22} /></div>
+                <div className="upload-zone-title">{fileName ? `Loaded ${fileName}` : "Drop your CSV here or click to browse"}</div>
+                <div className="upload-zone-sub">Accepts .csv files (UTF-8, comma-separated, header row) · {cfg.label} format · max {MAX_ROWS} rows</div>
+                <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: "none" }} onChange={(e) => readFile(e.target.files[0])} />
             </div>
+            {fileError && <div className="inline-error" style={{ marginTop: 10 }}>{fileError}</div>}
 
-            {/* Format guide */}
             <div style={{ marginTop: 10, marginBottom: 16 }}>
-                <button type="button" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", cursor: "pointer", background: "none", border: "none" }} onClick={() => setGuideOpen((o) => !o)}>
+                <button
+                    type="button"
+                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)", cursor: "pointer", background: "none", border: "none" }}
+                    onClick={() => setGuideOpen((o) => !o)}
+                    aria-expanded={guideOpen}
+                >
                     <ChevronDown size={14} style={{ transform: guideOpen ? "rotate(180deg)" : "none", transition: "transform 180ms" }} />
                     CSV format guide
                 </button>
                 {guideOpen && (
-                    <div style={{ marginTop: 8, padding: "12px 14px", borderRadius: 10, background: "var(--panel)", border: "1px solid var(--line)", fontSize: 12, fontFamily: "monospace", whiteSpace: "pre-wrap", color: "var(--muted-strong)" }}>
-                        {cfg.example}
+                    <div style={{ marginTop: 8, padding: "12px 14px", borderRadius: 10, background: "var(--panel)", border: "1px solid var(--line)", fontSize: 12 }}>
+                        <div style={{ fontFamily: "monospace", whiteSpace: "pre-wrap", color: "var(--muted-strong)", marginBottom: 8 }}>{cfg.example}</div>
+                        <div className="muted-note">{cfg.notes}</div>
                     </div>
                 )}
             </div>
 
-            {/* Preview */}
             {parsed && (
                 <div>
-                    {/* Column mapping */}
                     <div style={{ marginBottom: 14, padding: "12px 16px", borderRadius: 12, background: "var(--panel)", border: "1px solid var(--line)" }}>
                         <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Column Mapping</div>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            {cfg.expectedCols.map((c) => (
-                                <span key={c} style={{
-                                    padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                                    background: parsed.headers.includes(c) ? "rgba(45,216,129,0.12)" : "rgba(255,106,95,0.12)",
-                                    color: parsed.headers.includes(c) ? "var(--success)" : "var(--danger)",
-                                    border: `1px solid ${parsed.headers.includes(c) ? "rgba(45,216,129,0.3)" : "rgba(255,106,95,0.3)"}`,
-                                }}>
-                                    {c} {parsed.headers.includes(c) ? "✓" : "✗ missing"}
-                                </span>
-                            ))}
+                            {knownCols.map((c) => {
+                                const present = parsed.headers.includes(c);
+                                const required = cfg.requiredCols.includes(c);
+                                const color = present ? "var(--success)" : required ? "var(--danger)" : "var(--muted)";
+                                return (
+                                    <span key={c} style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, color, border: `1px solid ${color}` }}>
+                                        {c} {present ? "✓" : required ? "✗ missing" : "(optional)"}
+                                    </span>
+                                );
+                            })}
                             {extraCols.map((c) => (
-                                <span key={c} style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: "rgba(240,168,50,0.12)", color: "#f0a832", border: "1px solid rgba(240,168,50,0.3)" }}>
-                                    {c} (extra)
+                                <span key={c} style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#f0a832", border: "1px solid rgba(240,168,50,0.5)" }}>
+                                    {c} (ignored)
                                 </span>
                             ))}
                         </div>
                         {missingCols.length > 0 && (
-                            <div style={{ fontSize: 12, color: "var(--danger)", marginTop: 8 }}>
-                                Missing required columns: {missingCols.join(", ")}
-                            </div>
+                            <div style={{ fontSize: 12, color: "var(--danger)", marginTop: 8 }}>Missing required columns: {missingCols.join(", ")}</div>
                         )}
                     </div>
 
-                    {/* Table preview */}
                     <div className="workspace-section-title">Preview (first 5 rows)</div>
                     <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 12, background: "var(--panel)" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -167,7 +225,7 @@ export default function ImportData() {
                                 {parsed.rows.slice(0, 5).map((row, i) => (
                                     <tr key={i}>
                                         {parsed.headers.map((h) => (
-                                            <td key={h} style={{ padding: "9px 14px", borderBottom: i < 4 && i < parsed.rows.length - 1 ? "1px solid var(--line)" : "none", color: "var(--muted-strong)" }}>{row[h] || "—"}</td>
+                                            <td key={h} style={{ padding: "9px 14px", borderBottom: "1px solid var(--line)", color: "var(--muted-strong)" }}>{row[h] || "—"}</td>
                                         ))}
                                     </tr>
                                 ))}
@@ -175,12 +233,29 @@ export default function ImportData() {
                         </table>
                     </div>
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                        {parsed.rows.length} row{parsed.rows.length !== 1 ? "s" : ""} detected · {validRows.length} valid
+                        {parsed.rows.length} data row{parsed.rows.length !== 1 ? "s" : ""} detected
+                        {tooMany && <span style={{ color: "var(--danger)" }}> — too many, split the file into chunks of {MAX_ROWS}</span>}
                     </div>
 
-                    {imported ? (
-                        <div className="inline-success" style={{ marginTop: 14 }}>
-                            {validRows.length} record{validRows.length !== 1 ? "s" : ""} imported successfully (preview only — no backend write).
+                    {importError && <div className="inline-error" style={{ marginTop: 14 }} role="alert">{importError}</div>}
+
+                    {result ? (
+                        <div style={{ marginTop: 14 }}>
+                            <div className={result.created > 0 ? "inline-success" : "inline-error"} role="status">
+                                Imported {result.created} {cfg.label.toLowerCase()}; {result.skipped} row{result.skipped !== 1 ? "s" : ""} skipped.
+                            </div>
+                            {result.errors.length > 0 && (
+                                <div className="audit-list" style={{ marginTop: 10 }}>
+                                    {result.errors.slice(0, 50).map((e) => (
+                                        <div key={e.row} className="audit-row" style={{ fontSize: 12 }}>
+                                            <strong style={{ minWidth: 60 }}>Row {e.row}</strong>
+                                            <span style={{ color: "var(--muted-strong)" }}>{e.message}</span>
+                                        </div>
+                                    ))}
+                                    {result.errors.length > 50 && <div className="muted-note">…and {result.errors.length - 50} more.</div>}
+                                </div>
+                            )}
+                            <button type="button" className="btn-secondary" style={{ marginTop: 12 }} onClick={reset}>Import another file</button>
                         </div>
                     ) : (
                         <button
@@ -188,9 +263,9 @@ export default function ImportData() {
                             className="btn-primary"
                             style={{ marginTop: 14 }}
                             onClick={handleImport}
-                            disabled={missingCols.length > 0}
+                            disabled={busy || missingCols.length > 0 || parsed.rows.length === 0 || tooMany}
                         >
-                            Import {validRows.length} Record{validRows.length !== 1 ? "s" : ""}
+                            {busy ? "Importing…" : `Import ${parsed.rows.length} row${parsed.rows.length !== 1 ? "s" : ""}`}
                         </button>
                     )}
                 </div>
