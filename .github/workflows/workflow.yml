@@ -59,7 +59,7 @@ jobs:
       - name: Make Maven Wrapper Executable
         run: chmod +x ./mvnw
 
-      # Integration tests run against an in-memory H2 database (src/test/resources/application-test.properties),
-      # so no PostgreSQL service is needed here.
+      # Integration tests start their own PostgreSQL 16 with Testcontainers (the runner has Docker),
+      # so no database service is declared here.
       - name: Compile and Test Backend
         run: ./mvnw -B clean verify

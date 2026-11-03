@@ -96,7 +96,14 @@ Additional rules, enforced in `UserService`:
 (cd backend && ./mvnw clean verify)
 ```
 
-- Backend tests (`backend/src/test`) are MockMvc integration tests that go through the real security filter chain. They run on **in-memory H2** (profile `test`, `src/test/resources/application-test.properties`), so they don't need Postgres or Docker.
+- Backend tests (`backend/src/test`) are MockMvc integration tests that go through the real security filter chain, on **real PostgreSQL 16**.
+  - By default Testcontainers starts a `postgres:16` container. This needs Docker access (see Prerequisites); the first run pulls the image.
+  - Without Docker, point the tests at any PostgreSQL 16 database they may wipe:
+    ```bash
+    TEST_DB_URL=jdbc:postgresql://localhost:5433/msframework_test ./mvnw verify
+    ```
+    `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` default to `msframework`. The schema is dropped and recreated, so never use your dev database.
+- Every test class is annotated `@IntegrationTest` (`IntegrationTest.java`), so they all share one Spring context and one container. Don't add `@SpringBootTest` directly, or you'll start a second context and database.
 - When you change behaviour, add or adjust a test in `ApiIntegrationTests`. Use unique emails and names, because the tests share one database.
 - ESLint runs the React Compiler rules (`eslint-plugin-react-hooks` v7). Two common failures:
   - calling `setState` synchronously inside `useEffect` (do it in a promise or callback instead);

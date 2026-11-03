@@ -4,11 +4,8 @@ import com.jayway.jsonpath.JsonPath;
 import com.msframework.backend.service.PasswordResetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -27,9 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * End-to-end tests of the REST API through the real security filter chain.
  * Each test uses unique emails/names so tests do not depend on each other's data.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@IntegrationTest
 class ApiIntegrationTests {
 
     private static final String ADMIN_EMAIL = "admin@test.com";
