@@ -1,0 +1,72 @@
+/* Department seals (ui/seal/Seal.tsx): the small round seal and the gear badge. */
+@layer components {
+  .ms-seal-mini {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 1.5px solid var(--seal-border, var(--text-tertiary));
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--seal, var(--text-tertiary)) 13%, transparent);
+    color: var(--seal, var(--text-tertiary));
+  }
+
+  .ms-seal-mini > svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-seal-mini--empty {
+    border-style: dashed;
+    border-color: var(--text-tertiary);
+    background: none;
+  }
+
+  .ms-seal-badge {
+    position: relative;
+    display: block;
+    flex: none;
+    width: 112px;
+    height: 76px;
+  }
+
+  .ms-seal-badge__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ms-seal-badge__teeth {
+    fill: none;
+    stroke: var(--gear);
+    stroke-width: 4;
+    stroke-dasharray: 4.2 4.31;
+  }
+
+  .ms-seal-badge__ring {
+    fill: none;
+    stroke: var(--gear);
+    stroke-width: 2.5;
+  }
+
+  .ms-seal-badge__disc {
+    fill: color-mix(in srgb, var(--seal) 12%, transparent);
+    stroke: var(--seal-border);
+    stroke-width: 1.5;
+  }
+
+  .ms-seal-badge__star {
+    fill: var(--seal);
+  }
+
+  .ms-seal-badge__icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    color: var(--seal);
+    transform: translate(-50%, -50%);
+  }
+}

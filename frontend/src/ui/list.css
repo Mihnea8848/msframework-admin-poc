@@ -1,0 +1,302 @@
+/*
+ * List building blocks shared by the data pages (CSS only, import it from the page):
+ * ms-toolbar (search, chips, inline filter), ms-table (the concept's data table in a clipped
+ * frame), ms-status (pill with icon and label), ms-role, ms-empty and ms-notice.
+ */
+@layer components {
+  .ms-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+    margin-bottom: 10px;
+  }
+
+  .ms-search {
+    position: relative;
+    flex: 1 1 260px;
+    min-width: 0;
+    max-width: 380px;
+  }
+
+  .ms-search > svg {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    width: 16px;
+    height: 16px;
+    color: var(--text-tertiary);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .ms-search .ms-input {
+    padding-left: 36px;
+  }
+
+  .ms-toolbar__filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .ms-toolbar__filter .ms-select {
+    width: 180px;
+  }
+
+  .ms-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ms-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .ms-chip:hover {
+    border-color: var(--border-control);
+    color: var(--text-primary);
+  }
+
+  .ms-chip:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ms-chip[aria-pressed="true"] {
+    border-color: var(--chip-on-line);
+    background: var(--chip-on);
+    color: var(--text-primary);
+  }
+
+  .ms-chip > svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-result-count {
+    margin: 0 0 10px;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  /* The clipped table frame: the outline colour, clipped, with the fill inset by 1px */
+  .ms-table-wrap {
+    position: relative;
+    isolation: isolate;
+    overflow-x: auto;
+    background: var(--border-subtle);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .ms-table-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    background: var(--surface-1);
+    clip-path: polygon(0 0, calc(100% - 9.41px) 0, 100% 9.41px, 100% 100%, 9.41px 100%, 0 calc(100% - 9.41px));
+  }
+
+  .ms-table-wrap:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  .ms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-table th {
+    height: 40px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ms-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-faint);
+    vertical-align: middle;
+  }
+
+  .ms-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .ms-table tbody tr:hover {
+    background: var(--row-hover);
+  }
+
+  .ms-table__muted {
+    color: var(--text-secondary);
+  }
+
+  .ms-table__actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .ms-table__actions > * + * {
+    margin-left: 6px;
+  }
+
+  /* A status pill: icon (or dot) and label, never colour alone */
+  .ms-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px 3px 7px;
+    border-radius: var(--radius-2);
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-bold);
+    white-space: nowrap;
+  }
+
+  .ms-status > svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-status--ok {
+    background: var(--status-ok-bg);
+    color: var(--status-ok-fg);
+  }
+
+  .ms-status--warn {
+    background: var(--status-warn-bg);
+    color: var(--status-warn-fg);
+  }
+
+  .ms-status--danger {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-fg);
+  }
+
+  .ms-status--info {
+    background: var(--status-info-bg);
+    color: var(--status-info-fg);
+  }
+
+  .ms-status--neutral {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+
+  .ms-role {
+    display: inline-flex;
+    padding: 3px 7px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    white-space: nowrap;
+  }
+
+  .ms-role--admin {
+    border-color: var(--chip-on-line);
+    color: var(--accent-text);
+  }
+
+  .ms-empty {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 40px 24px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .ms-empty > * {
+    margin: 0;
+  }
+
+  .ms-empty__title {
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    font-weight: var(--weight-bold);
+  }
+
+  /* A page-level notice (Alert) with an optional action on the right */
+  .ms-notice {
+    margin-bottom: var(--space-4);
+  }
+
+  .ms-notice .ms-alert__body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
+  }
+
+  @media (width <= 767px) {
+    .ms-toolbar {
+      gap: 6px 8px;
+      margin-bottom: 6px;
+    }
+
+    .ms-search {
+      flex-basis: 100%;
+      max-width: none;
+    }
+
+    .ms-toolbar__filter {
+      flex: 1 1 100%;
+      margin-left: 0;
+    }
+
+    .ms-toolbar__filter .ms-select {
+      flex: 1;
+      width: auto;
+    }
+
+    .ms-chips {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .ms-chip {
+      flex: none;
+      height: var(--touch-target);
+    }
+
+    .ms-empty {
+      padding: 24px 16px;
+    }
+  }
+}
