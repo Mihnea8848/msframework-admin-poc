@@ -27,9 +27,12 @@ section into a version (see `AGENTS.md`, Git workflow).
   and in CI.
 - Migration tests that upgrade real legacy databases (pre-RBAC and the
   last pre-Flyway `main`) and compare them with a fresh database.
+- OpenAPI description of the API at `/v3/api-docs` (springdoc-openapi 3.1.1, no
+  Swagger UI), open without login unless `API_DOCS_ENABLED=false`. The
+  committed contract `api/openapi.json` is checked by `OpenApiContractTest`;
+  regenerate it with `./mvnw verify -Dopenapi.write=true`.
 - Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
   for now) and `typescript-eslint` in the frontend lint.
-
 - Chevron design foundation: colour, seal, spacing, type, density and
   motion tokens in `frontend/src/styles/tokens/`, layered CSS
   (`styles/index.css`), a contrast test that fails CI when a text pair
@@ -63,6 +66,10 @@ section into a version (see `AGENTS.md`, Git workflow).
   the backend DTOs, and `npm run build` type checks first. Pages stay
   JavaScript until they are restyled.
 - Removed the unused `bootstrap` dependency.
+- Request bodies that were untyped maps (change email or password, forgot
+  and reset password, client audit events, API keys, webhooks, settings)
+  are typed records. The JSON fields, defaults and error messages are
+  unchanged.
 - The existing pages use the Chevron palette and type through a bridge
   from the old colour variables: dark background `#171717`, no lime
   accent, no gradient buttons, glows, blur or heavy shadows. The auth pages
