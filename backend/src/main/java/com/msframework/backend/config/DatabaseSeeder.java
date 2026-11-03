@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -29,8 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Brings any database (fresh or from an older version of the app) to a consistent state on start-up.
- * Every step is idempotent.
+ * Seeds reference data on start-up, after the Flyway migrations: syncs the built-in role
+ * permissions and creates the departments, the first admin and the integrations when missing.
+ * Every step is idempotent. Legacy data repairs live in the migrations (V2).
  */
 @Component
 @RequiredArgsConstructor
@@ -59,9 +59,10 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        // Instances starting at the same time take turns; the lock ends with the transaction.
+        jdbcTemplate.queryForList("SELECT pg_advisory_xact_lock(hashtext('msf-seeder'))");
         Map<String, Role> roles = syncRoles();
         seedDepartments();
-        repairUsers(roles);
         seedAdmin(roles.get(SystemRoles.ADMIN));
         seedConnections();
     }
@@ -89,55 +90,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .map(name -> Department.builder().name(name).build())
                     .toList());
         }
-    }
-
-    /**
-     * Fixes users created by older versions: a missing status becomes Active, and users without any
-     * role get the role from the legacy {@code users.role} column (pre-RBAC schema) or MEMBER.
-     */
-    private void repairUsers(Map<String, Role> roles) {
-        Map<Long, String> legacyRoles = null;
-
-        for (User user : userRepository.findAll()) {
-            boolean changed = false;
-            if (user.getStatus() == null || user.getStatus().isBlank()) {
-                user.setStatus(User.STATUS_ACTIVE);
-                changed = true;
-            }
-            if (user.getRoles().isEmpty()) {
-                if (legacyRoles == null) legacyRoles = readLegacyRoles();
-                String legacy = legacyRoles.getOrDefault(user.getId(), "");
-                Role role = roles.getOrDefault(legacy.toUpperCase(Locale.ROOT), roles.get(SystemRoles.MEMBER));
-                user.setRoles(new HashSet<>(Set.of(role)));
-                log.info("[SEEDER] Assigned role {} to {} (user had no role)", role.getName(), user.getEmail());
-                changed = true;
-            }
-            if (user.getCreatedAt() == null) {
-                user.setCreatedAt(LocalDateTime.now());
-                changed = true;
-            }
-            if (changed) userRepository.save(user);
-        }
-    }
-
-    private Map<Long, String> readLegacyRoles() {
-        Map<Long, String> legacy = new HashMap<>();
-        // Check first instead of catching a failed query: on PostgreSQL a failed statement would
-        // abort the surrounding transaction.
-        Integer hasColumn = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.columns "
-                        + "WHERE LOWER(table_name) = 'users' AND LOWER(column_name) = 'role'",
-                Integer.class);
-        if (hasColumn == null || hasColumn == 0) {
-            return legacy; // database created after the RBAC change
-        }
-        try {
-            jdbcTemplate.query("SELECT id, role FROM users WHERE role IS NOT NULL",
-                    rs -> { legacy.put(rs.getLong("id"), rs.getString("role")); });
-        } catch (DataAccessException e) {
-            log.warn("[SEEDER] Could not read legacy roles: {}", e.getMessage());
-        }
-        return legacy;
     }
 
     private void seedAdmin(Role adminRole) {
