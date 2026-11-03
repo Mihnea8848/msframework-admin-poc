@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { readStorage, writeStorage } from "../utils/storage.js";
+import { readStorage, writeStorage } from "../utils/storage";
 
 const ACCENTS = [
     { label: "Lime", dark: "#d2ff72", light: "#7ab800" },

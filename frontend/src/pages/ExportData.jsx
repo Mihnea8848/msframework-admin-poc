@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, primaryRole } from "../auth/permissions";
-import { get, post } from "../api/client.js";
-import { downloadText, toCSV } from "../utils/csv.js";
+import { get, post } from "../api/client";
+import { downloadText, toCSV } from "../utils/csv";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const ENTITY_OPTIONS = {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Database, RefreshCw } from "lucide-react";
-import { get } from "../api/client.js";
-import { formatBytes } from "../utils/format.js";
+import { get } from "../api/client";
+import { formatBytes } from "../utils/format";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const DESCRIPTIONS = {

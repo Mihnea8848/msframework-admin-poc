@@ -4,9 +4,9 @@ import { Building2 } from "lucide-react";
 import QuickActions from "../ui/QuickActions.jsx";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { PAGES } from "../routes/navigation.js";
-import { get } from "../api/client.js";
-import { getLastSeenAuditId, onAuditSeen } from "../utils/auditSeen.js";
+import { PAGES } from "../routes/navigation";
+import { get } from "../api/client";
+import { getLastSeenAuditId, onAuditSeen } from "../utils/auditSeen";
 
 const POLL_MS = 30000;
 const BADGE_LIMIT = 50;

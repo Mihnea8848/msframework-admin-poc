@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { BadgeCheck, Circle, ShieldCheck, TableProperties, UsersRound } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole } from "../auth/permissions";
-import { get } from "../api/client.js";
-import { relTime } from "../utils/format.js";
-import { auditMeta } from "../utils/auditTypes.js";
-import { PAGES } from "../routes/navigation.js";
+import { get } from "../api/client";
+import { relTime } from "../utils/format";
+import { auditMeta } from "../utils/auditTypes";
+import { PAGES } from "../routes/navigation";
 import PageHeader from "../ui/PageHeader.jsx";
 
 const QUICK_LINK_KEYS = ["notifications", "security", "database", "payments", "import", "export"];

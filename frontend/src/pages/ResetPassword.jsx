@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
 import { useAuth } from "../auth/AuthProvider";
-import { passwordProblem } from "../utils/validators.js";
+import { passwordProblem } from "../utils/validators";
 
 export default function ResetPassword() {
     const navigate = useNavigate();

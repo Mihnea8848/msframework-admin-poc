@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as authApi from "./auth";
-import { setUnauthorizedHandler } from "../api/client.js";
+import { setUnauthorizedHandler } from "../api/client";
 
 const AuthContext = createContext(null);
 

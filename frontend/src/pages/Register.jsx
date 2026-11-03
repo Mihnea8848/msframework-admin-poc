@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/ms_logo.png";
 import WavyBackground from "../ui/WavyBackground.jsx";
-import { get, post } from "../api/client.js";
+import { get, post } from "../api/client";
 import {
     validateFullName,
     validateEmail,
     validatePassword,
     validatePhone,
-} from "../utils/validators.js";
+} from "../utils/validators";
 
 function RequirementMeter({ show, checks, labels }) {
     const entries = Object.entries(checks);

@@ -1,11 +1,18 @@
+export interface ParsedCSV {
+    /** Header names, trimmed and lower-cased. */
+    headers: string[];
+    /** One object per data row, keyed by header. Missing cells are "". */
+    rows: Record<string, string>[];
+}
+
 /**
  * Minimal RFC 4180 CSV support: quoted fields, escaped quotes (""), commas and newlines inside
  * quotes, CRLF line endings and a UTF-8 BOM.
  */
-export function parseCSV(text) {
+export function parseCSV(text: string | null | undefined): ParsedCSV {
     const input = (text || "").replace(/^\uFEFF/, "");
-    const rows = [];
-    let row = [];
+    const rows: string[][] = [];
+    let row: string[] = [];
     let field = "";
     let inQuotes = false;
 
@@ -43,16 +50,17 @@ export function parseCSV(text) {
     }
 
     const nonEmpty = rows.filter((r) => r.some((cell) => cell.trim() !== ""));
-    if (nonEmpty.length === 0) return { headers: [], rows: [] };
+    const [headerRow, ...dataRows] = nonEmpty;
+    if (!headerRow) return { headers: [], rows: [] };
 
-    const headers = nonEmpty[0].map((h) => h.trim().toLowerCase());
-    const data = nonEmpty.slice(1).map((values) =>
+    const headers = headerRow.map((h) => h.trim().toLowerCase());
+    const data = dataRows.map((values) =>
         Object.fromEntries(headers.map((h, idx) => [h, (values[idx] ?? "").trim()]))
     );
     return { headers, rows: data };
 }
 
-function escapeCell(value) {
+function escapeCell(value: unknown): string {
     const s = value === null || value === undefined ? "" : String(value);
     // Prevent formula injection when the file is opened in a spreadsheet, without mangling
     // ordinary values such as "+40 712 345 678" or "-5".
@@ -60,14 +68,22 @@ function escapeCell(value) {
     return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-/** columns: [{ key, label, get?(row) }] */
-export function toCSV(rows, columns) {
+export interface CSVColumn<Row> {
+    key: string;
+    label: string;
+    /** Computes the cell; defaults to `row[key]`. */
+    get?: (row: Row) => unknown;
+}
+
+export function toCSV<Row extends object>(rows: readonly Row[], columns: readonly CSVColumn<Row>[]): string {
     const header = columns.map((c) => escapeCell(c.label)).join(",");
-    const lines = rows.map((row) => columns.map((c) => escapeCell(c.get ? c.get(row) : row[c.key])).join(","));
+    const lines = rows.map((row) =>
+        columns.map((c) => escapeCell(c.get ? c.get(row) : (row as Record<string, unknown>)[c.key])).join(",")
+    );
     return [header, ...lines].join("\r\n");
 }
 
-export function downloadText(content, filename, type = "text/csv;charset=utf-8;") {
+export function downloadText(content: string, filename: string, type = "text/csv;charset=utf-8;"): void {
     // BOM so Excel opens UTF-8 (diacritics) correctly.
     const blob = new Blob(["\uFEFF", content], { type });
     const url = URL.createObjectURL(blob);

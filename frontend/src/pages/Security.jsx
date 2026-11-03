@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock, ShieldAlert, XCircle } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole } from "../auth/permissions";
-import { get } from "../api/client.js";
-import { auditMeta } from "../utils/auditTypes.js";
-import { relTime } from "../utils/format.js";
+import { get } from "../api/client";
+import { auditMeta } from "../utils/auditTypes";
+import { relTime } from "../utils/format";
 import PageHeader from "../ui/PageHeader.jsx";
 
 function ScoreRing({ score }) {

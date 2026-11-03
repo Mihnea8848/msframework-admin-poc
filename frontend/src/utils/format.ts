@@ -1,10 +1,12 @@
-export function initialsOf(name, fallback = "?") {
+type DateInput = string | number | Date | null | undefined;
+
+export function initialsOf(name: string | null | undefined, fallback: unknown = "?"): string {
     const parts = (name || "").trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return String(fallback).toUpperCase();
     return parts.slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
-export function relTime(dateStr) {
+export function relTime(dateStr: DateInput): string {
     if (!dateStr) return "";
     const time = new Date(dateStr).getTime();
     if (Number.isNaN(time)) return "";
@@ -19,13 +21,13 @@ export function relTime(dateStr) {
     return new Date(dateStr).toLocaleDateString();
 }
 
-export function formatDateTime(dateStr) {
+export function formatDateTime(dateStr: DateInput): string {
     if (!dateStr) return "—";
     const date = new Date(dateStr);
     return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 }
 
-export function formatBytes(bytes) {
+export function formatBytes(bytes: number | null | undefined): string {
     if (bytes === null || bytes === undefined) return "—";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

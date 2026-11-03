@@ -1,7 +1,7 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 import { RequireAuth, RedirectIfAuthed, RequirePermission } from "./Guards.jsx";
 import DashboardLayout from "../layout/DashboardLayout.jsx";
-import { PAGES } from "./navigation.js";
+import { PAGES } from "./navigation";
 
 import Dashboard from "../pages/Dashboard.jsx";
 import UserManagement from "../pages/UserManagement.jsx";

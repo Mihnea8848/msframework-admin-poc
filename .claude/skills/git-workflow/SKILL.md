@@ -42,8 +42,8 @@ default disagrees with this file, this file wins.
 
    Name the branch after the change (`department-audit-log`,
    `fix-reset-expiry`). Never work on `main`.
-2. Make the change and check it locally the way CI does: `npm run lint` and
-   `npm run build` in `frontend/`, `./mvnw verify` in `backend/`. When the
+2. Make the change and check it locally the way CI does: `npm run lint`,
+   `npm test` and `npm run build` in `frontend/`, `./mvnw verify` in `backend/`. When the
    change is visible in the UI and the person is at the computer, ask them to
    try it; that is often faster than a long automated run.
 3. Update the documentation in the same branch: `README.md` for anything a

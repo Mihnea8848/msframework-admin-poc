@@ -66,12 +66,13 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite 7, React Router 7, Lucide Icons |
+| Frontend | React 19, Vite 7, React Router 7, Lucide Icons, TypeScript 5 (incremental migration from JavaScript) |
 | Styling | Plain CSS with CSS custom properties (no framework), light/dark theme via `[data-theme]` |
 | Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
 | Database | PostgreSQL 16 (Docker); schema managed by Hibernate `ddl-auto=update` |
-| Tests | JUnit 5 + MockMvc integration tests on PostgreSQL 16 via Testcontainers |
-| DevOps | Docker Compose, GitHub Actions CI (frontend lint + build, backend build + tests) |
+| Tests | Frontend: Vitest + Testing Library unit tests (jsdom). Backend: JUnit 5 + MockMvc integration tests on PostgreSQL 16 via Testcontainers |
+| Code quality | ESLint (typescript-eslint, React Compiler rules, jsx-a11y), Stylelint, `tsc` type check |
+| DevOps | Docker Compose, GitHub Actions CI (frontend lint + unit tests + type check + build, backend build + tests) |
 
 ---
 
@@ -121,13 +122,15 @@ msframework-admin-poc/
 ├── docker-compose.yml          # PostgreSQL 16 on port 5433
 ├── frontend/
 │   └── src/
-│       ├── api/client.js       # fetch wrapper: JSON, error messages, 401 handling
+│       ├── api/client.ts       # fetch wrapper: JSON, error messages, 401 handling
+│       ├── api/types.ts        # TypeScript types for the backend's JSON responses
 │       ├── auth/               # AuthProvider, auth API calls, permission helpers
 │       ├── layout/             # DashboardLayout, Sidebar, Topbar
 │       ├── pages/              # 15 page components + auth pages
-│       ├── routes/             # navigation.js (single page/permission registry), AppRoutes, Guards
+│       ├── routes/             # navigation.ts (single page/permission registry), AppRoutes, Guards
 │       ├── styles/theme.css    # CSS variables, components, themes, density
 │       ├── ui/                 # Modal, Toggle, PageHeader, QuickActions, WavyBackground
+│       ├── test/setup.ts       # Vitest setup (unit tests live next to their modules as *.test.ts)
 │       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/
     └── src/

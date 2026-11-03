@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Home, ChevronRight, Menu, Settings, LogOut } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { primaryRole } from "../auth/permissions";
-import { initialsOf } from "../utils/format.js";
+import { initialsOf } from "../utils/format";
 
 export default function Topbar({ onOpenSidebar }) {
     const navigate = useNavigate();

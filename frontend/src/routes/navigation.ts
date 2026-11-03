@@ -2,12 +2,31 @@ import {
     Bell, BookText, Box, BriefcaseBusiness, Building2, Cable, Clock3, CreditCard,
     Database, Download, Home, Palette, Shield, Upload, UsersRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { Permission } from "../api/types";
+
+export type PageKey =
+    | "home" | "dashboard" | "notifications" | "appearance" | "database" | "connections"
+    | "timezones" | "docs" | "auth" | "users" | "departments" | "security" | "payments"
+    | "import" | "export";
+
+export type PageGroup = "General" | "Ventures";
+
+export interface PageEntry {
+    key: PageKey;
+    label: string;
+    path: string;
+    icon: LucideIcon;
+    group: PageGroup;
+    /** `null` means any signed-in user. */
+    permission: Permission | null;
+}
 
 /**
  * Every page in the dashboard. Used by the sidebar, the Quick Actions palette and the router,
  * so a page's permission is defined in exactly one place. `permission: null` = any signed-in user.
  */
-export const PAGES = [
+export const PAGES: readonly PageEntry[] = [
     { key: "home", label: "Home", path: "/", icon: Home, group: "General", permission: null },
     { key: "dashboard", label: "Dashboard", path: "/dashboard", icon: Box, group: "General", permission: "DASHBOARD_READ" },
     { key: "notifications", label: "Notifications", path: "/notifications", icon: Bell, group: "General", permission: "AUDIT_READ" },
@@ -25,6 +44,6 @@ export const PAGES = [
     { key: "export", label: "Export data", path: "/export", icon: Download, group: "Ventures", permission: "EXPORT_DATA" },
 ];
 
-export function pageByKey(key) {
+export function pageByKey(key: string): PageEntry | undefined {
     return PAGES.find((p) => p.key === key);
 }
