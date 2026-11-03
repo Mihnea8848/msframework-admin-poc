@@ -30,6 +30,15 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
   for now) and `typescript-eslint` in the frontend lint.
 
+- Chevron design foundation: colour, seal, spacing, type, density and
+  motion tokens in `frontend/src/styles/tokens/`, layered CSS
+  (`styles/index.css`), a contrast test that fails CI when a text pair
+  drops below 4.5:1 (3:1 for focus rings and borders), and the approved
+  concept in `design/concept-chevron.html`.
+- Appearance: System theme, six brand accents, and a Full/Reduced motion
+  setting that defaults to the device setting.
+- SVG logo and favicon.
+
 ### Fixed
 - Changing your own email no longer logs you out.
 - Deleting a department with members unassigns them instead of failing.
@@ -54,3 +63,15 @@ section into a version (see `AGENTS.md`, Git workflow).
   the backend DTOs, and `npm run build` type checks first. Pages stay
   JavaScript until they are restyled.
 - Removed the unused `bootstrap` dependency.
+- The existing pages use the Chevron palette and type through a bridge
+  from the old colour variables: dark background `#171717`, no lime
+  accent, no gradient buttons, glows, blur or heavy shadows. The auth pages
+  lose the animated wave background. The brand reads "Multimedia
+  Entertainment Hub", with "MEH Studios Inc" under MSFramework in the
+  sidebar.
+- Manrope and Montserrat are self-hosted instead of loaded from Google
+  Fonts, so no visitor data goes to a third party.
+- The theme is applied before the first paint by `public/theme-init.js`
+  instead of an inline script. Saved accents from the old palette move to
+  the new accent keys (Lime and Rose become Cyan).
+- Removed the 1.4 MB PNG logo and unused images.

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
 import QuickActions from "../ui/QuickActions.jsx";
+import Logo from "../ui/brand/Logo";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
 import { PAGES } from "../routes/navigation";
@@ -97,9 +97,12 @@ export default function Sidebar({ onNavigate }) {
         <>
             <div className="sidebar-inner">
                 <div className="sidebar-brand">
-                    <div className="brand-pill" title="Organisation">
-                        <Building2 size={15} />
-                        <span>Company</span>
+                    <div className="sidebar-brand-lockup">
+                        <Logo className="sidebar-brand-logo" />
+                        <div>
+                            <div className="sidebar-brand-name">MSFramework</div>
+                            <div className="sidebar-brand-sub">MEH Studios Inc</div>
+                        </div>
                     </div>
                 </div>
 

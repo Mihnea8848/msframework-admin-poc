@@ -1,0 +1,72 @@
+/*
+ * Semantic colour roles for the dark theme, which is the default. Every value points at a
+ * primitive (primitives.css) or an accent token (accents.css); no colour literals here.
+ * Mapped 1:1 from the concept's dark tokens. semantic-light.css overrides the same names.
+ *
+ * Pairs that carry text or a boundary are checked by contrast.test.ts.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces, back to front */
+  --canvas: var(--charcoal-900);
+  --surface-1: var(--charcoal-850);
+  --surface-2: var(--charcoal-800);
+  --surface-3: var(--charcoal-700);
+  --field: var(--charcoal-900);
+  --scrim: var(--black-a62);
+
+  /* Text */
+  --text-primary: var(--white-a95);
+  --text-secondary: var(--white-a72);
+  --text-tertiary: var(--white-a56);
+  --text-disabled: var(--white-a50);
+
+  /* Borders. border-control outlines inputs and secondary buttons (3:1 against surfaces). */
+  --border-faint: var(--white-a7);
+  --border-subtle: var(--charcoal-750);
+  --border-strong: var(--white-a16);
+  --border-control: var(--white-a40);
+
+  /* Interaction */
+  --focus-ring: var(--accent-text);
+  --row-hover: var(--white-a3);
+  --nav-active: var(--white-a7);
+  --notch: var(--accent-line);
+  --chip-on: var(--accent-tint);
+  --chip-on-line: var(--accent-line);
+  --disabled-bg: var(--white-a5);
+
+  /* Primary action, from the selected accent */
+  --primary: var(--accent-solid);
+  --primary-hover: var(--accent-solid-hover);
+  --on-primary: var(--on-accent);
+
+  /* Destructive action: maple red, never an accent. "-solid" because the legacy bridge still
+     uses the plain --danger name for danger text. */
+  --danger-solid: var(--maple-red);
+  --danger-solid-hover: var(--maple-red-700);
+  --on-danger: var(--white);
+
+  /* Status: fg is text on any surface, bg a tint behind it, border its outline */
+  --status-ok-fg: var(--green-400);
+  --status-ok-bg: color-mix(in srgb, var(--green-400) 12%, transparent);
+  --status-ok-border: color-mix(in srgb, var(--green-400) 45%, transparent);
+  --status-warn-fg: var(--amber-400);
+  --status-warn-bg: color-mix(in srgb, var(--amber-400) 12%, transparent);
+  --status-warn-border: color-mix(in srgb, var(--amber-400) 45%, transparent);
+  --status-danger-fg: var(--red-300);
+  --status-danger-bg: color-mix(in srgb, var(--red-300) 10%, transparent);
+  --status-danger-border: color-mix(in srgb, var(--red-300) 65%, transparent);
+  --status-info-fg: var(--blue-300);
+  --status-info-bg: color-mix(in srgb, var(--blue-300) 12%, transparent);
+  --status-info-border: color-mix(in srgb, var(--blue-300) 45%, transparent);
+
+  /* Brand mark and decoration */
+  --logo-upper: var(--brand-cyan);
+  --logo-lower: var(--brand-cobalt);
+  --trace: var(--white);
+  --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 26%, transparent);
+  --avatar-text: var(--white-a95);
+  --gear: var(--white-a20);
+}

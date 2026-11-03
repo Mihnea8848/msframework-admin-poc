@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/ms_logo.png";
-import WavyBackground from "../ui/WavyBackground.jsx";
+import Logo from "../ui/brand/Logo";
 import { get, post } from "../api/client";
 import {
     validateFullName,
@@ -102,10 +101,13 @@ export default function Register() {
     return (
         <div className="auth-bg" style={{ minHeight: "100vh", paddingBottom: "140px", overflowY: "auto" }}>
             <div className="auth-circuit">
-                <WavyBackground colorA="#28beef" colorB="#2487cb" />
                 <div className="auth-card auth-card-wide" style={{ marginBottom: 60 }}>
                     <div className="auth-brand">
-                        <img className="auth-logo" src={String(logo)} alt="MSFramework" />
+                        <Logo className="auth-logo" />
+                        <div>
+                            <div className="auth-brand-name">MSFramework</div>
+                            <div className="auth-brand-sub">Multimedia Entertainment Hub</div>
+                        </div>
                     </div>
                     <h1 className="auth-title">Create Account</h1>
                     <div className="auth-subtitle">
@@ -126,7 +128,7 @@ export default function Register() {
                             </div>
                             <div className="auth-field field-wrapper">
                                 <label className="auth-label">Email address</label>
-                                <input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@company.com" onFocus={() => setFocusField("email")} onBlur={() => setFocusField(null)} required />
+                                <input className="auth-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@mehstudios.net" onFocus={() => setFocusField("email")} onBlur={() => setFocusField(null)} required />
                                 <RequirementMeter show={focusField === "email" && !emailVal.ok} checks={emailVal.checks} labels={{ nonEmpty: "Email is required", formatOk: "Invalid email format" }} />
                             </div>
                             <div className="auth-field field-wrapper">
@@ -149,7 +151,7 @@ export default function Register() {
                         </div>
                         <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center" }}>
                             {!canSubmit && (fullName || email || phone) && (
-                                <div style={{ background: "rgba(255,106,95,0.12)", color: "var(--danger)", padding: "14px 24px", borderRadius: "12px", fontSize: "14px", fontWeight: "700", marginBottom: "24px", textAlign: "center", width: "100%", border: "1px solid rgba(255,106,95,0.3)" }}>
+                                <div style={{ background: "var(--status-danger-bg)", color: "var(--danger)", padding: "14px 24px", borderRadius: "2px", fontSize: "14px", fontWeight: "700", marginBottom: "24px", textAlign: "center", width: "100%", border: "1px solid var(--status-danger-border)" }}>
                                     {!nameVal.ok ? "⚠️ Please provide your full name (Name Surname)" :
                                         !phoneVal.ok ? "⚠️ Please provide a valid phone number (min 7 digits)" :
                                             !emailVal.ok ? "⚠️ Please provide a valid email address" :
@@ -160,13 +162,10 @@ export default function Register() {
                                 </div>
                             )}
                             <button
-                                className="auth-primary gradient-hover-btn"
+                                className="auth-primary"
                                 type="submit"
                                 disabled={!canSubmit || loading}
-                                style={{
-                                    width: "100%", padding: "20px", fontSize: "18px", fontWeight: "800", opacity: canSubmit ? 1 : 0.5,
-                                    display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center"
-                                }}
+                                style={{ width: "100%" }}
                             >
                                 {loading ? "Creating Account..." : "Create Account"}
                             </button>

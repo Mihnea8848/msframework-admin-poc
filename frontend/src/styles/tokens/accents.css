@@ -1,0 +1,128 @@
+/*
+ * Accents: six keys taken from the brand and seal palette, chosen on the Appearance page and
+ * stored as data-accent on <html>. Maple red is the danger colour and is never an accent.
+ *
+ * Each key has AA-safe values per theme:
+ *   -solid / -solid-hover  fill of primary buttons and badges
+ *   -on                    text and icons on the fill (4.5:1)
+ *   -text                  accent-coloured text, links and the focus ring on surfaces (4.5:1)
+ *   -line                  the nav notch, selected chips and accent borders
+ * The [data-accent] blocks at the end copy one key into the generic --accent-* names.
+ */
+:root {
+  /* A faint wash of the selected accent, for selected rows and chips */
+  --accent-tint: color-mix(in srgb, var(--accent-line) 12%, transparent);
+  --accent-cyan-solid: var(--cyan-600);
+  --accent-cyan-solid-hover: var(--cyan-700);
+  --accent-cyan-on: var(--white);
+  --accent-cyan-text: var(--brand-cyan);
+  --accent-cyan-line: var(--brand-cyan);
+  --accent-cobalt-solid: var(--cobalt-600);
+  --accent-cobalt-solid-hover: var(--cobalt-700);
+  --accent-cobalt-on: var(--white);
+  --accent-cobalt-text: var(--cobalt-300);
+  --accent-cobalt-line: var(--brand-cobalt);
+  --accent-violet-solid: var(--purple-600);
+  --accent-violet-solid-hover: var(--purple-650);
+  --accent-violet-on: var(--white);
+  --accent-violet-text: var(--purple-300);
+  --accent-violet-line: var(--purple-300);
+  --accent-jade-solid: var(--jade-600);
+  --accent-jade-solid-hover: var(--jade-650);
+  --accent-jade-on: var(--white);
+  --accent-jade-text: var(--jade-300);
+  --accent-jade-line: var(--jade-300);
+  --accent-gold-solid: var(--gold-300);
+  --accent-gold-solid-hover: var(--gold-400);
+  --accent-gold-on: var(--ink);
+  --accent-gold-text: var(--gold-300);
+  --accent-gold-line: var(--gold-300);
+  --accent-silver-solid: var(--silver-650);
+  --accent-silver-solid-hover: var(--silver-750);
+  --accent-silver-on: var(--white);
+  --accent-silver-text: var(--silver-200);
+  --accent-silver-line: var(--silver-300);
+}
+
+:root[data-theme="light"] {
+  --accent-cyan-solid: var(--cyan-600);
+  --accent-cyan-solid-hover: var(--cyan-720);
+  --accent-cyan-on: var(--white);
+  --accent-cyan-text: var(--cyan-750);
+  --accent-cyan-line: var(--brand-cobalt);
+  --accent-cobalt-solid: var(--cobalt-600);
+  --accent-cobalt-solid-hover: var(--cobalt-700);
+  --accent-cobalt-on: var(--white);
+  --accent-cobalt-text: var(--cobalt-750);
+  --accent-cobalt-line: var(--cobalt-600);
+  --accent-violet-solid: var(--purple-700);
+  --accent-violet-solid-hover: var(--purple-800);
+  --accent-violet-on: var(--white);
+  --accent-violet-text: var(--purple-700);
+  --accent-violet-line: var(--purple-700);
+  --accent-jade-solid: var(--jade-750);
+  --accent-jade-solid-hover: var(--jade-800);
+  --accent-jade-on: var(--white);
+  --accent-jade-text: var(--jade-700);
+  --accent-jade-line: var(--jade-700);
+  --accent-gold-solid: var(--gold-700);
+  --accent-gold-solid-hover: var(--gold-800);
+  --accent-gold-on: var(--white);
+  --accent-gold-text: var(--gold-700);
+  --accent-gold-line: var(--gold-700);
+  --accent-silver-solid: var(--silver-750);
+  --accent-silver-solid-hover: var(--silver-800);
+  --accent-silver-on: var(--white);
+  --accent-silver-text: var(--silver-700);
+  --accent-silver-line: var(--silver-600);
+}
+
+/* The selected accent. Cyan is the default when data-accent is missing. */
+:root,
+:root[data-accent="cyan"] {
+  --accent-solid: var(--accent-cyan-solid);
+  --accent-solid-hover: var(--accent-cyan-solid-hover);
+  --on-accent: var(--accent-cyan-on);
+  --accent-text: var(--accent-cyan-text);
+  --accent-line: var(--accent-cyan-line);
+}
+
+:root[data-accent="cobalt"] {
+  --accent-solid: var(--accent-cobalt-solid);
+  --accent-solid-hover: var(--accent-cobalt-solid-hover);
+  --on-accent: var(--accent-cobalt-on);
+  --accent-text: var(--accent-cobalt-text);
+  --accent-line: var(--accent-cobalt-line);
+}
+
+:root[data-accent="violet"] {
+  --accent-solid: var(--accent-violet-solid);
+  --accent-solid-hover: var(--accent-violet-solid-hover);
+  --on-accent: var(--accent-violet-on);
+  --accent-text: var(--accent-violet-text);
+  --accent-line: var(--accent-violet-line);
+}
+
+:root[data-accent="jade"] {
+  --accent-solid: var(--accent-jade-solid);
+  --accent-solid-hover: var(--accent-jade-solid-hover);
+  --on-accent: var(--accent-jade-on);
+  --accent-text: var(--accent-jade-text);
+  --accent-line: var(--accent-jade-line);
+}
+
+:root[data-accent="gold"] {
+  --accent-solid: var(--accent-gold-solid);
+  --accent-solid-hover: var(--accent-gold-solid-hover);
+  --on-accent: var(--accent-gold-on);
+  --accent-text: var(--accent-gold-text);
+  --accent-line: var(--accent-gold-line);
+}
+
+:root[data-accent="silver"] {
+  --accent-solid: var(--accent-silver-solid);
+  --accent-solid-hover: var(--accent-silver-solid-hover);
+  --on-accent: var(--accent-silver-on);
+  --accent-text: var(--accent-silver-text);
+  --accent-line: var(--accent-silver-line);
+}

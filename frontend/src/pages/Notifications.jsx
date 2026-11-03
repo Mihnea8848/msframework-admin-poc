@@ -81,7 +81,7 @@ export default function Notifications() {
                     const isNew = ev.id > seenBefore;
                     return (
                         <div key={ev.id} className="audit-row" style={isNew ? { boxShadow: "inset 3px 0 0 var(--accent)" } : undefined}>
-                            <div className="audit-icon" style={{ background: `${meta.color}20`, color: meta.color }}>
+                            <div className="audit-icon" style={{ background: `color-mix(in srgb, ${meta.color} 13%, transparent)`, color: meta.color }}>
                                 <Icon size={14} />
                             </div>
                             <div className="audit-body">

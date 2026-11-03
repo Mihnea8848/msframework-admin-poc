@@ -201,7 +201,7 @@ export default function ImportData() {
                                 );
                             })}
                             {extraCols.map((c) => (
-                                <span key={c} style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#f0a832", border: "1px solid rgba(240,168,50,0.5)" }}>
+                                <span key={c} style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, color: "var(--status-warn-fg)", border: "1px solid var(--status-warn-border)" }}>
                                     {c} (ignored)
                                 </span>
                             ))}

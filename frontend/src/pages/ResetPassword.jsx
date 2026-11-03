@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import logo from "../assets/ms_logo.png";
-import WavyBackground from "../ui/WavyBackground.jsx";
+import Logo from "../ui/brand/Logo";
 import { useAuth } from "../auth/AuthProvider";
 import { passwordProblem } from "../utils/validators";
 
@@ -63,11 +62,13 @@ export default function ResetPassword() {
     return (
         <div className="auth-bg">
             <div className="auth-circuit">
-                <WavyBackground colorA="#28beef" colorB="#2487cb" />
-
                 <div className="auth-card">
                     <div className="auth-brand">
-                        <img className="auth-logo" src={logo} alt="MSFramework" />
+                        <Logo className="auth-logo" />
+                        <div>
+                            <div className="auth-brand-name">MSFramework</div>
+                            <div className="auth-brand-sub">Multimedia Entertainment Hub</div>
+                        </div>
                     </div>
 
                     <h1 className="auth-title">Reset Password</h1>
@@ -129,7 +130,7 @@ export default function ResetPassword() {
                         </div>
 
                         <button
-                            className="auth-primary gradient-hover-btn"
+                            className="auth-primary"
                             type="submit"
                             disabled={loading || !token || Boolean(message)}
                         >

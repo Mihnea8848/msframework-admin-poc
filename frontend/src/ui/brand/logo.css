@@ -1,0 +1,14 @@
+@layer components {
+  .ms-logo {
+    display: block;
+    overflow: visible;
+  }
+
+  .ms-logo__upper {
+    fill: var(--logo-upper);
+  }
+
+  .ms-logo__lower {
+    fill: var(--logo-lower);
+  }
+}

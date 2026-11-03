@@ -112,7 +112,6 @@ export default function HomePage() {
     const tiles = [
         {
             icon: UsersRound,
-            iconColor: "#28beef",
             title: "User Management",
             desc: hasPermission(user, "USER_UPDATE")
                 ? "View and manage the members of your organisation."
@@ -124,7 +123,6 @@ export default function HomePage() {
         },
         {
             icon: Building2,
-            iconColor: "#bb2eb8",
             title: "Departments",
             desc: "Create and organise departments and see who belongs to each.",
             metric: `${departments.length} department${departments.length !== 1 ? "s" : ""}`,
@@ -134,7 +132,6 @@ export default function HomePage() {
         },
         {
             icon: Bell,
-            iconColor: "#f0a832",
             title: "Notifications",
             desc: "Full audit log of every action taken across the platform.",
             metric: "Audit events",
@@ -144,7 +141,6 @@ export default function HomePage() {
         },
         {
             icon: Database,
-            iconColor: "#2dd881",
             title: "Database",
             desc: "Browse the live schema and row counts of every application table.",
             metric: "Live schema",
@@ -154,7 +150,6 @@ export default function HomePage() {
         },
         {
             icon: Shield,
-            iconColor: "#ff6a5f",
             title: "Security",
             desc: "Monitor your security score, open vulnerabilities, and alerts.",
             metric: canReadUsers
@@ -166,7 +161,6 @@ export default function HomePage() {
         },
         {
             icon: CreditCard,
-            iconColor: "#d2ff72",
             title: "Payments",
             desc: "Proof-of-concept payments view with sample transactions.",
             metric: "Demo data",
@@ -176,7 +170,6 @@ export default function HomePage() {
         },
         {
             icon: Upload,
-            iconColor: "#6c32db",
             title: "Import Data",
             desc: "Upload CSV files to create users and departments in bulk.",
             metric: "CSV supported",
@@ -186,7 +179,6 @@ export default function HomePage() {
         },
         {
             icon: Download,
-            iconColor: "#1a9ddf",
             title: "Export Data",
             desc: "Download real CSV exports of any dataset in the system.",
             metric: "Live data",
@@ -216,11 +208,11 @@ export default function HomePage() {
                     <div className="workspace-breadcrumb">General / Home</div>
 
                     <div className="workspace-title-row">
-                        <h1>Company Overview</h1>
+                        <h1>Multimedia Entertainment Hub</h1>
                     </div>
 
                     <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Everything at a glance — navigate to sections available to your role.
+                        Everything at a glance. Open the sections your role can use.
                     </p>
                 </div>
             </div>
@@ -254,10 +246,7 @@ export default function HomePage() {
                                     }
                                 }}
                             >
-                                <div
-                                    className="nav-tile-icon"
-                                    style={{ color: tile.iconColor }}
-                                >
+                                <div className="nav-tile-icon">
                                     <Icon size={20} />
                                 </div>
 

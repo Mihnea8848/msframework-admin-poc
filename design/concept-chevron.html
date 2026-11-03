@@ -1,0 +1,1674 @@
+<title>MSFramework Chevron</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Montserrat:wght@600;700&display=swap">
+<style>
+/* ============ TOKENS: dark is the default ============ */
+:root{
+  color-scheme: dark;
+  --page:#171717; --panel:#1F1F1F; --raised:#272727; --field:#171717;
+  --line:#2D2D2D; --line-soft:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.16); --field-line:rgba(255,255,255,.36);
+  --text:rgba(255,255,255,.95); --text-2:rgba(255,255,255,.72); --text-3:rgba(255,255,255,.56);
+  --stripe-1:#2EBFF6; --stripe-2:#2689CA; --stripe-3:#6C6C69;
+  --logo-upper:#2EBFF6; --logo-lower:#2689CA; --trace:#FFFFFF;
+  --grain-blend:overlay; --grain-strength:.6; --grain-wash:.05;
+  --accent-text:#2EBFF6; --notch:#2EBFF6; --focus:#2EBFF6;
+  --primary:#2176B3; --primary-hover:#1B649A; --on-primary:#FFFFFF;
+  --danger:#D92A21; --danger-hover:#B9231B; --on-danger:#FFFFFF;
+  --danger-text:#FF7A6E; --danger-line:rgba(255,122,110,.65); --danger-tint:rgba(255,122,110,.1);
+  --ok:#4CC38A; --ok-tint:rgba(76,195,138,.12);
+  --warn:#E8B339; --warn-tint:rgba(232,179,57,.12);
+  --scrim:rgba(0,0,0,.62);
+  --row-hover:rgba(255,255,255,.035); --nav-active:rgba(255,255,255,.07);
+  --chip-on:rgba(46,191,246,.12); --chip-on-line:rgba(46,191,246,.6);
+  --avatar-bg:rgba(38,137,202,.26); --avatar-text:rgba(255,255,255,.95);
+  --gear:rgba(255,255,255,.2);
+  --disabled-bg:rgba(255,255,255,.05); --disabled-text:rgba(255,255,255,.5);
+  --clear:transparent;
+  --seal-adm:#F26473; --seal-dev:#B98AD6; --seal-qc:#5AA6E6; --seal-ext:#3FB58E;
+  --seal-hr:#E07A4A; --seal-eth:#B3B3B3; --seal-eng:#E0E0E0; --seal-dir:#EBC034;
+  --cb-bg:#0E0E0F; --cb-text:#D2D2D2; --cb-text-2:#9C9C9C; --cb-line:#2B2B2D; --cb-on:#2E2E31; --cb-frame:#050505; --stage:#0F0F0F;
+
+  --font-ui:"Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-cap:"Montserrat", "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-frame:ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --clip-8:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  --side-w:256px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --page:#ECEEF0; --panel:#FFFFFF; --raised:#F5F6F7; --field:#FFFFFF;
+    --line:#D5D9DD; --line-soft:rgba(0,0,0,.05); --line-strong:#C4C8CC; --field-line:#7D838A;
+    --text:#1E1E1E; --text-2:#4A4D52; --text-3:#63676D;
+    --stripe-1:#2EBFF6; --stripe-2:#2689CA; --stripe-3:#6C6C69;
+    --logo-upper:#2EBFF6; --logo-lower:#2689CA; --trace:#1E1E1E;
+    --grain-blend:soft-light; --grain-strength:.7; --grain-wash:.12;
+    --accent-text:#1F6FA8; --notch:#2689CA; --focus:#1F6FA8;
+    --primary:#2176B3; --primary-hover:#1B629A; --on-primary:#FFFFFF;
+    --danger:#D92A21; --danger-hover:#B9231B; --on-danger:#FFFFFF;
+    --danger-text:#B3241C; --danger-line:#C45C55; --danger-tint:rgba(217,42,33,.07);
+    --ok:#186C43; --ok-tint:rgba(26,116,72,.09);
+    --warn:#8A5A00; --warn-tint:rgba(214,150,20,.12);
+    --scrim:rgba(24,26,29,.45);
+    --row-hover:rgba(0,0,0,.025); --nav-active:rgba(38,137,202,.09);
+    --chip-on:rgba(38,137,202,.1); --chip-on-line:#2689CA;
+    --avatar-bg:rgba(38,137,202,.14); --avatar-text:#17507A;
+    --gear:#C9CDD1;
+    --disabled-bg:#F0F1F2; --disabled-text:#6E7278;
+    --clear:transparent;
+    --seal-adm:#AE0A1C; --seal-dev:#6D3A8B; --seal-qc:#2B6FA8; --seal-ext:#21795F;
+    --seal-hr:#A1441B; --seal-eth:#6B6B6B; --seal-eng:#3F3F3F; --seal-dir:#846500;
+    --cb-bg:#E4E5E7; --cb-text:#26282B; --cb-text-2:#565A5F; --cb-line:#CDD0D4; --cb-on:#FFFFFF; --cb-frame:#1A1A1A; --stage:#DCDFE2;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"]{
+  --page:#ECEEF0; --panel:#FFFFFF; --raised:#F5F6F7; --field:#FFFFFF;
+  --line:#D5D9DD; --line-soft:rgba(0,0,0,.05); --line-strong:#C4C8CC; --field-line:#7D838A;
+  --text:#1E1E1E; --text-2:#4A4D52; --text-3:#63676D;
+  --stripe-1:#2EBFF6; --stripe-2:#2689CA; --stripe-3:#6C6C69;
+  --logo-upper:#2EBFF6; --logo-lower:#2689CA; --trace:#1E1E1E;
+  --grain-blend:soft-light; --grain-strength:.7; --grain-wash:.12;
+  --accent-text:#1F6FA8; --notch:#2689CA; --focus:#1F6FA8;
+  --primary:#2176B3; --primary-hover:#1B629A; --on-primary:#FFFFFF;
+  --danger:#D92A21; --danger-hover:#B9231B; --on-danger:#FFFFFF;
+  --danger-text:#B3241C; --danger-line:#C45C55; --danger-tint:rgba(217,42,33,.07);
+  --ok:#186C43; --ok-tint:rgba(26,116,72,.09);
+  --warn:#8A5A00; --warn-tint:rgba(214,150,20,.12);
+  --scrim:rgba(24,26,29,.45);
+  --row-hover:rgba(0,0,0,.025); --nav-active:rgba(38,137,202,.09);
+  --chip-on:rgba(38,137,202,.1); --chip-on-line:#2689CA;
+  --avatar-bg:rgba(38,137,202,.14); --avatar-text:#17507A;
+  --gear:#C9CDD1;
+  --disabled-bg:#F0F1F2; --disabled-text:#6E7278;
+  --clear:transparent;
+  --seal-adm:#AE0A1C; --seal-dev:#6D3A8B; --seal-qc:#2B6FA8; --seal-ext:#21795F;
+  --seal-hr:#A1441B; --seal-eth:#6B6B6B; --seal-eng:#3F3F3F; --seal-dir:#846500;
+  --cb-bg:#E4E5E7; --cb-text:#26282B; --cb-text-2:#565A5F; --cb-line:#CDD0D4; --cb-on:#FFFFFF; --cb-frame:#1A1A1A; --stage:#DCDFE2;
+  color-scheme: light;
+}
+
+/* ============ BASE ============ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow-x:clip}
+body{background:var(--stage);color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+h1,h2,h3,p,ul,ol{margin:0;padding:0}
+ul,ol{list-style:none}
+button,input,select{font:inherit;color:inherit}
+a{color:inherit}
+[hidden]{display:none !important}
+.sr{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+[tabindex="-1"]:focus{outline:none}
+svg.lucide{width:18px;height:18px;flex:none}
+
+/* ============ PROTOTYPE FRAME (neutral, not part of the concept) ============ */
+.frame{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.cbar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;background:var(--cb-bg);color:var(--cb-text);border-bottom:1px solid var(--cb-line);font-family:var(--font-frame);font-size:12.5px;padding-block:7px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-top:max(7px, env(safe-area-inset-top, 0px))}
+.cbar :focus-visible{outline:2px solid var(--cb-text);outline-offset:2px}
+.cb-id{font-weight:600;white-space:nowrap}
+.cb-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.cb-tabs a{text-decoration:none;color:var(--cb-text-2);padding:4px 8px;border-radius:5px}
+.cb-tabs a:hover{color:var(--cb-text)}
+.cb-tabs a[aria-current="page"]{color:var(--cb-text);background:var(--cb-on)}
+.cb-ctl{display:flex;align-items:center;gap:6px}
+.cb-lbl{color:var(--cb-text-2)}
+.cb-seg{display:inline-flex;border:1px solid var(--cb-line);border-radius:6px;padding:2px;gap:2px}
+.cb-seg button{border:0;background:none;padding:3px 9px;border-radius:4px;cursor:pointer;color:var(--cb-text-2)}
+.cb-seg button[aria-pressed="true"]{background:var(--cb-on);color:var(--cb-text)}
+.cb-switch{display:inline-flex;align-items:center;gap:7px;border:0;background:none;cursor:pointer;padding:3px 2px;color:var(--cb-text)}
+.cb-track{width:28px;height:16px;border-radius:9px;border:1px solid var(--cb-text-2);position:relative;flex:none}
+.cb-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--cb-text-2);transition:transform .15s}
+.cb-switch[aria-checked="true"] .cb-track{background:var(--cb-on);border-color:var(--cb-text)}
+.cb-switch[aria-checked="true"] .cb-thumb{transform:translateX(12px);background:var(--cb-text)}
+.cb-note{color:var(--cb-text-2);margin-left:auto}
+.cb-more{display:contents}
+.cb-toggle{display:none}
+@media (max-width:599px){
+  .cbar{gap:0 12px;padding-top:env(safe-area-inset-top, 0px);padding-bottom:0;min-height:44px}
+  .cb-id{flex:1;min-width:0;line-height:44px;overflow:hidden;text-overflow:ellipsis}
+  .cb-toggle{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 4px 0 10px;border:0;background:none;color:var(--cb-text);font:inherit;font-weight:600;cursor:pointer}
+  .cb-chev{width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+  .cb-toggle[aria-expanded="true"] .cb-chev{transform:translateY(2px) rotate(-135deg)}
+  .cb-more{display:none}
+  .cbar.open .cb-more{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;width:100%;padding:2px 0 10px;border-top:1px solid var(--cb-line)}
+  .cbar.open .cb-tabs{width:100%}
+  .cb-tabs a{display:inline-flex;align-items:center;min-height:40px;padding:0 10px}
+  .cb-seg button{min-height:36px;padding:0 12px}
+  .cb-switch{min-height:44px}
+  .cb-note{margin-left:0;width:100%}
+}
+
+.stage{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding-block:16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-bottom:max(16px, env(safe-area-inset-bottom, 0px))}
+.device{position:relative;display:flex}
+.stage[data-device="desktop"] .device{flex:1;align-self:stretch;min-height:560px;border:1px solid var(--cb-line)}
+.stage[data-device="phone"] .device{flex:none;width:390px;height:844px;border:10px solid var(--cb-frame);border-radius:46px;overflow:hidden;box-sizing:content-box}
+/* A real phone: the app fills the screen; the app's own wrappers keep the 16px safe-area gutter */
+@media (max-width:460px){
+  .stage{padding:0}
+  .stage[data-device="phone"] .device,.stage[data-device="desktop"] .device{flex:1;width:auto;height:auto;align-self:stretch;min-height:480px;border:0;border-radius:0}
+}
+
+/* ============ APP ROOT ============ */
+.app{position:relative;flex:1;min-width:0;overflow:hidden;background:var(--page);color:var(--text);container:app / inline-size}
+
+/* ============ SHAPES & SHARED ATOMS ============ */
+.cut{--cut:10px;position:relative;isolation:isolate;background:var(--cut-line, var(--line));
+  clip-path:polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)))}
+.cut::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--cut-fill, var(--panel));
+  clip-path:polygon(0 0, calc(100% - var(--cut) + .59px) 0, 100% calc(var(--cut) - .59px), 100% 100%, calc(var(--cut) - .59px) 100%, 0 calc(100% - var(--cut) + .59px))}
+
+.eyebrow{font-family:var(--font-cap);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.stripes{display:flex;align-items:center;gap:3px;height:4px;margin:18px 0 24px}
+.stripes span{height:4px;clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+.stripes span:nth-child(1){width:56px;background:var(--stripe-1)}
+.stripes span:nth-child(2){width:34px;background:var(--stripe-2)}
+.stripes span:nth-child(3){width:18px;background:var(--stripe-3)}
+.stripes i{flex:1;height:1px;background:var(--line);margin-left:6px}
+.stripes.sm{margin:0}
+.stripes.sm span:nth-child(1){width:36px}.stripes.sm span:nth-child(2){width:22px}.stripes.sm span:nth-child(3){width:12px}
+
+/* Buttons: the button element carries the focus ring, the inner face carries the clipped shape */
+.btn{appearance:none;border:0;background:none;padding:0;margin:0;cursor:pointer;display:inline-flex;border-radius:1px;text-decoration:none}
+.btn .face{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:38px;padding:0 16px;font-family:var(--font-cap);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;border-radius:2px}
+.btn .face svg.lucide{width:16px;height:16px}
+.btn-primary .face{background:var(--primary);color:var(--on-primary);clip-path:var(--clip-8);border-radius:0}
+.btn-primary:hover .face{background:var(--primary-hover)}
+.btn-danger .face{background:var(--danger);color:var(--on-danger);clip-path:var(--clip-8);border-radius:0}
+.btn-danger:hover .face{background:var(--danger-hover)}
+.btn-secondary .face{background:var(--panel);color:var(--text);border:1px solid var(--field-line)}
+.btn-secondary:hover .face{background:var(--raised)}
+.btn-ghost .face{color:var(--text-2);padding:0 10px}
+.btn-ghost:hover .face{background:var(--row-hover);color:var(--text)}
+.btn-ghost-danger .face{color:var(--danger-text);border:1px solid var(--danger-line);background:var(--clear)}
+.btn-ghost-danger:hover .face{background:var(--danger-tint)}
+.btn.sm .face{height:32px;padding:0 10px;font-size:11px;gap:6px}
+.btn.sm .face svg.lucide{width:14px;height:14px}
+.btn.full{display:flex;width:100%}
+.btn:disabled{cursor:not-allowed}
+.btn:disabled .face{background:var(--disabled-bg);color:var(--disabled-text);border:1px solid var(--line)}
+.iconbtn{appearance:none;display:inline-grid;place-items:center;width:36px;height:36px;border:0;background:none;color:var(--text-2);border-radius:2px;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--row-hover);color:var(--text)}
+.link{appearance:none;border:0;background:none;padding:0;cursor:pointer;color:var(--accent-text);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.kbd{font-family:var(--font-cap);font-weight:600;font-size:10.5px;letter-spacing:.04em;color:var(--text-3);border:1px solid var(--line-strong);border-radius:2px;padding:1px 5px;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;font-family:var(--font-cap);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);border:1px solid var(--line-strong);border-radius:2px;padding:2px 6px;white-space:nowrap}
+
+/* Fields */
+.field{display:grid;gap:6px;align-content:start;min-width:0}
+.lbl,.field>label,.field legend,.seal-set legend{font-family:var(--font-cap);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.lbl-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.input,.select{width:100%;height:40px;border:1px solid var(--field-line);background:var(--field);color:var(--text);border-radius:2px;padding:0 12px;font-weight:500;font-size:14px}
+.input::placeholder{color:var(--text-3)}
+.input:focus-visible,.select:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+.input[aria-invalid="true"]{border-color:var(--danger-text)}
+.select{appearance:none;padding-right:34px;cursor:pointer}
+.select option{background:var(--panel);color:var(--text)}
+.select-wrap{position:relative;min-width:0}
+.select-wrap::after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;border-right:2px solid var(--text-2);border-bottom:2px solid var(--text-2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.err{display:flex;align-items:center;gap:6px;color:var(--danger-text);font-size:13px;font-weight:600}
+.err svg.lucide{width:15px;height:15px}
+.hint{color:var(--text-3);font-size:12.5px}
+.search{position:relative;min-width:0}
+.search>svg.lucide{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);width:16px;height:16px;pointer-events:none}
+.search .input{padding-left:36px}
+
+/* Seals */
+.seal-mini{--sc:var(--text-3);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--sc);color:var(--sc);background:color-mix(in srgb, var(--sc) 13%, var(--clear));flex:none}
+.seal-mini svg.lucide{width:14px;height:14px}
+.seal-mini.empty{border-style:dashed;background:none}
+.badge{--sc:var(--text-3);position:relative;width:112px;height:76px;flex:none}
+.badge .seal-svg{display:block;width:100%;height:100%}
+.badge .badge-ico{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);color:var(--sc)}
+.gear-teeth{fill:none;stroke:var(--gear);stroke-width:4;stroke-dasharray:4.2 4.31}
+.gear-ring{fill:none;stroke:var(--gear);stroke-width:2.5}
+.seal-disc{fill:color-mix(in srgb, var(--sc) 12%, var(--clear));stroke:var(--sc);stroke-width:1.5}
+.seal-star{fill:var(--sc)}
+
+/* ============ LOGIN ============ */
+.login{position:absolute;inset:0;overflow:auto;background:var(--page);display:grid;grid-template-columns:minmax(440px,46%) 1fr}
+.login-main{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:48px clamp(24px,6vw,104px);min-height:100%}
+.login-panel{--cut:12px;width:100%;max-width:420px;padding:34px 34px 30px}
+.lp-brand{display:flex;align-items:center;gap:16px;margin-bottom:26px}
+.lp-logo{width:46px;height:66px;flex:none;overflow:visible}
+.lg-u{fill:var(--logo-upper)}.lg-l{fill:var(--logo-lower)}
+.logo-fill{transition:opacity .22s ease}
+.logo-trace path{fill:none;stroke:var(--trace);stroke-width:24;stroke-linejoin:miter;stroke-dasharray:1 1;stroke-dashoffset:1;opacity:0}
+.login-panel.tracing .logo-fill{opacity:0}
+.login-panel.tracing .logo-trace path{opacity:1;animation:trace 900ms cubic-bezier(.55,0,.35,1) forwards}
+.login-panel.tracing .logo-trace path:nth-child(2){animation-delay:60ms}
+.login-panel.traced .logo-trace path{opacity:0;stroke-dashoffset:0;transition:opacity .2s ease}
+@keyframes trace{to{stroke-dashoffset:0}}
+.lb-text,.login-form{transition:opacity .24s ease}
+.login-panel.tracing .lb-text,.login-panel.tracing .login-form{opacity:0}
+.lp-word{font-weight:700;font-size:21px;letter-spacing:-.01em;line-height:1.1}
+.lp-sub{font-family:var(--font-cap);font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-top:5px}
+.lp-title{font-size:22px;font-weight:700;line-height:1.2}
+.lp-lead{color:var(--text-2);margin:6px 0 22px}
+.login-form form{display:grid;gap:16px}
+.login-form .btn-primary{margin-top:4px}
+.or{display:flex;align-items:center;gap:12px;margin:20px 0 14px;color:var(--text-3);font-family:var(--font-cap);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.sso .face{justify-content:space-between}
+.sso .face>span{display:inline-flex;align-items:center;gap:8px}
+.login-foot{color:var(--text-3);font-size:12.5px;max-width:420px;display:flex;gap:8px;align-items:center}
+.login-foot svg.lucide{width:15px;height:15px}
+.login-art{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.login-main{position:relative;z-index:1}
+.login-art svg{position:absolute;inset:0;width:100%;height:100%}
+.st1{fill:var(--stripe-1)}.st2{fill:var(--stripe-2)}.st3{fill:var(--stripe-3)}
+.la-stop-cyan{stop-color:var(--logo-upper)}
+.la-stop-cobalt{stop-color:var(--logo-lower)}
+/* Grain over the mark: grey noise blended into the gradient, so the fade breaks up like film grain. */
+.la-grain{mix-blend-mode:var(--grain-blend);opacity:var(--grain-strength)}
+/* A much fainter grain over the whole panel keeps the flat charcoal from looking empty. */
+.la-grain-wash{position:absolute;inset:0;pointer-events:none;opacity:var(--grain-wash);mix-blend-mode:var(--grain-blend);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+  background-size:180px 180px}
+
+/* ============ SHELL ============ */
+.shell{position:absolute;inset:0;display:flex}
+.sidebar{position:relative;width:var(--side-w);flex:none;background:var(--panel);display:flex;flex-direction:column;border-right:1px solid var(--line);min-height:0}
+.side-head{display:flex;align-items:center;gap:11px;padding:18px 16px 14px 18px}
+.side-logo{width:24px;height:35px;flex:none}
+.side-word{font-weight:700;font-size:16px;line-height:1.1}
+.side-sub{font-family:var(--font-cap);font-weight:600;font-size:9px;letter-spacing:.1em;line-height:1.35;text-transform:uppercase;color:var(--text-3);margin-top:3px}
+.side-sub span{white-space:nowrap}
+.qa-btn{display:flex;align-items:center;gap:9px;margin:4px 12px 8px 14px;height:36px;padding:0 8px 0 10px;border:1px solid var(--line-strong);background:var(--field);color:var(--text-2);border-radius:2px;cursor:pointer;font-weight:600;font-size:13px}
+.qa-btn:hover{border-color:var(--field-line);color:var(--text)}
+.qa-btn svg.lucide{width:16px;height:16px}
+.qa-btn .kbd{margin-left:auto}
+.side-nav{flex:1;overflow-y:auto;padding:6px 0 16px;min-height:0}
+.nav-group{font-family:var(--font-cap);font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:16px 18px 6px 22px}
+.nav-item{position:relative;display:flex;align-items:center;gap:11px;height:34px;margin:1px 10px 1px 8px;padding:0 10px 0 16px;border-radius:2px;text-decoration:none;color:var(--text-2);font-weight:600;font-size:13.5px}
+.nav-item svg.lucide{width:17px;height:17px;color:var(--text-3)}
+.nav-item:hover{background:var(--row-hover);color:var(--text)}
+.nav-item[aria-current="page"]{background:var(--nav-active);color:var(--text)}
+.nav-item[aria-current="page"] svg.lucide{color:var(--accent-text)}
+.nav-item[aria-current="page"]::before{content:"";position:absolute;left:4px;top:50%;width:7px;height:12px;transform:translateY(-50%);background:var(--notch);clip-path:polygon(0 0,45% 0,100% 50%,45% 100%,0 100%,55% 50%)}
+.nbadge{margin-left:auto;min-width:20px;height:18px;padding:0 5px;display:inline-grid;place-items:center;background:var(--primary);color:var(--on-primary);font-family:var(--font-cap);font-weight:700;font-size:10.5px;border-radius:2px}
+.side-foot{padding:12px 18px 16px 22px;border-top:1px solid var(--line);color:var(--text-3);font-family:var(--font-cap);font-weight:600;font-size:9px;letter-spacing:.1em;line-height:1.4;text-transform:uppercase}
+
+.maincol{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{flex:none;height:56px;display:flex;align-items:center;gap:6px;padding:0 16px 0 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.crumbs{display:flex;align-items:center;gap:8px;margin-left:8px;font-weight:600;font-size:13px;color:var(--text-3);min-width:0}
+.crumbs li{white-space:nowrap}
+.crumbs li+li::before{content:"/";margin-right:8px;color:var(--text-3)}
+.crumbs li[aria-current]{color:var(--text)}
+.tb-spacer{flex:1}
+.user-chip{display:flex;align-items:center;gap:10px;padding:0 10px 0 4px;margin-right:4px}
+.avatar{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:2px;background:var(--avatar-bg);color:var(--avatar-text);font-family:var(--font-cap);font-weight:700;font-size:11.5px;letter-spacing:.04em;flex:none}
+.uc-name{font-weight:700;font-size:13.5px;line-height:1.2}
+.uc-role{margin-top:2px}
+.tb-sep{width:1px;height:24px;background:var(--line);margin:0 4px}
+.ptop{display:none}
+.tabbar{display:none}
+
+.viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+.scroller{height:100%;overflow-y:auto;overflow-x:hidden}
+.content{max-width:1280px;margin:0 auto;padding:28px 32px 56px}
+
+/* Page header */
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}
+.ph-text{min-width:0}
+.ph-title{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:700;line-height:1.2;margin-top:6px;letter-spacing:-.01em}
+.count{font-family:var(--font-cap);font-weight:700;font-size:12px;letter-spacing:.04em;color:var(--text-2);border:1px solid var(--line-strong);padding:2px 8px;border-radius:2px}
+.ph-desc{color:var(--text-2);margin-top:6px;max-width:62ch}
+.ph-act{display:flex;gap:8px}
+.ph-meta{display:none}
+
+/* Page transition: a short fade and rise of the content area only */
+@keyframes page-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes view-in{from{opacity:0}to{opacity:1}}
+.page-in{animation:page-in 180ms cubic-bezier(.2,0,0,1) both}
+.view-in{animation:view-in 220ms ease-out both}
+
+/* Stagger */
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.stagger>*{animation:rise 240ms cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+
+/* ============ DASHBOARD ============ */
+.sec{margin-bottom:28px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:12px}
+.sec-title{font-size:16px;font-weight:700}
+.sec-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:var(--text-3);font-size:13px}
+.sum{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.sum svg.lucide{width:16px;height:16px}
+.sum-warn{color:var(--warn)}.sum-ok{color:var(--ok)}
+.status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stile{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;min-height:148px}
+.stile::after{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--edge)}
+.st-ok{--edge:var(--ok)}.st-warn{--edge:var(--warn)}
+.stile-top{display:flex;align-items:center;gap:10px}
+.stile-ico{display:inline-grid;place-items:center;width:32px;height:32px;background:var(--raised);border-radius:2px;color:var(--text-2)}
+.stile-name{font-family:var(--font-cap);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.stile-text{font-weight:600;font-size:15px;line-height:1.35;flex:1}
+.stile-badge{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;color:var(--edge);font-weight:700;font-size:12.5px;padding:3px 8px 3px 6px;background:color-mix(in srgb, var(--edge) 12%, var(--clear));border-radius:2px}
+.stile-badge svg.lucide{width:15px;height:15px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{padding:16px 18px 16px}
+.kpi-l{display:flex;align-items:center;gap:8px;font-family:var(--font-cap);font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-2)}
+.kpi-l svg.lucide{width:15px;height:15px;color:var(--accent-text)}
+.kpi-v{font-size:32px;font-weight:700;line-height:1.1;margin-top:10px;letter-spacing:-.02em}
+.kpi-s{color:var(--text-3);font-size:12.5px;margin-top:4px}
+.dash-cols{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:2px}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.panel-meta{color:var(--text-3);font-size:12.5px}
+.events li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 18px;border-bottom:1px solid var(--line-soft)}
+.events li:last-child{border-bottom:0}
+.ev-ico{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:2px;background:var(--raised);color:var(--text-2)}
+.ev-ico svg.lucide{width:15px;height:15px}
+.ev-alert .ev-ico{color:var(--danger-text);background:var(--danger-tint)}
+.ev-warning .ev-ico{color:var(--warn);background:var(--warn-tint)}
+.ev-type{font-family:var(--font-cap);font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.ev-text{font-weight:600;margin-top:2px;overflow-wrap:anywhere}
+.ev-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ev-side time{color:var(--text-3);font-size:12.5px;white-space:nowrap}
+.lvl{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:11.5px}
+.lvl svg.lucide{width:13px;height:13px}
+.lvl-alert{color:var(--danger-text)}.lvl-warning{color:var(--warn)}
+.qlinks{padding:6px}
+.qlink{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 12px;border:0;background:none;border-radius:2px;cursor:pointer;text-align:left}
+.qlink:hover{background:var(--row-hover)}
+.qlink+.qlink{border-top:1px solid var(--line-soft)}
+.ql-ico{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:2px;background:var(--raised);color:var(--accent-text);flex:none}
+.ql-ico svg.lucide{width:16px;height:16px}
+.ql-text{flex:1;min-width:0;display:flex;flex-direction:column}
+.ql-label{font-weight:700}
+.ql-meta{color:var(--text-3);font-size:12.5px}
+.qlink>svg.lucide:last-child{color:var(--text-3);width:16px;height:16px}
+
+/* ============ USERS ============ */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:10px}
+.toolbar .search{flex:1 1 260px;max-width:380px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border:1px solid var(--line-strong);background:var(--panel);color:var(--text-2);border-radius:2px;cursor:pointer;font-family:var(--font-cap);font-weight:700;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+.chip:hover{color:var(--text);border-color:var(--field-line)}
+.chip svg.lucide{width:14px;height:14px;display:none}
+.chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on-line);color:var(--text)}
+.chip[aria-pressed="true"] svg.lucide{display:block;color:var(--accent-text)}
+.field-inline{display:flex;align-items:center;gap:10px;margin-left:auto}
+.field-inline .select-wrap{width:160px}
+.result-count{color:var(--text-3);font-size:12.5px;margin-bottom:10px}
+.table-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:2px}
+.utable{width:100%;border-collapse:collapse;min-width:880px}
+.utable th{font-family:var(--font-cap);font-weight:700;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-2);text-align:left;padding:0 14px;height:40px;background:var(--raised);border-bottom:1px solid var(--line);white-space:nowrap}
+.utable td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.utable tbody tr:last-child td{border-bottom:0}
+.utable tbody tr:hover{background:var(--row-hover)}
+.person{display:flex;align-items:center;gap:10px;min-width:0}
+.pname{font-weight:700;white-space:nowrap}
+.pname[data-action]{cursor:pointer}
+.pname[data-action]:hover{text-decoration:underline;text-underline-offset:3px}
+.c-email{color:var(--text-2);font-size:13px}
+.role{display:inline-flex;font-family:var(--font-cap);font-weight:700;font-size:10.5px;letter-spacing:.08em;padding:3px 7px;border:1px solid var(--line-strong);border-radius:2px;color:var(--text-2)}
+.role-ADMIN{color:var(--accent-text);border-color:var(--chip-on-line)}
+.status{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px;padding:3px 9px 3px 8px;border-radius:2px;white-space:nowrap}
+.status .dot{width:8px;height:8px;border-radius:50%}
+.st-Active{background:var(--ok-tint);color:var(--ok)}
+.st-Active .dot{background:var(--ok)}
+.st-Inactive{background:var(--raised);color:var(--text-2)}
+.st-Inactive .dot{border:1.5px solid var(--text-3)}
+.dept{display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+.dept.none{color:var(--text-3);font-weight:500}
+.c-act{text-align:right;white-space:nowrap}
+.c-act .btn+.btn{margin-left:6px}
+.empty{padding:40px 24px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:2px;display:grid;gap:10px;justify-items:center}
+.empty p{color:var(--text-2)}
+.empty-title{font-weight:700;font-size:15px;color:var(--text) !important}
+
+/* ============ DEPARTMENTS ============ */
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.dcard{--cut:10px;padding:22px 18px 16px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.dname{font-family:var(--font-cap);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;line-height:1.35;margin-top:12px}
+.dinfo{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1}
+.dmeta{color:var(--text-2);font-size:13px;margin-top:6px}
+.dmeta b{color:var(--text);font-weight:700}
+.dmgr{color:var(--text-3);font-size:12.5px;margin-top:2px}
+.dmgr span{color:var(--text-2);font-weight:600}
+.dactions{display:flex;justify-content:space-between;gap:8px;width:100%;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.legend{margin-top:24px;padding:16px 18px 18px}
+.legend-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.legend-head p{color:var(--text-3);font-size:12.5px;max-width:60ch}
+.legend ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 16px}
+.legend li{display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px}
+.legend li small{color:var(--text-3);font-weight:500;font-size:12px;display:block}
+
+/* ============ DIALOGS, SHEETS, PALETTE ============ */
+.layer{position:absolute;inset:0;z-index:20;pointer-events:none}
+.ov{position:absolute;inset:0;background:var(--scrim);display:grid;place-items:center;padding:24px;pointer-events:auto;animation:fade .16s ease both}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+@keyframes sheet{from{transform:translateY(100%)}}
+.dlg{width:min(540px,100%);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line-strong);border-radius:2px;animation:pop .2s cubic-bezier(.2,.7,.2,1) both;outline:none}
+.dlg.narrow{width:min(470px,100%)}
+.dlg.danger .dlg-head .eyebrow{color:var(--danger-text)}
+.sheet-grip{display:none}
+.dlg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px 22px}
+.dlg-title{font-size:18px;font-weight:700;margin-top:4px;line-height:1.25}
+.dlg-head+.stripes{padding:0 22px}
+.dlg-body{padding:20px 22px 6px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:10px;padding:18px 22px 20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.span2{grid-column:1 / -1}
+.dept-select{display:flex;align-items:center;gap:10px}
+.dept-select .select-wrap{flex:1}
+.confirm{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.confirm-ico{display:inline-grid;place-items:center;width:40px;height:40px;background:var(--danger-tint);color:var(--danger-text);border-radius:2px}
+.confirm-ico svg.lucide{width:20px;height:20px}
+.confirm p{color:var(--text-2)}
+.confirm p strong{color:var(--text)}
+.confirm-field{margin-top:18px}
+.seal-set{border:0;margin:0;padding:0;min-width:0}
+.seal-set legend{padding:0;margin-bottom:8px}
+.seal-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seal-opt-wrap{position:relative}
+.seal-radio{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.seal-opt{display:flex;align-items:center;gap:9px;min-height:42px;padding:6px 10px;border:1px solid var(--line-strong);border-radius:2px;cursor:pointer;font-weight:600;font-size:13px}
+.seal-opt:hover{background:var(--row-hover)}
+.seal-radio:checked+.seal-opt{border:2px solid var(--sc);padding:5px 9px;background:color-mix(in srgb, var(--sc) 9%, var(--clear))}
+.seal-radio:focus-visible+.seal-opt{outline:2px solid var(--focus);outline-offset:2px}
+.seal-opt small{display:block;color:var(--text-3);font-weight:500;font-size:11.5px}
+
+.dlg-palette{width:min(580px,100%);padding:0}
+.ov-palette{place-items:start center;padding-top:12%}
+.pal-search{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line)}
+.pal-search svg.lucide{color:var(--text-3)}
+.pal-search input{flex:1;height:54px;border:0;background:none;font-size:15px;font-weight:600;outline:none;min-width:0}
+.pal-search input::placeholder{color:var(--text-3)}
+.dlg-palette:focus-within .pal-search{box-shadow:inset 0 -2px 0 var(--focus)}
+.pal-list{max-height:360px;overflow-y:auto;padding:6px}
+.pal-opt{display:flex;align-items:center;gap:12px;height:42px;padding:0 12px;border-radius:2px;cursor:pointer;position:relative;font-weight:600}
+.pal-opt svg.lucide{color:var(--text-3);width:17px;height:17px}
+.pal-opt[aria-selected="true"]{background:var(--nav-active)}
+.pal-opt[aria-selected="true"]::before{content:"";position:absolute;left:2px;top:50%;width:6px;height:11px;transform:translateY(-50%);background:var(--notch);clip-path:polygon(0 0,45% 0,100% 50%,45% 100%,0 100%,55% 50%)}
+.pal-opt[aria-selected="true"] svg.lucide{color:var(--accent-text)}
+.pal-grp{margin-left:auto;font-family:var(--font-cap);font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.pal-empty{padding:18px 12px;color:var(--text-2)}
+.pal-foot{display:flex;gap:16px;padding:10px 16px;border-top:1px solid var(--line);color:var(--text-3);font-size:12px}
+.pal-foot span{display:inline-flex;gap:6px;align-items:center}
+
+.ov-sheet{place-items:end stretch;padding:0}
+.dlg-sheet{width:100%;max-height:88%;border-left:0;border-right:0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom, 0px);animation:sheet .24s cubic-bezier(.2,.7,.2,1) both}
+.more-body{display:grid;gap:10px;padding-top:16px;padding-bottom:0}
+.more-grp{font-family:var(--font-cap);font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:6px 4px}
+.more-item{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 10px;text-decoration:none;font-weight:600;border-radius:2px;border-bottom:1px solid var(--line-soft)}
+.more-item svg.lucide{color:var(--text-3)}
+.more-item[aria-current="page"]{background:var(--nav-active)}
+.more-item .nbadge{margin-left:auto}
+.more-logout{position:sticky;bottom:0;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;width:100%;border:1px solid var(--field-line);background:var(--panel);border-radius:2px;cursor:pointer;font-family:var(--font-cap);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:6px 0 0;box-shadow:0 12px 0 0 var(--panel), 0 -10px 0 0 var(--panel)}
+
+/* Toasts */
+.toasts{position:absolute;right:16px;bottom:16px;z-index:30;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;max-width:calc(100% - 32px)}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px 12px 14px;background:var(--raised);border:1px solid var(--line-strong);border-left:3px solid var(--stripe-1);border-radius:2px;font-weight:600;pointer-events:auto;animation:pop .2s cubic-bezier(.2,.7,.2,1) both;max-width:420px}
+.toast svg.lucide{color:var(--ok);width:17px;height:17px}
+.toast.out{opacity:0;transition:opacity .18s ease}
+
+/* ============ RESPONSIVE (container queries on the app root) ============ */
+@container app (max-width:1180px){
+  .status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container app (max-width:1060px){
+  .dash-cols{grid-template-columns:minmax(0,1fr)}
+  .field-inline{margin-left:0}
+}
+@container app (max-width:767px){
+  /* ---- Base sizing: 14px text, 40px controls inside 44px hit areas, 12-16px rhythm ---- */
+  .app{font-size:14px}
+  .btn{min-height:44px;align-items:center}
+  .btn .face,.btn.sm .face{height:40px;padding:0 14px}
+  .iconbtn{width:44px;height:44px}
+  /* Inputs: a 2px clear border widens the hit area to 44px; the visible box is the 40px inset line */
+  .input,.select{height:44px;border:2px solid var(--clear);background-clip:padding-box;box-shadow:inset 0 0 0 1px var(--field-line);padding:0 12px;font-size:14px}
+  .select{padding-right:32px}
+  .input[aria-invalid="true"]{border-color:var(--clear);box-shadow:inset 0 0 0 1px var(--danger-text)}
+  .input:focus-visible,.select:focus-visible{border-color:var(--clear);box-shadow:inset 0 0 0 1px var(--focus);outline-offset:-2px}
+  .search .input{padding-left:36px}
+  .field{gap:4px}
+
+  /* ---- Login: centred panel, 16px gutter, max 400px ---- */
+  .login{grid-template-columns:minmax(0,1fr)}
+  .login-art{display:none}
+  .login-main{justify-content:center;align-items:center;gap:12px;padding-block:16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+  .login-panel{max-width:400px;padding:22px 18px 20px}
+  .lp-brand{gap:12px;margin-bottom:18px}
+  .lp-logo{width:36px;height:52px}
+  .lp-word{font-size:19px}
+  .lp-sub{font-size:9.5px;letter-spacing:.1em}
+  .lp-title{font-size:19px}
+  .lp-lead{font-size:13px;margin:4px 0 14px}
+  .login-form form{gap:12px}
+  .or{margin:14px 0 10px}
+  .login-foot{width:100%;max-width:400px;justify-content:center;text-align:center;font-size:12px}
+
+  /* ---- Shell: 52px top bar, ~60px tab bar ---- */
+  .sidebar,.topbar{display:none}
+  .ptop{display:flex;flex:none;align-items:center;gap:10px;height:52px;padding-right:max(4px, env(safe-area-inset-right, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));background:var(--panel);border-bottom:1px solid var(--line)}
+  .ptop-logo{width:16px;height:23px;flex:none}
+  .ptop-title{flex:1;min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ptop .avatar{width:30px;height:30px;font-size:11px}
+  .tabbar{display:flex;flex:none;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+  .tab{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;border:0;background:none;text-decoration:none;color:var(--text-3);font-weight:600;font-size:11px;cursor:pointer;padding:4px 2px}
+  .tab svg.lucide{width:20px;height:20px}
+  .tab[aria-current="page"]{color:var(--text)}
+  .tab[aria-current="page"] svg.lucide{color:var(--accent-text)}
+  .tab[aria-current="page"]::before{content:"";position:absolute;top:0;left:50%;width:30px;height:3px;transform:translateX(-50%);background:var(--notch);clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+  .content{padding-top:12px;padding-bottom:20px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+  /* ---- Page header: one compact row, meta left, action right ---- */
+  .ph{flex-wrap:nowrap;align-items:center;gap:12px;margin-bottom:12px}
+  .ph .eyebrow,.ph+.stripes{display:none}
+  .ph-title{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .ph-text{flex:1}
+  .ph-desc{font-size:12.5px;color:var(--text-2);margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ph.has-meta .ph-desc{display:none}
+  .ph-meta{display:block;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ph-act{flex:none}
+  .ph-act .btn .face{padding:0 12px;font-size:11.5px;gap:6px}
+
+  /* Row action buttons: 36px visual, 44px hit area, icon only (name stays for assistive tech) */
+  .btn.act{width:44px;height:44px;justify-content:center}
+  .btn.sm.act .face{width:36px;height:36px;padding:0}
+  .btn.act .face>span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .btn.act .face svg.lucide{width:16px;height:16px}
+
+  /* Clipped list container shared by Users and Departments */
+  .utable,.dept-grid{position:relative;isolation:isolate;background:var(--line);clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))}
+  .utable::before,.dept-grid::before{content:"";position:absolute;inset:1px;z-index:-1;background:var(--panel);clip-path:polygon(0 0, calc(100% - 9.41px) 0, 100% 9.41px, 100% 100%, 9.41px 100%, 0 calc(100% - 9.41px))}
+
+  /* ---- Dashboard ---- */
+  .sec{margin-bottom:16px}
+  .sec-head{margin-bottom:8px;gap:4px 12px}
+  .sec-title{font-size:15px}
+  .sec-meta{font-size:12px;gap:4px 10px}
+  .sum svg.lucide{width:15px;height:15px}
+  .status-grid{display:block;background:var(--panel);border:1px solid var(--line);border-radius:2px}
+  .stile{display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:"ico name badge" "ico text text";column-gap:10px;row-gap:2px;align-items:center;min-height:60px;padding:10px 12px;background:none;clip-path:none;isolation:auto}
+  .stile+.stile{border-top:1px solid var(--line-soft)}
+  .stile::before,.stile::after{display:none}
+  .stile-top{display:contents}
+  .stile-ico{grid-area:ico;align-self:center}
+  .stile-ico svg.lucide{width:16px;height:16px}
+  .stile-name{grid-area:name;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stile-text{grid-area:text;font-size:12.5px;font-weight:500;line-height:1.3;color:var(--text-2)}
+  .stile-badge{grid-area:badge;justify-self:end;font-size:11.5px;padding:2px 7px 2px 5px;gap:5px}
+  .stile-badge svg.lucide{width:13px;height:13px}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpi{--cut:8px;padding:10px 12px 11px}
+  .kpi-l{font-size:10px;gap:6px}
+  .kpi-l svg.lucide{width:13px;height:13px}
+  .kpi-v{font-size:22px;margin-top:4px}
+  .kpi-s{font-size:11.5px;margin-top:2px;line-height:1.3}
+  .dash-cols{gap:12px}
+  .panel-head{padding:10px 12px 8px}
+  .panel-meta{font-size:12px}
+  .events li{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"ico type side" "ico text text";column-gap:10px;row-gap:1px;align-items:center;padding:8px 12px}
+  .events li>div:not(.ev-side){display:contents}
+  .ev-ico{grid-area:ico;width:28px;height:28px;align-self:start;margin-top:2px}
+  .ev-ico svg.lucide{width:14px;height:14px}
+  .ev-type{grid-area:type;font-size:9.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev-text{grid-area:text;font-size:13px;margin-top:0;line-height:1.35}
+  .ev-side{grid-area:side;flex-direction:row;align-items:center;gap:8px}
+  .ev-side time{font-size:11.5px}
+  .lvl{font-size:11px}
+  .qlinks{padding:2px 4px}
+  .qlink{min-height:48px;padding:6px 8px;gap:10px}
+  .ql-ico{width:28px;height:28px}
+  .ql-meta{font-size:12px}
+
+  /* ---- Users ---- */
+  .toolbar{display:grid;grid-template-columns:minmax(0,1fr) 132px;grid-template-areas:"search status" "chips chips";gap:6px 8px;margin-bottom:6px}
+  .toolbar .search{grid-area:search;max-width:none}
+  .field-inline{grid-area:status;margin-left:0;gap:0}
+  .field-inline .lbl{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .field-inline .select-wrap{width:100%}
+  .field-inline .select{font-size:13px;padding-left:10px}
+  .chips{grid-area:chips;flex-wrap:nowrap;gap:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin-inline:calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));padding-inline:14px;scroll-padding-inline:16px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip,.chip:hover,.chip[aria-pressed="true"]{flex:none;height:44px;padding:0 12px;border:4px solid var(--clear);border-left-width:2px;border-right-width:2px;background-clip:padding-box;font-size:10.5px}
+  .chip{box-shadow:inset 0 0 0 1px var(--line-strong)}
+  .chip:hover{box-shadow:inset 0 0 0 1px var(--field-line)}
+  .chip[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--chip-on-line)}
+  .result-count{font-size:12px;margin-bottom:6px}
+  .table-wrap{overflow:visible;background:none;border:0}
+  .utable{min-width:0;display:block}
+  .utable thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .utable tbody{display:block}
+  .utable tr{display:grid;grid-template-columns:32px auto minmax(0,1fr) auto auto;grid-template-areas:"av name name status act" "av email email email act" "av role dept dept act";column-gap:8px;row-gap:1px;align-items:center;min-height:66px;padding:6px 4px 6px 12px}
+  .utable tbody tr+tr{border-top:1px solid var(--line-soft)}
+  .utable tbody tr:hover{background:none}
+  .utable td{display:block;padding:0;border:0;min-width:0}
+  .utable td.c-name,.c-name .person{display:contents}
+  .c-name .avatar{grid-area:av;align-self:start;margin-top:2px}
+  .pname{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:1.3}
+  .c-status{grid-area:status;justify-self:end}
+  .status{padding:0;background:none;font-size:12px;gap:5px}
+  .status .dot{width:7px;height:7px}
+  .c-email{grid-area:email;font-size:12.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+  .c-role{grid-area:role}
+  .role{font-size:9.5px;padding:1px 5px}
+  .c-dept{grid-area:dept;overflow:hidden}
+  .dept{gap:6px;font-size:12px;max-width:100%}
+  .dept>span:last-child{overflow:hidden;text-overflow:ellipsis}
+  .dept .seal-mini{width:18px;height:18px;border-width:1px}
+  .dept .seal-mini svg.lucide{width:11px;height:11px}
+  .c-act{grid-area:act;display:flex;gap:0}
+  .c-act .btn+.btn{margin-left:0}
+  .empty{padding:24px 16px}
+
+  /* ---- Departments ---- */
+  .dept-grid{display:block}
+  /* Name line beside the actions; the member/manager line runs the full width under both */
+  .dcard{display:grid;grid-template-columns:52px auto minmax(0,1fr) auto;grid-template-areas:"badge name name act" "badge meta mgr mgr";align-items:center;column-gap:0;row-gap:1px;min-height:64px;padding:8px 6px 9px 12px;text-align:left;background:none;clip-path:none;isolation:auto}
+  .dcard::before{display:none}
+  .dcard+.dcard{border-top:1px solid var(--line-soft)}
+  .dcard .badge{grid-area:badge;width:40px;height:40px}
+  .dcard .badge .badge-ico{width:16px;height:16px}
+  .dinfo{display:contents}
+  .dname{grid-area:name;min-width:0;margin-top:0;font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dmeta{grid-area:meta;margin-top:0;font-size:12.5px;white-space:nowrap}
+  .dmgr{grid-area:mgr;min-width:0;margin-top:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dmgr::before{content:"\00B7";margin:0 6px;color:var(--text-3)}
+  .dactions{grid-area:act;display:flex;gap:0;width:auto;margin:-4px 0 -4px 8px;padding-top:0;border-top:0}
+  .legend{margin-top:16px;padding:12px}
+  .legend-head{margin-bottom:8px}
+  .legend ul{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px}
+  .legend li{font-size:12.5px;gap:8px;align-items:center}
+
+  /* ---- Dialogs become bottom sheets ---- */
+  .ov-dialog{place-items:end stretch;padding:0}
+  .dlg-dialog,.dlg.narrow{width:100%;max-height:92%;overscroll-behavior:contain;border-left:0;border-right:0;border-bottom:0;animation:sheet .24s cubic-bezier(.2,.7,.2,1) both}
+  .dlg-sheet{overscroll-behavior:contain}
+  .sheet-grip{display:block;width:40px;height:4px;margin:8px auto 0;background:var(--line-strong);border-radius:2px}
+  .dlg-head{padding:8px 4px 10px 16px}
+  .dlg-title{font-size:17px}
+  .dlg-head+.stripes{padding:0 16px}
+  .dlg-body{padding:14px 16px 4px}
+  .dlg-foot{position:sticky;bottom:0;background:var(--panel);gap:8px;padding:10px 16px max(12px, env(safe-area-inset-bottom, 0px));border-top:1px solid var(--line-soft)}
+  .dlg-foot{flex-wrap:wrap}
+  .dlg-foot .btn{flex:1 1 auto}
+  .dlg-foot .btn .face{padding:0 10px;letter-spacing:.05em;gap:6px}
+  .form-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+  .confirm{gap:12px}
+  .confirm-ico{width:36px;height:36px}
+  .confirm-field{margin-top:14px}
+  .seal-opts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .seal-opt{min-height:44px;padding:4px 8px;font-size:12.5px;gap:8px}
+  .seal-radio:checked+.seal-opt{padding:3px 7px}
+  .ov-palette{padding:8px}
+  .pal-opt{height:44px}
+  .pal-foot{display:none}
+  .more-body{gap:6px;padding-top:12px}
+  .more-logout{min-height:44px}
+  .toasts{left:12px;right:12px;bottom:calc(68px + env(safe-area-inset-bottom, 0px));align-items:stretch;max-width:none}
+  .toast{max-width:none;padding:10px 14px 10px 12px}
+  /* An open sheet always stays readable: toasts drop behind it */
+  .layer:not(:empty)~.toasts{z-index:10}
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+:root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{animation:none !important;transition:none !important}
+</style>
+
+<div class="frame">
+  <header class="cbar" aria-label="Prototype controls">
+    <span class="cb-id">Concept C · Chevron</span>
+    <button type="button" class="cb-toggle" id="cb-toggle" aria-expanded="false" aria-controls="cb-more"><span class="cb-chev" aria-hidden="true"></span>Controls</button>
+    <div class="cb-more" id="cb-more">
+    <nav class="cb-tabs" aria-label="Prototype screens">
+      <a href="#login">Login</a><a href="#dashboard">Dashboard</a><a href="#users">Users</a><a href="#departments">Departments</a>
+    </nav>
+    <div class="cb-ctl"><span class="cb-lbl" id="cb-theme-l">Theme</span>
+      <div class="cb-seg" role="group" aria-labelledby="cb-theme-l"><button type="button" data-set-theme="dark" aria-pressed="true">Dark</button><button type="button" data-set-theme="light" aria-pressed="false">Light</button></div>
+    </div>
+    <div class="cb-ctl"><span class="cb-lbl" id="cb-device-l">Device</span>
+      <div class="cb-seg" role="group" aria-labelledby="cb-device-l"><button type="button" data-set-device="desktop" aria-pressed="true">Desktop</button><button type="button" data-set-device="phone" aria-pressed="false">Phone</button></div>
+    </div>
+    <button type="button" class="cb-switch" id="cb-motion" role="switch" aria-checked="false"><span class="cb-track" aria-hidden="true"><span class="cb-thumb"></span></span>Reduce motion</button>
+    <span class="cb-note">Sample data · prototype, not connected</span>
+    </div>
+  </header>
+
+  <div class="stage" id="stage" data-device="desktop">
+    <div class="device">
+      <div class="app" id="app">
+
+        <!-- LOGIN -->
+        <section class="login" id="login-screen" aria-label="Sign in to MSFramework" hidden>
+          <div class="login-main">
+            <div class="login-panel cut" id="login-panel">
+              <div class="lp-brand">
+                <svg class="lp-logo" viewBox="0 0 694 1000" aria-hidden="true" focusable="false">
+                  <g class="logo-fill">
+                    <path class="lg-u" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/>
+                    <path class="lg-l" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/>
+                  </g>
+                  <g class="logo-trace">
+                    <path pathLength="1" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/>
+                    <path pathLength="1" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/>
+                  </g>
+                </svg>
+                <div class="lb-text"><p class="lp-word">MSFramework</p><p class="lp-sub">Multimedia Entertainment Hub</p></div>
+              </div>
+              <div class="login-form">
+                <h1 class="lp-title">Sign in</h1>
+                <p class="lp-lead">Use your studio account to manage users, departments and settings.</p>
+                <form id="login-form" novalidate>
+                  <div class="field">
+                    <label for="login-email">Email</label>
+                    <input class="input" id="login-email" type="email" autocomplete="username" value="alex.mercer@mehstudios.net">
+                  </div>
+                  <div class="field">
+                    <div class="lbl-row"><label class="lbl" for="login-pass">Password</label><button type="button" class="link" id="forgot">Forgot password?</button></div>
+                    <input class="input" id="login-pass" type="password" autocomplete="current-password" aria-describedby="login-pass-err" aria-invalid="false">
+                    <p class="err" id="login-pass-err" hidden></p>
+                  </div>
+                  <button type="submit" class="btn btn-primary full"><span class="face">Sign in</span></button>
+                </form>
+                <div class="or" aria-hidden="true">or</div>
+                <button type="button" class="btn btn-secondary full sso" disabled aria-describedby="sso-note"><span class="face"><span><i data-lucide="key-round"></i>Single sign-on</span><span class="tag" id="sso-note">Coming soon</span></span></button>
+              </div>
+            </div>
+            <p class="login-foot"><i data-lucide="shield"></i>Protected system. Every sign-in is recorded in the audit log.</p>
+          </div>
+          <div class="login-art" aria-hidden="true">
+            <!-- The logo mark, oversized and bleeding off the edge. Each half fades to transparent
+                 through a brand gradient, and a fine grain clipped to the mark dissolves the fade. -->
+            <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMaxYMid slice" focusable="false">
+              <defs>
+                <linearGradient id="la-upper" x1="0" y1="0" x2="0.35" y2="1">
+                  <stop offset="0" class="la-stop-cyan" stop-opacity="0.95"/>
+                  <stop offset="0.55" class="la-stop-cyan" stop-opacity="0.45"/>
+                  <stop offset="1" class="la-stop-cobalt" stop-opacity="0.08"/>
+                </linearGradient>
+                <linearGradient id="la-lower" x1="0" y1="0.25" x2="0.2" y2="1">
+                  <stop offset="0" class="la-stop-cobalt" stop-opacity="0.85"/>
+                  <stop offset="0.6" class="la-stop-cobalt" stop-opacity="0.3"/>
+                  <stop offset="1" class="la-stop-cobalt" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="la-fade-g" gradientUnits="userSpaceOnUse" x1="1000" y1="0" x2="1560" y2="0">
+                  <stop offset="0" stop-color="#000"/>
+                  <stop offset="0.25" stop-color="#555"/>
+                  <stop offset="1" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="la-fade" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="1000">
+                  <rect width="1600" height="1000" fill="url(#la-fade-g)"/>
+                </mask>
+                <clipPath id="la-clip" clipPathUnits="userSpaceOnUse">
+                  <path transform="translate(1000 -60) scale(1.16)" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/>
+                  <path transform="translate(1000 -60) scale(1.16)" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/>
+                </clipPath>
+                <filter id="la-grain" x="0" y="0" width="100%" height="100%" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="11" stitchTiles="stitch"/>
+                  <feColorMatrix type="saturate" values="0"/>
+                </filter>
+              </defs>
+              <g mask="url(#la-fade)">
+                <g transform="translate(1000 -60) scale(1.16)">
+                  <path fill="url(#la-upper)" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/>
+                  <path fill="url(#la-lower)" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/>
+                </g>
+                <rect class="la-grain" width="1600" height="1000" clip-path="url(#la-clip)" filter="url(#la-grain)"/>
+              </g>
+            </svg>
+            <div class="la-grain-wash"></div>
+          </div>
+        </section>
+
+        <!-- APP SHELL -->
+        <div class="shell" id="shell" hidden>
+          <aside class="sidebar" aria-label="Sidebar">
+            <div class="side-head">
+              <svg class="side-logo" viewBox="0 0 694 1000" aria-hidden="true" focusable="false"><path class="lg-u" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/><path class="lg-l" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/></svg>
+              <div><p class="side-word">MSFramework</p><p class="side-sub">MEH Studios Inc</p></div>
+            </div>
+            <button type="button" class="qa-btn" id="qa-btn" aria-haspopup="dialog"><i data-lucide="search"></i><span>Quick actions</span><span class="kbd">Ctrl K</span></button>
+            <nav class="side-nav" id="side-nav" aria-label="Main"></nav>
+            <p class="side-foot">Multimedia Entertainment Hub</p>
+          </aside>
+
+          <div class="maincol">
+            <header class="topbar">
+              <button type="button" class="iconbtn" id="tb-back" aria-label="Back"><i data-lucide="chevron-left"></i></button>
+              <button type="button" class="iconbtn" id="tb-fwd" aria-label="Forward"><i data-lucide="chevron-right"></i></button>
+              <nav aria-label="Breadcrumb"><ol class="crumbs" id="crumbs"></ol></nav>
+              <span class="tb-spacer"></span>
+              <div class="user-chip"><span class="avatar" aria-hidden="true">AM</span><div><p class="uc-name">Alex Mercer</p><p class="uc-role"><span class="tag">Admin</span></p></div></div>
+              <span class="tb-sep" aria-hidden="true"></span>
+              <button type="button" class="iconbtn" id="tb-settings" aria-label="Account settings"><i data-lucide="settings"></i></button>
+              <button type="button" class="btn btn-ghost sm" id="tb-logout"><span class="face"><i data-lucide="log-out"></i>Log out</span></button>
+            </header>
+            <header class="ptop">
+              <svg class="ptop-logo" viewBox="0 0 694 1000" aria-hidden="true" focusable="false"><path class="lg-u" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z"/><path class="lg-l" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z"/></svg>
+              <p class="ptop-title" id="ptop-title">Dashboard</p>
+              <button type="button" class="iconbtn" id="ptop-avatar" aria-label="Alex Mercer, open menu" aria-haspopup="dialog"><span class="avatar" aria-hidden="true">AM</span></button>
+            </header>
+
+            <div class="viewport" id="viewport">
+              <main class="scroller" id="scroller"><div class="content" id="content"></div></main>
+            </div>
+
+            <nav class="tabbar" aria-label="Main">
+              <a class="tab" href="#home" data-tab="home"><i data-lucide="house"></i><span>Home</span></a>
+              <a class="tab" href="#dashboard" data-tab="dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+              <a class="tab" href="#users" data-tab="users"><i data-lucide="users"></i><span>Users</span></a>
+              <a class="tab" href="#departments" data-tab="departments"><i data-lucide="building-2"></i><span>Departments</span></a>
+              <button type="button" class="tab" id="tab-more" aria-haspopup="dialog"><i data-lucide="ellipsis"></i><span>More</span></button>
+            </nav>
+          </div>
+        </div>
+
+        <div class="layer" id="layer"></div>
+        <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+/* In-page back/forward: walks the screens visited in this prototype instead of the browser
+   history, so the buttons never navigate the page that embeds the artifact. */
+(function () {
+  var stack = [location.hash || "#"], idx = 0, moving = false;
+  window.addEventListener("hashchange", function () {
+    if (moving) { moving = false; return; }
+    stack = stack.slice(0, idx + 1);
+    stack.push(location.hash);
+    idx = stack.length - 1;
+  });
+  window.__navBack = function () { if (idx > 0) { idx -= 1; moving = true; location.hash = stack[idx]; } };
+  window.__navFwd = function () { if (idx < stack.length - 1) { idx += 1; moving = true; location.hash = stack[idx]; } };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const store = {
+    get(k) { try { return localStorage.getItem('msf-chevron.' + k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem('msf-chevron.' + k, v); } catch (e) { /* storage unavailable */ } }
+  };
+  const icons = () => {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      try { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); } catch (e) { /* icons are decorative */ }
+    }
+  };
+
+  /* ---------------- Sample data ---------------- */
+  const SEALS = {
+    adm: { name: 'Administration', icon: 'landmark' },
+    dev: { name: 'Development', icon: 'cpu' },
+    qc: { name: 'Quality Control', icon: 'target' },
+    ext: { name: 'External Affairs', icon: 'globe' },
+    hr: { name: 'Human Resources', icon: 'users-round' },
+    eth: { name: 'Ethics & Regulations', icon: 'scale' },
+    eng: { name: 'Engineering & Innovation', icon: 'atom' },
+    dir: { name: "Director's office", icon: 'compass' }
+  };
+  const SEAL_ORDER = ['adm', 'dev', 'qc', 'ext', 'hr', 'eth', 'eng', 'dir'];
+
+  let depts = [
+    { id: 'd1', name: 'Administration', seal: 'adm', manager: null },
+    { id: 'd2', name: 'Development', seal: 'dev', manager: 'u4' },
+    { id: 'd3', name: 'Quality Control', seal: 'qc', manager: null },
+    { id: 'd4', name: 'External Affairs', seal: 'ext', manager: 'u3' },
+    { id: 'd5', name: 'Human Resources', seal: 'hr', manager: null },
+    { id: 'd6', name: 'Ethics & Regulations', seal: 'eth', manager: null },
+    { id: 'd7', name: 'Engineering & Innovation', seal: 'eng', manager: null }
+  ];
+  let users = [
+    { id: 'u1', name: 'Alex Mercer', email: 'alex.mercer@mehstudios.net', role: 'ADMIN', status: 'Active', dept: 'd1' },
+    { id: 'u2', name: 'Sarah Jenkins', email: 'sarah.jenkins@mehstudios.net', role: 'ADMIN', status: 'Active', dept: 'd7' },
+    { id: 'u3', name: 'David Chen', email: 'david.chen@mehstudios.net', role: 'MANAGER', status: 'Active', dept: 'd4' },
+    { id: 'u4', name: 'Ioana Popescu', email: 'ioana.popescu@mehstudios.net', role: 'MANAGER', status: 'Active', dept: 'd2' },
+    { id: 'u5', name: 'Mihai Ionescu', email: 'mihai.ionescu@mehstudios.net', role: 'MEMBER', status: 'Active', dept: 'd2' },
+    { id: 'u6', name: 'Elena Dumitrescu', email: 'elena.dumitrescu@mehstudios.net', role: 'MEMBER', status: 'Active', dept: 'd3' },
+    { id: 'u7', name: 'Radu Stan', email: 'radu.stan@mehstudios.net', role: 'MEMBER', status: 'Inactive', dept: 'd3' },
+    { id: 'u8', name: 'Ana Georgescu', email: 'ana.georgescu@mehstudios.net', role: 'MEMBER', status: 'Active', dept: 'd5' },
+    { id: 'u9', name: 'Victor Marin', email: 'victor.marin@mehstudios.net', role: 'VIEWER', status: 'Active', dept: 'd6' },
+    { id: 'u10', name: 'Clara Voicu', email: 'clara.voicu@mehstudios.net', role: 'MEMBER', status: 'Active', dept: 'd7' },
+    { id: 'u11', name: 'Tudor Petrescu', email: 'tudor.petrescu@mehstudios.net', role: 'MEMBER', status: 'Inactive', dept: 'd2' },
+    { id: 'u12', name: 'Maria Tănase', email: 'maria.tanase@mehstudios.net', role: 'VIEWER', status: 'Active', dept: null }
+  ];
+  let uid = 100;
+
+  const STATUS = [
+    { name: 'API', icon: 'activity', state: 'ok', text: 'Operational', badge: 'Working' },
+    { name: 'Database', icon: 'database', state: 'ok', text: 'Operational, 14 ms', badge: 'Working' },
+    { name: 'Integrations', icon: 'cable', state: 'warn', text: '1 of 4 connected integrations paused (Slack)', badge: 'Needs attention' },
+    { name: 'Security score', icon: 'shield', state: 'warn', text: '78 / 100, 2 items to review', badge: 'Needs review' }
+  ];
+  const EVENT_TYPES = {
+    user_updated: { label: 'User updated', icon: 'pencil' },
+    login_failed: { label: 'Sign-in failed', icon: 'triangle-alert' },
+    key_generated: { label: 'API key created', icon: 'key-round' },
+    connection_changed: { label: 'Integration changed', icon: 'cable' },
+    login: { label: 'Signed in', icon: 'shield-check' },
+    dept_updated: { label: 'Department updated', icon: 'building-2' },
+    export: { label: 'Data exported', icon: 'download' },
+    user_created: { label: 'User created', icon: 'plus' }
+  };
+  const EVENTS = [
+    { text: 'Alex Mercer updated Radu Stan: status Active → Inactive', time: '4m ago', type: 'user_updated' },
+    { text: 'Failed sign-in attempt for radu.stan@mehstudios.net', time: '12m ago', type: 'login_failed', level: 'alert' },
+    { text: 'Sarah Jenkins generated API key: CI deploy', time: '38m ago', type: 'key_generated' },
+    { text: 'Slack integration paused by Sarah Jenkins', time: '1h ago', type: 'connection_changed', level: 'warning' },
+    { text: 'Ioana Popescu signed in', time: '1h ago', type: 'login' },
+    { text: 'Department renamed: QA → Quality Control', time: '3h ago', type: 'dept_updated' },
+    { text: 'Exported users CSV (12 rows)', time: '5h ago', type: 'export' },
+    { text: 'Clara Voicu registered', time: 'yesterday', type: 'user_created' }
+  ];
+  const QUICK = [
+    { to: 'notifications', icon: 'bell', label: 'Notifications', meta: '3 unread' },
+    { to: 'security', icon: 'shield', label: 'Security', meta: '2 items to review' },
+    { to: 'database', icon: 'database', label: 'Database', meta: 'Operational, 14 ms' },
+    { to: 'export', icon: 'download', label: 'Export data', meta: 'Users and audit log as CSV' }
+  ];
+
+  const NAV = [
+    { group: 'General', items: [
+      { id: 'home', label: 'Home', icon: 'house', desc: 'Your starting point in MSFramework.' },
+      { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', desc: 'Is everything working? A plain-language check of the Multimedia Entertainment Hub systems.' },
+      { id: 'notifications', label: 'Notifications', icon: 'bell', badge: 3, desc: 'Alerts and messages for your account.' },
+      { id: 'appearance', label: 'Appearance', icon: 'palette', desc: 'Theme and display preferences.' },
+      { id: 'database', label: 'Database', icon: 'database', desc: 'Connection details and health of the main database.' },
+      { id: 'connections', label: 'Connections', icon: 'cable', desc: 'Integrations with outside services.' },
+      { id: 'timezones', label: 'Timezones', icon: 'clock-3', desc: 'Local times for every studio location.' },
+      { id: 'docs', label: 'Documentation', icon: 'book-text', desc: 'Guides for running MSFramework.' }
+    ] },
+    { group: 'Ventures', items: [
+      { id: 'account', label: 'Account & security', icon: 'key-round', desc: 'Your email, password and sign-in settings.' },
+      { id: 'users', label: 'User management', icon: 'users', desc: 'Manage who can sign in, their role and their department.' },
+      { id: 'departments', label: 'Departments', icon: 'building-2', desc: 'The studio departments, their seals, members and managers.' },
+      { id: 'security', label: 'Security', icon: 'shield', desc: 'Security score and items to review.' },
+      { id: 'payments', label: 'Payments', icon: 'credit-card', desc: 'Billing overview. Demo data only.' },
+      { id: 'import', label: 'Import data', icon: 'upload', desc: 'Bring users in from a CSV file.' },
+      { id: 'export', label: 'Export data', icon: 'download', desc: 'Download users and the audit log as CSV.' }
+    ] }
+  ];
+  const PAGES = {};
+  const PAGE_LIST = [];
+  NAV.forEach((g) => g.items.forEach((it) => { const p = Object.assign({ group: g.group }, it); PAGES[it.id] = p; PAGE_LIST.push(p); }));
+  const TAB_ROUTES = ['home', 'dashboard', 'users', 'departments'];
+  const ROLES = ['ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'];
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const state = { route: null, q: '', role: 'all', status: 'all', reduce: false };
+
+  /* ---------------- Elements ---------------- */
+  const root = document.documentElement;
+  const app = $('#app'), stage = $('#stage');
+  const loginEl = $('#login-screen'), shellEl = $('#shell');
+  const viewport = $('#viewport'), scroller = $('#scroller'), content = $('#content');
+  const layerEl = $('#layer'), toastsEl = $('#toasts');
+  const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const motionOK = () => !state.reduce && !mqReduce.matches;
+
+  /* ---------------- Helpers ---------------- */
+  const initials = (n) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const deptById = (id) => depts.find((d) => d.id === id) || null;
+  const userById = (id) => users.find((u) => u.id === id) || null;
+  const membersOf = (id) => users.filter((u) => u.dept === id).length;
+  const sealVar = (k) => 'var(--seal-' + k + ')';
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  const roleLabel = (r) => r.charAt(0) + r.slice(1).toLowerCase();
+
+  function button(label, opts) {
+    const o = Object.assign({ variant: 'primary', icon: '', action: '', attrs: '', size: '', type: 'button' }, opts || {});
+    return '<button type="' + o.type + '" class="btn btn-' + o.variant + (o.size ? ' ' + o.size : '') + '"' +
+      (o.action ? ' data-action="' + o.action + '"' : '') + ' ' + o.attrs + '><span class="face">' +
+      (o.icon ? '<i data-lucide="' + o.icon + '"></i>' : '') + '<span>' + label + '</span></span></button>';
+  }
+  const stripes = (cls) => '<div class="stripes ' + (cls || '') + '" aria-hidden="true"><span></span><span></span><span></span><i></i></div>';
+  // On phone the eyebrow, the big title and the stripes are hidden (the top bar names the page).
+  // The h1 stays for screen readers; the compact meta line (count or short question) is visual only.
+  function pageHeader(o) {
+    const meta = o.count != null ? '<span class="count-n">' + o.count + '</span> ' + o.countLabel : (o.meta ? esc(o.meta) : '');
+    return '<header class="ph' + (meta ? ' has-meta' : '') + '"><div class="ph-text"><p class="eyebrow">' + esc(o.group) + '</p>' +
+      '<h1 class="ph-title" tabindex="-1">' + esc(o.title) +
+      (o.count != null ? '<span class="count"><span class="sr">, </span><span class="count-n">' + o.count + '</span><span class="sr"> ' + o.countLabel + '</span></span>' : '') +
+      '</h1><p class="ph-desc">' + esc(o.desc) + '</p>' + (meta ? '<p class="ph-meta" aria-hidden="true">' + meta + '</p>' : '') + '</div>' +
+      (o.action ? '<div class="ph-act">' + o.action + '</div>' : '') + '</header>' + stripes();
+  }
+  const sealMini = (k) => '<span class="seal-mini" style="--sc:' + sealVar(k) + '" aria-hidden="true"><i data-lucide="' + SEALS[k].icon + '"></i></span>';
+  function deptChip(u) {
+    const d = deptById(u.dept);
+    if (!d) return '<span class="dept none"><span class="seal-mini empty" aria-hidden="true"></span><span>No department</span></span>';
+    return '<span class="dept">' + sealMini(d.seal) + '<span>' + esc(d.name) + '</span></span>';
+  }
+  function starPts(cx, cy, R, r) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R;
+      pts.push((cx + rad * Math.cos(a)).toFixed(2) + ',' + (cy + rad * Math.sin(a)).toFixed(2));
+    }
+    return pts.join(' ');
+  }
+  const STAR_L = starPts(12, 39, 5, 2.1), STAR_R = starPts(100, 39, 5, 2.1);
+  function sealBadge(k) {
+    return '<div class="badge" style="--sc:' + sealVar(k) + '" aria-hidden="true"><svg class="seal-svg" viewBox="0 0 112 76" preserveAspectRatio="xMidYMid slice" focusable="false">' +
+      '<circle class="gear-teeth" cx="56" cy="38" r="32.5"/><circle class="gear-ring" cx="56" cy="38" r="30"/>' +
+      '<circle class="seal-disc" cx="56" cy="38" r="25"/>' +
+      '<polygon class="seal-star" points="' + STAR_L + '"/><polygon class="seal-star" points="' + STAR_R + '"/></svg>' +
+      '<i data-lucide="' + SEALS[k].icon + '" class="badge-ico"></i></div>';
+  }
+  function selectHTML(id, opts, val, extra) {
+    return '<div class="select-wrap"><select id="' + id + '" class="select" ' + (extra || '') + '>' +
+      opts.map((o) => '<option value="' + esc(o[0]) + '"' + (o[0] === val ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') +
+      '</select></div>';
+  }
+  function setErr(input, msg) {
+    const p = document.getElementById(input.id + '-err');
+    input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    if (p) { p.hidden = !msg; p.innerHTML = msg ? '<i data-lucide="triangle-alert"></i><span>' + esc(msg) + '</span>' : ''; }
+  }
+  const errSlot = (id) => '<p class="err" id="' + id + '-err" hidden></p>';
+
+  /* ---------------- Toasts ---------------- */
+  function toast(msg, icon) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<i data-lucide="' + (icon || 'circle-check') + '"></i><span>' + esc(msg) + '</span>';
+    toastsEl.appendChild(t);
+    icons();
+    while (toastsEl.children.length > 3) toastsEl.firstElementChild.remove();
+    setTimeout(() => {
+      t.classList.add('out');
+      setTimeout(() => t.remove(), motionOK() ? 200 : 0);
+    }, 4000);
+  }
+
+  /* ---------------- Screens ---------------- */
+  function renderDashboard(stagger) {
+    const total = users.length;
+    const active = users.filter((u) => u.status === 'Active').length;
+    const admins = users.filter((u) => u.role === 'ADMIN');
+    const noDept = users.filter((u) => !deptById(u.dept)).length;
+    const managed = depts.filter((d) => d.manager && userById(d.manager)).length;
+    const attention = STATUS.filter((s) => s.state !== 'ok').length;
+    const kpis = [
+      { icon: 'users', label: 'Total users', value: total, sub: noDept ? plural(noDept, 'user', 'users') + ' without a department' : 'All users have a department' },
+      { icon: 'circle-check', label: 'Active', value: active, sub: (total - active) + ' inactive' },
+      { icon: 'shield-check', label: 'Admins', value: admins.length, sub: admins.map((a) => a.name).join(', ') || 'No admins' },
+      { icon: 'building-2', label: 'Departments', value: depts.length, sub: plural(managed, 'has a manager', 'have a manager') }
+    ];
+    return pageHeader({ group: 'General', title: 'Dashboard', meta: 'Is everything working?', desc: 'Is everything working? A plain-language check of the Multimedia Entertainment Hub systems.',
+      action: button('Refresh status', { icon: 'activity', action: 'refresh-status', variant: 'secondary' }) }) +
+      '<section class="sec" aria-labelledby="sec-status"><div class="sec-head"><h2 class="sec-title" id="sec-status">System status</h2>' +
+      '<p class="sec-meta">' + (attention
+        ? '<span class="sum sum-warn"><i data-lucide="triangle-alert"></i>Mostly working. ' + attention + ' items need attention.</span>'
+        : '<span class="sum sum-ok"><i data-lucide="circle-check"></i>Everything is working.</span>') +
+      '<span id="checked">Checked 1 min ago</span></p></div>' +
+      '<ul class="status-grid">' + STATUS.map((s) =>
+        '<li class="stile cut st-' + s.state + '"><div class="stile-top"><span class="stile-ico" aria-hidden="true"><i data-lucide="' + s.icon + '"></i></span>' +
+        '<h3 class="stile-name">' + esc(s.name) + '</h3></div><p class="stile-text">' + esc(s.text) + '</p>' +
+        '<p class="stile-badge"><i data-lucide="' + (s.state === 'ok' ? 'circle-check' : 'triangle-alert') + '"></i>' + s.badge + '</p></li>').join('') +
+      '</ul></section>' +
+      '<section class="sec" aria-labelledby="sec-kpi"><div class="sec-head"><h2 class="sec-title" id="sec-kpi">Studio at a glance</h2></div>' +
+      '<ul class="kpi-grid' + (stagger ? ' stagger' : '') + '">' + kpis.map((k, i) =>
+        '<li class="kpi cut" style="--i:' + i + '"><p class="kpi-l"><i data-lucide="' + k.icon + '"></i>' + k.label + '</p>' +
+        '<p class="kpi-v">' + k.value + '</p><p class="kpi-s">' + esc(k.sub) + '</p></li>').join('') + '</ul></section>' +
+      '<div class="dash-cols">' +
+      '<section class="panel" aria-labelledby="sec-act"><div class="panel-head"><h2 class="sec-title" id="sec-act">Recent activity</h2><span class="panel-meta">Latest 8 audit events</span></div>' +
+      '<ol class="events">' + EVENTS.map((ev) => {
+        const t = EVENT_TYPES[ev.type];
+        return '<li class="' + (ev.level ? 'ev-' + ev.level : '') + '"><span class="ev-ico" aria-hidden="true"><i data-lucide="' + t.icon + '"></i></span>' +
+          '<div><p class="ev-type">' + t.label + '</p><p class="ev-text">' + esc(ev.text) + '</p></div>' +
+          '<div class="ev-side">' + (ev.level === 'alert' ? '<span class="lvl lvl-alert"><i data-lucide="triangle-alert"></i>Alert</span>' : '') +
+          (ev.level === 'warning' ? '<span class="lvl lvl-warning"><i data-lucide="triangle-alert"></i>Warning</span>' : '') +
+          '<time>' + ev.time + '</time></div></li>';
+      }).join('') + '</ol></section>' +
+      '<section class="panel" aria-labelledby="sec-ql"><div class="panel-head"><h2 class="sec-title" id="sec-ql">Quick links</h2></div><div class="qlinks">' +
+      QUICK.map((q) => '<button type="button" class="qlink" data-action="go" data-to="' + q.to + '"><span class="ql-ico" aria-hidden="true"><i data-lucide="' + q.icon + '"></i></span>' +
+        '<span class="ql-text"><span class="ql-label">' + q.label + '</span><span class="ql-meta">' + q.meta + '</span></span><i data-lucide="chevron-right"></i></button>').join('') +
+      '</div></section></div>';
+  }
+
+  function renderUsers() {
+    const chips = [['all', 'All roles']].concat(ROLES.map((r) => [r, roleLabel(r)]));
+    return pageHeader({ group: 'Ventures', title: 'User management', count: users.length, countLabel: 'users',
+      desc: 'Manage who can sign in, their role and their department.', action: button('Add user', { icon: 'plus', action: 'add-user' }) }) +
+      '<div class="toolbar"><div class="search"><label class="sr" for="user-search">Search users by name or email</label><i data-lucide="search"></i>' +
+      '<input class="input" id="user-search" type="search" placeholder="Search name or email" autocomplete="off" value="' + esc(state.q) + '"></div>' +
+      '<div class="chips" role="group" aria-label="Filter by role">' + chips.map((c) =>
+        '<button type="button" class="chip" data-action="role-filter" data-role="' + c[0] + '" aria-pressed="' + (state.role === c[0]) + '"><i data-lucide="check"></i>' + c[1] + '</button>').join('') + '</div>' +
+      '<div class="field-inline"><label class="lbl" for="status-filter">Status</label>' +
+      selectHTML('status-filter', [['all', 'All statuses'], ['Active', 'Active'], ['Inactive', 'Inactive']], state.status) + '</div></div>' +
+      '<p class="result-count" id="user-count" aria-live="polite"></p><div id="user-results"></div>';
+  }
+  function updateUserResults() {
+    const box = $('#user-results');
+    if (!box) return;
+    const term = norm(state.q.trim());
+    const list = users.filter((u) => (!term || norm(u.name).includes(term) || norm(u.email).includes(term)) &&
+      (state.role === 'all' || u.role === state.role) && (state.status === 'all' || u.status === state.status));
+    $('#user-count').textContent = 'Showing ' + list.length + ' of ' + plural(users.length, 'user', 'users');
+    $$('.chip', content).forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.role === state.role)));
+    $$('.count-n', content).forEach((cn) => { cn.textContent = users.length; });
+    if (!list.length) {
+      box.innerHTML = '<div class="empty"><p class="empty-title">No users match these filters</p><p>' +
+        (state.q ? 'Nobody matches "' + esc(state.q) + '". ' : '') + 'Clear the search or change the filters.</p>' +
+        button('Clear filters', { variant: 'secondary', action: 'clear-filters', size: 'sm' }) + '</div>';
+    } else {
+      box.innerHTML = '<div class="table-wrap" role="region" aria-label="Users" tabindex="0"><table class="utable"><thead><tr>' +
+        '<th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Department</th><th scope="col"><span class="sr">Actions</span></th>' +
+        '</tr></thead><tbody>' + list.map((u) =>
+          '<tr><td class="c-name"><div class="person"><span class="avatar" aria-hidden="true">' + initials(u.name) + '</span><span class="pname" data-action="edit-user-name" data-id="' + u.id + '">' + esc(u.name) + '</span></div></td>' +
+          '<td class="c-email">' + esc(u.email) + '</td>' +
+          '<td class="c-role"><span class="role role-' + u.role + '">' + u.role + '</span></td>' +
+          '<td class="c-status"><span class="status st-' + u.status + '"><span class="dot" aria-hidden="true"></span>' + u.status + '</span></td>' +
+          '<td class="c-dept">' + deptChip(u) + '</td>' +
+          '<td class="c-act">' + button('Edit<span class="sr"> ' + esc(u.name) + '</span>', { variant: 'secondary', size: 'sm act', icon: 'pencil', action: 'edit-user', attrs: 'data-id="' + u.id + '"' }) +
+          button('Delete<span class="sr"> ' + esc(u.name) + '</span>', { variant: 'ghost-danger', size: 'sm act', icon: 'trash-2', action: 'delete-user', attrs: 'data-id="' + u.id + '"' }) + '</td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+    icons();
+  }
+
+  function renderDepartments(stagger) {
+    const cards = depts.map((d, i) => {
+      const n = membersOf(d.id), m = userById(d.manager);
+      return '<li class="dcard cut" style="--i:' + i + '">' + sealBadge(d.seal) +
+        '<div class="dinfo"><h2 class="dname">' + esc(d.name) + '</h2><p class="dmeta"><b>' + n + '</b> ' + (n === 1 ? 'member' : 'members') + '</p>' +
+        (m ? '<p class="dmgr">Manager: <span>' + esc(m.name) + '</span></p>' : '<p class="dmgr">No manager assigned</p>') + '</div>' +
+        '<div class="dactions">' + button('Edit<span class="sr"> ' + esc(d.name) + '</span>', { variant: 'secondary', size: 'sm act', icon: 'pencil', action: 'edit-dept', attrs: 'data-id="' + d.id + '"' }) +
+        button('Delete<span class="sr"> ' + esc(d.name) + '</span>', { variant: 'ghost-danger', size: 'sm act', icon: 'trash-2', action: 'delete-dept', attrs: 'data-id="' + d.id + '"' }) + '</div></li>';
+    }).join('');
+    return pageHeader({ group: 'Ventures', title: 'Departments', count: depts.length, countLabel: 'departments',
+      desc: 'The studio departments, their seals, members and managers.', action: button('Add department', { icon: 'plus', action: 'add-dept' }) }) +
+      (depts.length ? '<ul class="dept-grid' + (stagger ? ' stagger' : '') + '">' + cards + '</ul>'
+        : '<div class="empty"><p class="empty-title">No departments yet</p><p>Add a department to group users under a seal.</p></div>') +
+      '<section class="legend panel" aria-labelledby="legend-t"><div class="legend-head"><h2 class="eyebrow" id="legend-t">Seal palette</h2>' +
+      '<p>Each department uses its official seal colour and emblem. Add department offers these seals.</p></div><ul>' +
+      SEAL_ORDER.map((k) => '<li>' + sealMini(k) + '<span>' + esc(SEALS[k].name) + (k === 'dir' ? '<small>Not a department</small>' : '') + '</span></li>').join('') +
+      '</ul></section>';
+  }
+
+  function renderPlaceholder(route) {
+    const p = PAGES[route];
+    return pageHeader({ group: p.group, title: p.label, desc: p.desc }) +
+      '<div class="empty"><span class="stile-ico" aria-hidden="true"><i data-lucide="' + p.icon + '"></i></span>' +
+      '<p class="empty-title">This page is outside the prototype</p>' +
+      '<p>This concept covers Login, Dashboard, User management and Departments. ' + esc(p.label) + ' keeps its current layout for now.</p>' +
+      button('Go to dashboard', { variant: 'secondary', size: 'sm', action: 'go', attrs: 'data-to="dashboard"' }) + '</div>';
+  }
+
+  function renderRoute(route, stagger) {
+    const s = stagger !== false;
+    let html;
+    if (route === 'dashboard') html = renderDashboard(s);
+    else if (route === 'users') html = renderUsers();
+    else if (route === 'departments') html = renderDepartments(s);
+    else html = renderPlaceholder(route);
+    content.innerHTML = html;
+    if (route === 'users') {
+      const si = $('#user-search'), sf = $('#status-filter');
+      si.addEventListener('input', () => { state.q = si.value; updateUserResults(); });
+      sf.addEventListener('change', () => { state.status = sf.value; updateUserResults(); });
+      updateUserResults();
+    }
+    icons();
+  }
+
+  /* ---------------- Chrome ---------------- */
+  function renderSidebar() {
+    $('#side-nav').innerHTML = NAV.map((g, gi) =>
+      '<p class="nav-group" id="ng-' + gi + '">' + g.group + '</p><ul aria-labelledby="ng-' + gi + '">' + g.items.map((it) =>
+        '<li><a class="nav-item" href="#' + it.id + '" data-route="' + it.id + '"><i data-lucide="' + it.icon + '"></i><span>' + esc(it.label) + '</span>' +
+        (it.badge ? '<span class="nbadge"><span class="sr">, </span>' + it.badge + '<span class="sr"> unread</span></span>' : '') + '</a></li>').join('') + '</ul>').join('');
+  }
+  function updateChrome(route) {
+    const p = PAGES[route];
+    $$('.nav-item').forEach((a) => (a.dataset.route === route ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    $('#crumbs').innerHTML = '<li>' + p.group + '</li><li aria-current="page">' + esc(p.label) + '</li>';
+    $('#ptop-title').textContent = p.label;
+    $$('.tab').forEach((t) => {
+      const on = t.dataset.tab ? t.dataset.tab === route : !TAB_ROUTES.includes(route);
+      on ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current');
+    });
+  }
+  function updateConceptTabs(route) {
+    $$('.cb-tabs a').forEach((a) => (a.getAttribute('href').slice(1) === route ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  }
+
+  /* ---------------- Page transition ---------------- */
+  // A short fade and 6px rise on the element that changed: the content area between pages,
+  // or the whole view when moving between login and the app. Sidebar and top bar stay still.
+  let animatedEl = null;
+  function cancelWipe() {
+    if (animatedEl) animatedEl.classList.remove('page-in', 'view-in');
+    animatedEl = null;
+  }
+  function playEnter(el, cls) {
+    cancelWipe();
+    void el.offsetWidth; // restart the animation if the same element animates again
+    el.classList.add(cls);
+    animatedEl = el;
+    el.addEventListener('animationend', function done(e) {
+      if (e.target !== el) return;
+      el.classList.remove(cls);
+      el.removeEventListener('animationend', done);
+      if (animatedEl === el) animatedEl = null;
+    });
+  }
+
+  /* ---------------- Login ---------------- */
+  let traced = false;
+  function enterLogin() {
+    const panel = $('#login-panel');
+    const pass = $('#login-pass');
+    setErr(pass, '');
+    if (!traced && motionOK()) {
+      traced = true;
+      panel.classList.remove('traced');
+      panel.classList.add('tracing');
+      setTimeout(() => { panel.classList.remove('tracing'); panel.classList.add('traced'); }, 900);
+    } else {
+      traced = true;
+      panel.classList.remove('tracing');
+      panel.classList.add('traced');
+    }
+  }
+
+  /* ---------------- Routing ---------------- */
+  function parseHash() {
+    const h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+    return h === 'login' || PAGES[h] ? h : null;
+  }
+  function go(route) {
+    if (location.hash.slice(1) === route) navigate(route, true);
+    else location.hash = route;
+  }
+  function navigate(route, userNav) {
+    while (stack.length) closeLayer(false);
+    if (route === state.route) return;
+    const prev = state.route;
+    const anim = userNav && prev !== null && motionOK();
+    const crossing = (prev === 'login') !== (route === 'login');
+    if (!anim) cancelWipe();
+    state.route = route;
+    store.set('screen', route);
+    const isLogin = route === 'login';
+    loginEl.hidden = !isLogin;
+    shellEl.hidden = isLogin;
+    if (isLogin) enterLogin();
+    else { renderRoute(route); updateChrome(route); scroller.scrollTop = 0; }
+    updateConceptTabs(route);
+    if (anim) {
+      if (crossing) playEnter(isLogin ? loginEl : shellEl, 'view-in');
+      else playEnter(content, 'page-in');
+    }
+    if (userNav && prev !== null) {
+      const target = isLogin ? $('#login-email') : $('#content h1');
+      if (target) target.focus({ preventScroll: true });
+    }
+  }
+  window.addEventListener('hashchange', () => navigate(parseHash() || 'dashboard', true));
+
+  /* ---------------- Layers: dialogs, sheets, palette ---------------- */
+  const stack = [];
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const focusables = (r) => $$(FOCUSABLE, r).filter((el) => el.getClientRects().length > 0);
+  function setInert(v) { shellEl.inert = v; loginEl.inert = v; }
+  function openLayer(inner, opts) {
+    const o = Object.assign({ kind: 'dialog', cls: '', label: '', labelledby: '', describedby: '', initial: '', returnTo: document.activeElement }, opts || {});
+    const ov = document.createElement('div');
+    ov.className = 'ov ov-' + o.kind;
+    ov.innerHTML = '<div class="dlg dlg-' + o.kind + ' ' + o.cls + '" role="dialog" aria-modal="true" tabindex="-1"' +
+      (o.label ? ' aria-label="' + esc(o.label) + '"' : '') + (o.labelledby ? ' aria-labelledby="' + o.labelledby + '"' : '') +
+      (o.describedby ? ' aria-describedby="' + o.describedby + '"' : '') + '>' + inner + '</div>';
+    ov.addEventListener('mousedown', (e) => { if (e.target === ov) closeLayer(); });
+    ov.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeLayer(); });
+    layerEl.appendChild(ov);
+    stack.push({ ov, returnTo: o.returnTo });
+    setInert(true);
+    icons();
+    const dlg = ov.firstElementChild;
+    const f = o.initial === 'self' ? dlg : (o.initial ? $(o.initial, ov) : focusables(dlg)[0]);
+    (f || dlg).focus({ preventScroll: true });
+    return ov;
+  }
+  function closeLayer(focusTo) {
+    const top = stack.pop();
+    if (!top) return;
+    top.ov.remove();
+    if (!stack.length) setInert(false);
+    if (focusTo === false) return;
+    const t = focusTo || top.returnTo;
+    if (t && t.isConnected && typeof t.focus === 'function') t.focus({ preventScroll: true });
+    else { const h = $('#content h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  function dlgHead(eyebrow, title, tid) {
+    return '<div class="sheet-grip" aria-hidden="true"></div><div class="dlg-head"><div><p class="eyebrow">' + esc(eyebrow) + '</p>' +
+      '<h2 class="dlg-title" id="' + tid + '">' + esc(title) + '</h2></div>' +
+      '<button type="button" class="iconbtn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>' + stripes('sm');
+  }
+  const cancelBtn = (label) => '<button type="button" class="btn btn-secondary" data-close><span class="face">' + label + '</span></button>';
+
+  /* User add / edit */
+  function openUserDialog(id, trigger) {
+    const isNew = !id;
+    const u = isNew ? { name: '', email: '', role: 'MEMBER', status: 'Active', dept: null } : userById(id);
+    if (!u) return;
+    const deptOpts = [['', 'No department']].concat(depts.map((d) => [d.id, d.name]));
+    const body = '<form class="dlg-form" id="user-form" novalidate><div class="dlg-body"><div class="form-grid">' +
+      '<div class="field span2"><label for="f-name">Full name</label><input class="input" id="f-name" autocomplete="off" value="' + esc(u.name) + '" aria-describedby="f-name-err">' + errSlot('f-name') + '</div>' +
+      '<div class="field span2"><label for="f-email">Email</label><input class="input" id="f-email" type="email" autocomplete="off" value="' + esc(u.email) + '" aria-describedby="f-email-err">' + errSlot('f-email') + '</div>' +
+      '<div class="field"><label for="f-role">Role</label>' + selectHTML('f-role', ROLES.map((r) => [r, r]), u.role) + '</div>' +
+      '<div class="field"><label for="f-status">Status</label>' + selectHTML('f-status', [['Active', 'Active'], ['Inactive', 'Inactive']], u.status) + '</div>' +
+      '<div class="field span2"><label for="f-dept">Department</label><div class="dept-select"><span id="f-dept-seal"></span>' + selectHTML('f-dept', deptOpts, u.dept || '') + '</div></div>' +
+      '</div></div><div class="dlg-foot">' + cancelBtn('Cancel') + button(isNew ? 'Add user' : 'Save', { type: 'submit' }) + '</div></form>';
+    const ov = openLayer(dlgHead(isNew ? 'New user' : 'User', isNew ? 'Add user' : 'Edit ' + u.name, 'dlg-t') + body,
+      { labelledby: 'dlg-t', initial: '#f-name', returnTo: trigger });
+    const fName = $('#f-name', ov), fEmail = $('#f-email', ov), fDept = $('#f-dept', ov), slot = $('#f-dept-seal', ov);
+    const paintSeal = () => {
+      const d = deptById(fDept.value);
+      slot.innerHTML = d ? sealMini(d.seal) : '<span class="seal-mini empty" aria-hidden="true"></span>';
+      icons();
+    };
+    paintSeal();
+    fDept.addEventListener('change', paintSeal);
+    $('#user-form', ov).addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = fName.value.trim().replace(/\s+/g, ' ');
+      const email = fEmail.value.trim().toLowerCase();
+      const nameMsg = !name ? 'Enter a full name.' : '';
+      const emailMsg = !email ? 'Enter an email address.'
+        : !EMAIL_RE.test(email) ? 'Enter a valid email address, like name@mehstudios.net.'
+        : users.some((x) => x.email === email && x.id !== id) ? 'Another user already has this email. Use a different address.' : '';
+      setErr(fName, nameMsg);
+      setErr(fEmail, emailMsg);
+      icons();
+      if (nameMsg) { fName.focus(); return; }
+      if (emailMsg) { fEmail.focus(); return; }
+      const data = { name, email, role: $('#f-role', ov).value, status: $('#f-status', ov).value, dept: fDept.value || null };
+      let targetId = id;
+      if (isNew) { targetId = 'u' + (++uid); users.push(Object.assign({ id: targetId }, data)); }
+      else Object.assign(u, data);
+      closeLayer(false);
+      updateUserResults();
+      const again = $('[data-action="edit-user"][data-id="' + targetId + '"]', content);
+      if (again) again.focus({ preventScroll: true }); else { const h = $('#content h1'); if (h) h.focus(); }
+      toast(isNew ? 'Added ' + name : 'Saved changes to ' + name);
+    });
+  }
+
+  function openDeleteUser(id, trigger) {
+    const u = userById(id);
+    if (!u) return;
+    const body = '<div class="dlg-body"><div class="confirm"><span class="confirm-ico" aria-hidden="true"><i data-lucide="triangle-alert"></i></span>' +
+      '<p id="dlg-desc">They lose access immediately. Their past activity stays in the audit log. This can\'t be undone.</p></div></div>' +
+      '<div class="dlg-foot">' + cancelBtn('Keep user') + button('Delete user', { variant: 'danger', icon: 'trash-2', attrs: 'id="confirm-del"' }) + '</div>';
+    const ov = openLayer(dlgHead('Delete user', 'Delete ' + u.name + '?', 'dlg-t') + body,
+      { labelledby: 'dlg-t', describedby: 'dlg-desc', initial: '[data-close].btn', returnTo: trigger, cls: 'narrow danger' });
+    $('#confirm-del', ov).addEventListener('click', () => {
+      users = users.filter((x) => x.id !== id);
+      depts.forEach((d) => { if (d.manager === id) d.manager = null; });
+      closeLayer(false);
+      updateUserResults();
+      const s = $('#user-search');
+      if (s) s.focus({ preventScroll: true });
+      toast('Deleted ' + u.name);
+    });
+  }
+
+  /* Department add / edit */
+  function openDeptDialog(id, trigger) {
+    const isNew = !id;
+    const used = depts.map((d) => d.seal);
+    const d = isNew ? { name: '', seal: SEAL_ORDER.slice(0, 7).find((k) => !used.includes(k)) || '', manager: null } : deptById(id);
+    if (!d) return;
+    const mgrOpts = [['', 'No manager']].concat(users.slice().sort((a, b) => a.name.localeCompare(b.name)).map((x) => [x.id, x.name + ' (' + roleLabel(x.role) + ')']));
+    const body = '<form class="dlg-form" id="dept-form" novalidate><div class="dlg-body"><div class="form-grid">' +
+      '<div class="field span2"><label for="f-dname">Department name</label><input class="input" id="f-dname" autocomplete="off" value="' + esc(d.name) + '" aria-describedby="f-dname-err">' + errSlot('f-dname') + '</div>' +
+      '<fieldset class="seal-set span2" aria-describedby="f-seal-err"><legend>Seal</legend><div class="seal-opts">' + SEAL_ORDER.map((k) =>
+        '<div class="seal-opt-wrap"><input class="seal-radio" type="radio" name="seal" id="seal-' + k + '" value="' + k + '"' + (d.seal === k ? ' checked' : '') + '>' +
+        '<label class="seal-opt" for="seal-' + k + '" style="--sc:' + sealVar(k) + '">' + sealMini(k) + '<span>' + esc(SEALS[k].name) + (k === 'dir' ? '<small>Director gold</small>' : '') + '</span></label></div>').join('') +
+      '</div>' + errSlot('f-seal') + '</fieldset>' +
+      '<div class="field span2"><label for="f-mgr">Manager</label>' + selectHTML('f-mgr', mgrOpts, d.manager || '') + '</div>' +
+      '</div></div><div class="dlg-foot">' + cancelBtn('Cancel') + button(isNew ? 'Add department' : 'Save', { type: 'submit' }) + '</div></form>';
+    const ov = openLayer(dlgHead(isNew ? 'New department' : 'Department', isNew ? 'Add department' : 'Edit ' + d.name, 'dlg-t') + body,
+      { labelledby: 'dlg-t', initial: '#f-dname', returnTo: trigger });
+    const fN = $('#f-dname', ov);
+    $('#dept-form', ov).addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = fN.value.trim().replace(/\s+/g, ' ');
+      const msg = !name ? 'Enter a department name.'
+        : depts.some((x) => x.id !== id && norm(x.name) === norm(name)) ? 'A department with this name already exists. Choose a different name.' : '';
+      const seal = ($('input[name="seal"]:checked', ov) || {}).value || '';
+      const sealMsg = seal ? '' : 'Choose a seal for this department.';
+      setErr(fN, msg);
+      const se = $('#f-seal-err', ov);
+      se.hidden = !sealMsg;
+      se.innerHTML = sealMsg ? '<i data-lucide="triangle-alert"></i><span>' + sealMsg + '</span>' : '';
+      icons();
+      if (msg) { fN.focus(); return; }
+      if (sealMsg) { $('.seal-radio', ov).focus(); return; }
+      const manager = $('#f-mgr', ov).value || null;
+      let targetId = id;
+      if (isNew) { targetId = 'd' + (++uid); depts.push({ id: targetId, name, seal, manager }); }
+      else Object.assign(d, { name, seal, manager });
+      closeLayer(false);
+      renderRoute('departments', false);
+      const again = $('[data-action="edit-dept"][data-id="' + targetId + '"]', content);
+      if (again) again.focus({ preventScroll: false });
+      toast(isNew ? 'Added ' + name : 'Saved changes to ' + name);
+    });
+  }
+
+  function openDeleteDept(id, trigger) {
+    const d = deptById(id);
+    if (!d) return;
+    const n = membersOf(id);
+    const text = n
+      ? '<strong>' + esc(d.name) + '</strong> has ' + plural(n, 'member', 'members') + '. They will be kept but left without a department.'
+      : '<strong>' + esc(d.name) + '</strong> has no members. This can\'t be undone.';
+    const body = '<div class="dlg-body"><div class="confirm"><span class="confirm-ico" aria-hidden="true"><i data-lucide="triangle-alert"></i></span><p id="dlg-desc">' + text + '</p></div>' +
+      (n ? '<div class="field confirm-field"><label for="f-confirm">Type ' + esc(d.name) + ' to confirm</label>' +
+        '<input class="input" id="f-confirm" autocomplete="off" spellcheck="false" aria-describedby="f-confirm-hint"><p class="hint" id="f-confirm-hint">This can\'t be undone. Type the name exactly as shown.</p></div>' : '') +
+      '</div><div class="dlg-foot">' + cancelBtn('Keep department') +
+      button('Delete department', { variant: 'danger', icon: 'trash-2', attrs: 'id="confirm-del"' + (n ? ' disabled' : '') }) + '</div>';
+    const ov = openLayer(dlgHead('Delete department', 'Delete ' + d.name + '?', 'dlg-t') + body,
+      { labelledby: 'dlg-t', describedby: 'dlg-desc', initial: n ? '#f-confirm' : '[data-close].btn', returnTo: trigger, cls: 'narrow danger' });
+    const del = $('#confirm-del', ov), fc = $('#f-confirm', ov);
+    if (fc) fc.addEventListener('input', () => { del.disabled = fc.value.trim() !== d.name; });
+    del.addEventListener('click', () => {
+      if (del.disabled) return;
+      depts = depts.filter((x) => x.id !== id);
+      users.forEach((u) => { if (u.dept === id) u.dept = null; });
+      closeLayer(false);
+      renderRoute('departments', false);
+      const h = $('#content h1');
+      if (h) h.focus({ preventScroll: true });
+      toast('Deleted ' + d.name);
+    });
+  }
+
+  /* Quick actions palette */
+  function openPalette(trigger) {
+    const inner = '<div class="pal-search"><i data-lucide="search"></i><label class="sr" for="pal-q">Search pages</label>' +
+      '<input id="pal-q" type="text" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-autocomplete="list" placeholder="Search pages" autocomplete="off" spellcheck="false">' +
+      '<span class="kbd">Esc</span></div><ul class="pal-list" id="pal-list" role="listbox" aria-label="Pages"></ul>' +
+      '<div class="pal-foot"><span><span class="kbd">↑</span><span class="kbd">↓</span>Move</span><span><span class="kbd">Enter</span>Open</span><span><span class="kbd">Esc</span>Close</span></div>';
+    const ov = openLayer(inner, { kind: 'palette', label: 'Quick actions', initial: '#pal-q', returnTo: trigger || document.activeElement });
+    const q = $('#pal-q', ov), list = $('#pal-list', ov);
+    let items = [], idx = 0;
+    const mark = () => {
+      $$('.pal-opt', list).forEach((o, i) => o.setAttribute('aria-selected', String(i === idx)));
+      const cur = items[idx];
+      if (cur) { q.setAttribute('aria-activedescendant', 'pal-o-' + cur.id); const el = document.getElementById('pal-o-' + cur.id); if (el) el.scrollIntoView({ block: 'nearest' }); }
+      else q.removeAttribute('aria-activedescendant');
+    };
+    const draw = () => {
+      const t = norm(q.value.trim());
+      items = PAGE_LIST.filter((p) => !t || norm(p.label).includes(t) || norm(p.group).includes(t));
+      idx = Math.min(idx, Math.max(0, items.length - 1));
+      list.innerHTML = items.length ? items.map((p) =>
+        '<li class="pal-opt" role="option" id="pal-o-' + p.id + '" data-id="' + p.id + '" aria-selected="false"><i data-lucide="' + p.icon + '"></i><span>' + esc(p.label) + '</span><span class="pal-grp">' + p.group + '</span></li>').join('')
+        : '<li class="pal-empty" role="presentation">No pages match "' + esc(q.value) + '". Try another word.</li>';
+      icons();
+      mark();
+    };
+    const choose = (pid) => { if (!pid) return; closeLayer(false); go(pid); };
+    q.addEventListener('input', () => { idx = 0; draw(); });
+    q.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); idx = (idx + 1) % items.length; mark(); }
+      else if (e.key === 'ArrowUp' && items.length) { e.preventDefault(); idx = (idx - 1 + items.length) % items.length; mark(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (items[idx]) choose(items[idx].id); }
+    });
+    list.addEventListener('click', (e) => { const o = e.target.closest('.pal-opt'); if (o) choose(o.dataset.id); });
+    list.addEventListener('mousemove', (e) => {
+      const o = e.target.closest('.pal-opt');
+      if (!o) return;
+      const i = items.findIndex((p) => p.id === o.dataset.id);
+      if (i !== idx && i > -1) { idx = i; mark(); }
+    });
+    draw();
+  }
+
+  /* Phone: More sheet */
+  function openMore(trigger) {
+    const inner = dlgHead('Menu', 'More', 'more-t') + '<div class="dlg-body more-body">' +
+      '<div class="search"><label class="sr" for="more-q">Search pages</label><i data-lucide="search"></i><input class="input" id="more-q" type="search" placeholder="Search pages" autocomplete="off"></div>' +
+      '<div id="more-list"></div><button type="button" class="more-logout" id="more-logout"><i data-lucide="log-out"></i><span>Log out</span></button></div>';
+    const ov = openLayer(inner, { kind: 'sheet', labelledby: 'more-t', initial: 'self', returnTo: trigger });
+    const q = $('#more-q', ov), box = $('#more-list', ov);
+    const draw = () => {
+      const t = norm(q.value.trim());
+      const groups = NAV.map((g) => ({ group: g.group, items: g.items.filter((it) => t ? norm(it.label).includes(t) : !TAB_ROUTES.includes(it.id)) })).filter((g) => g.items.length);
+      box.innerHTML = groups.length ? groups.map((g) => '<p class="more-grp">' + g.group + '</p><ul>' + g.items.map((it) =>
+        '<li><a class="more-item" href="#' + it.id + '"' + (it.id === state.route ? ' aria-current="page"' : '') + '><i data-lucide="' + it.icon + '"></i><span>' + esc(it.label) + '</span>' +
+        (it.badge ? '<span class="nbadge"><span class="sr">, </span>' + it.badge + '<span class="sr"> unread</span></span>' : '') + '</a></li>').join('') + '</ul>').join('')
+        : '<p class="hint">No pages match "' + esc(q.value) + '". Try another word.</p>';
+      icons();
+    };
+    q.addEventListener('input', draw);
+    box.addEventListener('click', (e) => { if (e.target.closest('.more-item')) closeLayer(false); });
+    $('#more-logout', ov).addEventListener('click', () => { closeLayer(false); go('login'); });
+    draw();
+  }
+
+  /* ---------------- Events ---------------- */
+  content.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el || !content.contains(el)) return;
+    const a = el.dataset.action, id = el.dataset.id;
+    if (a === 'add-user') openUserDialog(null, el);
+    else if (a === 'edit-user') openUserDialog(id, el);
+    else if (a === 'edit-user-name') openUserDialog(id, $('[data-action="edit-user"][data-id="' + id + '"]', content) || el);
+    else if (a === 'delete-user') openDeleteUser(id, el);
+    else if (a === 'role-filter') { state.role = el.dataset.role; updateUserResults(); }
+    else if (a === 'clear-filters') {
+      state.q = ''; state.role = 'all'; state.status = 'all';
+      const s = $('#user-search'), f = $('#status-filter');
+      if (s) s.value = '';
+      if (f) f.value = 'all';
+      updateUserResults();
+      if (s) s.focus();
+    }
+    else if (a === 'add-dept') openDeptDialog(null, el);
+    else if (a === 'edit-dept') openDeptDialog(id, el);
+    else if (a === 'delete-dept') openDeleteDept(id, el);
+    else if (a === 'go') go(el.dataset.to);
+    else if (a === 'refresh-status') {
+      const m = $('#checked');
+      if (m) m.textContent = 'Checked just now';
+      toast('Status checked. Nothing changed since the last check.');
+    }
+  });
+
+  $('#login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const p = $('#login-pass');
+    if (!p.value) { setErr(p, 'Enter your password'); icons(); p.focus(); return; }
+    setErr(p, '');
+    p.value = '';
+    go('dashboard');
+  });
+  $('#login-pass').addEventListener('input', (e) => { if (e.target.value) setErr(e.target, ''); });
+  $('#forgot').addEventListener('click', () => toast('Password reset is not connected in this prototype.', 'key-round'));
+  $('#qa-btn').addEventListener('click', (e) => openPalette(e.currentTarget));
+  $('#tb-back').addEventListener('click', () => window.__navBack());
+  $('#tb-fwd').addEventListener('click', () => window.__navFwd());
+  $('#tb-settings').addEventListener('click', () => go('account'));
+  $('#tb-logout').addEventListener('click', () => go('login'));
+  $('#tab-more').addEventListener('click', (e) => openMore(e.currentTarget));
+  $('#ptop-avatar').addEventListener('click', (e) => openMore(e.currentTarget));
+
+  const isTyping = (el) => !!(el && el.closest && el.closest('input, textarea, select, [contenteditable="true"]'));
+  document.addEventListener('keydown', (e) => {
+    const top = stack[stack.length - 1];
+    if (e.key === 'Escape' && top) { e.preventDefault(); closeLayer(); return; }
+    if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (top && top.ov.classList.contains('ov-palette')) closeLayer();
+      else if (!top && state.route !== 'login') openPalette();
+      return;
+    }
+    if (e.key === '/' && !top && state.route !== 'login' && !isTyping(e.target)) { e.preventDefault(); openPalette(); return; }
+    if (e.key === 'Tab' && top) {
+      const dlg = top.ov.querySelector('.dlg');
+      const f = focusables(dlg);
+      if (!f.length) { e.preventDefault(); dlg.focus(); return; }
+      const first = f[0], last = f[f.length - 1], act = document.activeElement;
+      if (!dlg.contains(act)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && (act === first || act === dlg)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && act === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  /* ---------------- Prototype frame controls ---------------- */
+  function applyTheme(t) {
+    root.setAttribute('data-theme', t);
+    $$('[data-set-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setTheme === t)));
+    store.set('theme', t);
+  }
+  function applyDevice(d) {
+    stage.dataset.device = d;
+    $$('[data-set-device]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setDevice === d)));
+    store.set('device', d);
+  }
+  function applyReduce(v) {
+    state.reduce = v;
+    root.setAttribute('data-motion', v ? 'reduce' : 'full');
+    $('#cb-motion').setAttribute('aria-checked', String(v));
+    store.set('reduce', v ? '1' : '0');
+    if (v) {
+      cancelWipe();
+      const panel = $('#login-panel');
+      if (panel.classList.contains('tracing')) { panel.classList.remove('tracing'); panel.classList.add('traced'); }
+    }
+  }
+  $$('[data-set-theme]').forEach((b) => b.addEventListener('click', () => applyTheme(b.dataset.setTheme)));
+  $$('[data-set-device]').forEach((b) => b.addEventListener('click', () => applyDevice(b.dataset.setDevice)));
+  $('#cb-motion').addEventListener('click', () => applyReduce(!state.reduce));
+  // Narrow real viewports: the concept bar collapses to one row with a Controls toggle.
+  const cbar = $('.cbar'), cbToggle = $('#cb-toggle');
+  const setCbOpen = (v) => { cbar.classList.toggle('open', v); cbToggle.setAttribute('aria-expanded', String(v)); };
+  cbToggle.addEventListener('click', () => setCbOpen(!cbar.classList.contains('open')));
+  $$('.cb-tabs a').forEach((a) => a.addEventListener('click', () => setCbOpen(false)));
+
+  /* ---------------- Init ---------------- */
+  const storedTheme = store.get('theme');
+  applyTheme(storedTheme === 'light' || storedTheme === 'dark' ? storedTheme
+    : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+  const storedDevice = store.get('device');
+  applyDevice(window.innerWidth < 600 ? 'phone' : (storedDevice === 'phone' || storedDevice === 'desktop' ? storedDevice : 'desktop'));
+  const storedReduce = store.get('reduce');
+  applyReduce(storedReduce === '1' ? true : storedReduce === '0' ? false : mqReduce.matches);
+  renderSidebar();
+  icons();
+  const last = store.get('screen');
+  const initial = parseHash() || (last === 'login' || PAGES[last] ? last : 'login');
+  if (location.hash.slice(1) !== initial) { try { history.replaceState(null, '', '#' + initial); } catch (e) { /* sandboxed */ } }
+  navigate(initial, false);
+})();
+</script>

@@ -11,7 +11,7 @@ function ScoreRing({ score }) {
     const r = 52;
     const circ = 2 * Math.PI * r;
     const dash = (score / 100) * circ;
-    const color = score >= 75 ? "var(--success)" : score >= 50 ? "#f0a832" : "var(--danger)";
+    const color = score >= 75 ? "var(--success)" : score >= 50 ? "var(--status-warn-fg)" : "var(--danger)";
 
     return (
         <div className="security-score-wrap">

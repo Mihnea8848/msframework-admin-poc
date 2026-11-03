@@ -19,5 +19,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
     unstubGlobals: true,
+    // CSS is stubbed out in tests, except the token files: contrast.test.ts reads them.
+    css: { include: [/src\/styles\/tokens\/.+\.css/] },
   },
 })

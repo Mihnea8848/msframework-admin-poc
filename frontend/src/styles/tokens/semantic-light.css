@@ -1,0 +1,52 @@
+/*
+ * Semantic colour roles for the light theme. Same names as semantic-dark.css, applied when
+ * public/theme-init.js (or the Appearance page) sets data-theme="light" on <html>.
+ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --canvas: var(--grey-100);
+  --surface-1: var(--white);
+  --surface-2: var(--grey-50);
+  --surface-3: var(--grey-75);
+  --field: var(--white);
+  --scrim: var(--slate-a45);
+
+  /* Text */
+  --text-primary: var(--ink);
+  --text-secondary: var(--grey-700);
+  --text-tertiary: var(--grey-600);
+  --text-disabled: var(--grey-550);
+
+  /* Borders */
+  --border-faint: var(--black-a5);
+  --border-subtle: var(--grey-200);
+  --border-strong: var(--grey-300);
+  --border-control: var(--grey-500);
+
+  /* Interaction */
+  --row-hover: var(--black-a3);
+  --nav-active: color-mix(in srgb, var(--brand-cobalt) 9%, transparent);
+  --disabled-bg: var(--grey-75);
+
+  /* Status */
+  --status-ok-fg: var(--green-800);
+  --status-ok-bg: color-mix(in srgb, var(--green-800) 9%, transparent);
+  --status-ok-border: color-mix(in srgb, var(--green-800) 45%, transparent);
+  --status-warn-fg: var(--amber-800);
+  --status-warn-bg: color-mix(in srgb, var(--amber-400) 14%, transparent);
+  --status-warn-border: color-mix(in srgb, var(--amber-800) 45%, transparent);
+  --status-danger-fg: var(--red-800);
+  --status-danger-bg: color-mix(in srgb, var(--maple-red) 7%, transparent);
+  --status-danger-border: var(--red-500);
+  --status-info-fg: var(--cyan-750);
+  --status-info-bg: color-mix(in srgb, var(--brand-cobalt) 10%, transparent);
+  --status-info-border: color-mix(in srgb, var(--cyan-750) 45%, transparent);
+
+  /* Brand mark and decoration */
+  --trace: var(--ink);
+  --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 14%, transparent);
+  --avatar-text: var(--cyan-900);
+  --gear: var(--grey-250);
+}

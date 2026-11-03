@@ -6,20 +6,20 @@ import { del, get, post, put } from "../api/client";
 import Modal, { ModalActions } from "../ui/Modal.jsx";
 import PageHeader from "../ui/PageHeader.jsx";
 
-// Curated swatches the user can pick from — each maps to a CSS class + a preview hex
+// Curated swatches the user can pick from. Each key is a CSS class (flat colour, see theme.css).
 const COLOR_SWATCHES = [
-    { label: "Azure", cssClass: "avatar-azure", hex: "#2952ff" },
-    { label: "Rose", cssClass: "avatar-rose", hex: "#cb3a77" },
-    { label: "Cyan", cssClass: "avatar-cyan", hex: "#0078c8" },
-    { label: "Magenta", cssClass: "avatar-magenta", hex: "#bb2eb8" },
-    { label: "Amber", cssClass: "avatar-amber", hex: "#f18d1c" },
-    { label: "Gold", cssClass: "avatar-gold", hex: "#d59b0b" },
-    { label: "Violet", cssClass: "avatar-violet", hex: "#6c32db" },
-    { label: "Jade", cssClass: "avatar-jade", hex: "#117d5d" },
-    { label: "Sky", cssClass: "avatar-sky", hex: "#1a9ddf" },
-    { label: "Coral", cssClass: "avatar-coral", hex: "#dd5a3a" },
-    { label: "Orange", cssClass: "avatar-orange", hex: "#df7f12" },
-    { label: "Plum", cssClass: "avatar-plum", hex: "#9d3ac0" },
+    { label: "Azure", cssClass: "avatar-azure" },
+    { label: "Rose", cssClass: "avatar-rose" },
+    { label: "Cyan", cssClass: "avatar-cyan" },
+    { label: "Magenta", cssClass: "avatar-magenta" },
+    { label: "Amber", cssClass: "avatar-amber" },
+    { label: "Gold", cssClass: "avatar-gold" },
+    { label: "Violet", cssClass: "avatar-violet" },
+    { label: "Jade", cssClass: "avatar-jade" },
+    { label: "Sky", cssClass: "avatar-sky" },
+    { label: "Coral", cssClass: "avatar-coral" },
+    { label: "Orange", cssClass: "avatar-orange" },
+    { label: "Plum", cssClass: "avatar-plum" },
 ];
 
 const DEFAULT_COLOR = "avatar-azure";
@@ -275,10 +275,10 @@ export default function Departments() {
                                                     <span style={{ color: "var(--muted-strong)", fontWeight: 600 }}>{budgetUsed}%</span>
                                                     <span style={{ color: "var(--muted)" }}>used</span>
                                                 </div>
-                                                <div style={{ height: 5, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                                                <div style={{ height: 5, borderRadius: 999, background: "var(--border-faint)", overflow: "hidden" }}>
                                                     <div style={{
                                                         height: "100%", width: `${budgetUsed}%`, borderRadius: 999,
-                                                        background: budgetUsed > 80 ? "var(--danger)" : budgetUsed > 60 ? "#f0a832" : "var(--success)",
+                                                        background: budgetUsed > 80 ? "var(--danger)" : budgetUsed > 60 ? "var(--status-warn-fg)" : "var(--success)",
                                                         transition: "width 0.4s ease",
                                                     }} />
                                                 </div>
@@ -326,7 +326,7 @@ export default function Departments() {
                                                                 fontSize: 12,
                                                                 fontWeight: 600,
                                                                 color: "var(--danger)",
-                                                                borderColor: "rgba(255,106,95,0.25)",
+                                                                borderColor: "var(--status-danger-border)",
                                                             }}
                                                         >
                                                             <Trash2 size={13} /> Delete
@@ -375,13 +375,13 @@ export default function Departments() {
                                     <button
                                         key={sw.cssClass}
                                         type="button"
+                                        className={sw.cssClass}
                                         title={sw.label}
                                         aria-label={sw.label}
                                         aria-pressed={colorInput === sw.cssClass}
                                         onClick={() => setColorInput(sw.cssClass)}
                                         style={{
-                                            width: 36, height: 36, borderRadius: 10,
-                                            background: `linear-gradient(135deg, ${sw.hex}cc, ${sw.hex})`,
+                                            width: 36, height: 36, borderRadius: 2,
                                             border: colorInput === sw.cssClass ? "2px solid var(--text)" : "2px solid transparent",
                                             cursor: "pointer",
                                             transition: "border-color 120ms ease, transform 120ms ease",
