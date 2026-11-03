@@ -1,0 +1,347 @@
+/*
+ * Sidebar, ported from the concept's .sidebar (design/concept-chevron.html). Full width from
+ * 1024px, a 64px icon rail from 768 to 1023px, hidden below 768px (BottomNav takes over).
+ */
+@layer shell {
+  .ms-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sidebar);
+    display: none;
+    flex: none;
+    flex-direction: column;
+    width: var(--sidebar-width);
+    height: 100vh;
+    height: 100dvh;
+    background: var(--surface-1);
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  @media (width >= 768px) {
+    .ms-sidebar {
+      display: flex;
+    }
+  }
+
+  .ms-sidebar__head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 18px var(--space-4) 14px 18px;
+  }
+
+  .ms-sidebar__logo {
+    flex: none;
+    width: 24px;
+    height: 35px;
+  }
+
+  .ms-sidebar__brand {
+    min-width: 0;
+  }
+
+  .ms-sidebar__word {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--weight-bold);
+    line-height: 1.1;
+    color: var(--text-primary);
+  }
+
+  .ms-sidebar__sub {
+    margin: 3px 0 0;
+    font-family: var(--font-cap);
+    font-size: 9px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.1em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+  }
+
+  /* Quick actions: drawn as a search field with the shortcut hint */
+  .ms-sidebar__qa {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 36px;
+    margin: var(--space-1) var(--space-3) var(--space-2) 14px;
+    padding: 0 var(--space-2) 0 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--field);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: var(--weight-semibold);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-sidebar__qa:hover {
+    border-color: var(--border-control);
+    color: var(--text-primary);
+  }
+
+  .ms-sidebar__qa-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+  }
+
+  .ms-sidebar__qa-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-sidebar__kbd {
+    margin-left: auto;
+    padding: 1px 5px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+  }
+
+  .ms-sidebar__nav {
+    flex: 1;
+    min-height: 0;
+    padding: 6px 0 var(--space-4);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ms-sidebar__group-title {
+    margin: 0;
+    padding: var(--space-4) 18px 6px 22px;
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps-wide);
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .ms-sidebar__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-sidebar__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    height: 34px;
+    margin: 1px 10px 1px var(--space-2);
+    padding: 0 10px 0 var(--space-4);
+    border-radius: var(--radius-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-sidebar__item:hover {
+    background: var(--row-hover);
+    color: var(--text-primary);
+  }
+
+  .ms-sidebar__item[aria-current="page"] {
+    background: var(--nav-active);
+    color: var(--text-primary);
+  }
+
+  /* The Chevron notch marks the current page */
+  .ms-sidebar__item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: var(--space-1);
+    width: 7px;
+    height: 12px;
+    transform: translateY(-50%);
+    background: var(--notch);
+    clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+  }
+
+  .ms-sidebar__icon {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    color: var(--text-tertiary);
+  }
+
+  .ms-sidebar__item[aria-current="page"] .ms-sidebar__icon {
+    color: var(--accent-text);
+  }
+
+  .ms-sidebar__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-sidebar__badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 18px;
+    margin-left: auto;
+    padding: 0 5px;
+    border-radius: var(--radius-2);
+    background: var(--primary);
+    color: var(--on-primary);
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-bold);
+    line-height: 1;
+  }
+
+  .ms-sidebar__foot {
+    margin: 0;
+    padding: var(--space-3) 18px var(--space-4) 22px;
+    border-top: 1px solid var(--border-subtle);
+    font-family: var(--font-cap);
+    font-size: 9px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  :root[data-density="compact"] .ms-sidebar__item {
+    height: 30px;
+  }
+
+  /* ---- Icon rail, 768 to 1023px ---- */
+  @media (width >= 768px) and (width < 1024px) {
+    .ms-sidebar {
+      width: var(--rail-width);
+    }
+
+    .ms-sidebar__head {
+      justify-content: center;
+      padding: 18px 0 14px;
+    }
+
+    .ms-sidebar__brand,
+    .ms-sidebar__qa-text,
+    .ms-sidebar__kbd,
+    .ms-sidebar__foot {
+      display: none;
+    }
+
+    .ms-sidebar__qa {
+      justify-content: center;
+      width: 44px;
+      height: 40px;
+      margin: var(--space-1) auto var(--space-2);
+      padding: 0;
+    }
+
+    .ms-sidebar__group-title {
+      /* Kept for the list's accessible name, drawn as a divider */
+      height: 1px;
+      margin: var(--space-3) var(--space-4);
+      padding: 0;
+      overflow: hidden;
+      background: var(--border-subtle);
+      color: transparent;
+    }
+
+    .ms-sidebar__group:first-child .ms-sidebar__group-title {
+      margin-top: var(--space-1);
+      background: none;
+    }
+
+    .ms-sidebar__item {
+      justify-content: center;
+      height: 40px;
+      margin: 2px var(--space-2);
+      padding: 0;
+    }
+
+    .ms-sidebar__item[aria-current="page"]::before {
+      left: 2px;
+    }
+
+    .ms-sidebar__icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .ms-sidebar__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .ms-sidebar__badge {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      min-width: 16px;
+      height: 14px;
+      margin: 0;
+      padding: 0 3px;
+      font-size: 9px;
+    }
+
+    /* Tooltips: the label beside the rail on hover and keyboard focus */
+    .ms-sidebar__item::after,
+    .ms-sidebar__qa::after {
+      content: attr(data-label);
+      position: absolute;
+      top: 50%;
+      left: calc(100% + var(--space-3));
+      z-index: var(--z-overlay);
+      padding: var(--space-1) var(--space-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-2);
+      background: var(--surface-3);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-sm);
+      font-weight: var(--weight-semibold);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-4px, -50%);
+      transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+    }
+
+    .ms-sidebar__item:hover::after,
+    .ms-sidebar__item:focus-visible::after,
+    .ms-sidebar__qa:hover::after,
+    .ms-sidebar__qa:focus-visible::after {
+      opacity: 1;
+      transform: translate(0, -50%);
+    }
+
+  }
+
+  /* Room for the rail tooltips, which a scroll container would clip. Only where every item fits. */
+  @media (width >= 768px) and (width < 1024px) and (height >= 820px) {
+    .ms-sidebar__nav {
+      overflow: visible;
+    }
+  }
+}

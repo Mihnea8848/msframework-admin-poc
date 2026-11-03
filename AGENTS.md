@@ -109,9 +109,10 @@ Frontend scripts (in `frontend/`):
 | `npm run lint` | ESLint (JS, JSX and TS), then Stylelint (`npm run lint:css`) |
 | `npm test` | Vitest unit tests, once (`npm run test:watch` re-runs on save) |
 | `npm run typecheck` | `tsc -b` on its own |
-| `npm run build` | `tsc -b` type check, then `vite build` |
+| `npm run build` | `tsc -b` type check, `vite build`, then the bundle budget (`scripts/check-bundle.mjs`) |
+| `npm run check:bundle` | The bundle budget on its own, against an existing `dist/`: gzip sizes of the entry JS (<= 130 kB), all CSS (<= 25 kB), each lazy chunk (<= 40 kB) and the latin `.woff2` fonts (<= 70 kB). Prints a table and fails when one is over |
 
-- Frontend unit tests are `*.test.ts` files next to the module they test (`src/utils/csv.test.ts`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
+- Frontend unit tests are `*.test.ts` (or `.test.tsx` for components) files next to the module they test (`src/utils/csv.test.ts`, `src/shell/MoreSheet.test.tsx`). Router tests build a `createMemoryRouter(routes)` from `src/app/routes.tsx` inside `AuthProvider` and assert on `router.state.location`. jsdom has no `HTMLDialogElement.showModal`, so dialogs must work with the `open` attribute too (see `shell/MoreSheet.tsx`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
 - `eslint-plugin-jsx-a11y` reports its recommended rules as **warnings** for now, because the existing pages have legacy issues. Don't add new ones; a later cleanup PR turns them into errors.
 - Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) lints every CSS file except the legacy stylesheet in `src/styles/legacy/`. It rejects colour literals (hex, `rgb()`, `hsl()`, named colours) everywhere except `src/styles/tokens/primitives.css`, and requires the `ms-` prefix on class names (see "Frontend styles and design tokens").
 - `src/styles/tokens/contrast.test.ts` resolves the colour tokens for every theme x accent and theme x seal and fails when a pair drops below WCAG AA (4.5:1 for text, 3:1 for the focus ring, control borders and seal outlines). If you change a colour token and it fails, pick a different primitive; don't lower the threshold.
@@ -168,7 +169,7 @@ The approved visual design is **Concept C, Chevron**: `design/concept-chevron.ht
 
 ```
 frontend/src/styles/
-  index.css            the only CSS entry (imported once in main.jsx); declares the layers and imports the rest
+  index.css            the only CSS entry (imported once in main.tsx); declares the layers and imports the rest
   tokens/primitives.css    the raw palette, the only file with colour literals
   tokens/semantic-dark.css colour roles for dark (the default); semantic-light.css overrides them
   tokens/accents.css       the 6 accent keys, per theme
@@ -179,14 +180,17 @@ frontend/src/styles/
   tokens/legacy-aliases.css the old variables (--bg, --panel, --accent, ...) mapped to the new tokens
   base/                reset.css, fonts.css (self-hosted @font-face), typography.css
   legacy/              the pre-Chevron stylesheet, kept working through the aliases until pages are rebuilt
+  utilities.css        single-purpose helpers (ms-visually-hidden)
 ```
+
+Component and shell styles live next to their component (`src/ui/brand/logo.css`, `src/shell/sidebar.css`), imported by it.
 
 - **Cascade layers**, lowest priority first: `legacy, reset, tokens, base, components, shell, pages, utilities`. A later layer always wins, whatever the specificity, so `legacy/` can never override new styles. Because `reset` and `base` sit above `legacy`, keep them minimal and never set there something the legacy CSS relies on.
 - **Hex only in primitives.** `primitives.css` names colours by what they are (`--brand-cyan`, `--charcoal-850`). Everything else uses **semantic tokens** by role: `--canvas`, `--surface-1` to `--surface-3`, `--field`, `--text-primary/secondary/tertiary/disabled`, `--border-faint/subtle/strong/control`, `--focus-ring`, `--primary`, `--primary-hover`, `--on-primary`, `--danger-solid`, `--on-danger`, and `--status-ok|warn|danger|info-fg/bg/border`. To add a colour, add a primitive, point a semantic token at it in both theme files, and add the pair to `contrast.test.ts` if it carries text or a boundary.
 - **Accents** (`data-accent`): `cyan` (default), `cobalt`, `violet`, `jade`, `gold`, `silver`. The selected one fills `--accent-solid`, `--on-accent`, `--accent-text`, `--accent-line` and `--accent-tint`. Maple red (`--danger-solid`) is only for destructive actions and is never an accent.
 - **Seals** (department colours): put `data-seal="administration|development|quality-control|external-affairs|human-resources|ethics-regulations|engineering-innovation|director"` on an element and use `--seal` (ring, glyph and fill), `--seal-fg` (content on a solid seal fill), `--seal-text` (seal-coloured text) and `--seal-border` inside it. The per-theme values live on `:root` as `--seal-<name>-*`. The current departments still store the older `avatar-*` keys (flat colours in `primitives.css`) until they move to seals.
 - **Shape and type:** corners are 0 to 2px (`--radius-2`); the Chevron clipped corner is `clip-path: var(--clip-8)` (controls) or `var(--clip-12)` (panels). A clipped element also clips its focus outline, so drop the clip on `:focus-visible` or put the ring on a wrapper. Manrope (`--font-ui`) is the running text; Montserrat 600/700 uppercase (`--font-cap`) is for labels, buttons and eyebrows.
-- **Class names:** new component classes are global BEM classes with the `ms-` prefix (`ms-logo`, `ms-logo__upper`), one CSS file per component next to it, wrapped in `@layer components { ... }`.
+- **Class names:** new component classes are global BEM classes with the `ms-` prefix (`ms-logo`, `ms-logo__upper`), one CSS file per component next to it, wrapped in `@layer components { ... }` (`@layer shell { ... }` for `src/shell/` and `src/app/`).
 - **`<html>` attributes**, set before the first paint by `public/theme-init.js` (a blocking `<script src>` in `index.html`, not inline, so a strict CSP works) and changed live by `src/theme/appearance.ts`:
   - `data-theme`: `dark` or `light`. The stored preference (`theme` in localStorage) can also be `system`, resolved with `matchMedia`; dark is the default.
   - `data-accent` (stored as `accentKey`), `data-density` (`comfortable` or `compact`) and `data-motion` (`full` or `reduced`; the stored `motion` choice, otherwise the OS setting).
@@ -194,6 +198,16 @@ frontend/src/styles/
 - **Fonts** are self-hosted from `@fontsource-variable/manrope` and `@fontsource/montserrat` (SIL Open Font License 1.1), latin and latin-ext subsets only, declared in `base/fonts.css`. Don't add Google Fonts or other third-party font URLs.
 - **Logo:** `src/ui/brand/Logo.tsx` is the two-path SVG mark, coloured by `--logo-upper` and `--logo-lower`; pass `title` when it is the only name on screen. The favicon is `public/favicon.svg`.
 - **Brand names:** the product is MSFramework; in UI text the company is "Multimedia Entertainment Hub" ("MEH Studios Inc" in the narrow sidebar label). Example addresses use the `mehstudios.net` domain.
+
+### Shell, routing and motion
+
+- **Data router:** `src/app/router.tsx` (`createBrowserRouter`) with the route table in `src/app/routes.tsx`, generated from `PAGES`. Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) sit outside the shell; every other page is a child of one layout route, `RequireAuth` + `shell/AppShell`. Guards: signed out goes to `/login` with `state.from`; signed in on `/login` or `/register` goes to `/`; a missing permission goes to `/`; unknown paths go to `/`.
+- **The shell is mounted once.** Only the `<Outlet />` inside `<main>` changes on navigation, so anything that must survive navigation (the unread badge poll in `shell/useUnreadAudit.ts`, Quick Actions, the More sheet) belongs in `AppShell`, not in a page.
+- **Breakpoints:** full sidebar from 1024px, a 64px icon rail (labels as tooltips, still the links' accessible names) from 768 to 1023px, and below 768px a 52px top bar plus `BottomNav` (the first `MOBILE_TAB_COUNT` = 4 permitted pages by `mobilePriority`, then More) and `MoreSheet` (a native modal `<dialog>`: Escape, backdrop and close button close it; focus returns to More). Layout sizes are tokens in `tokens/scale.css` (`--sidebar-width`, `--rail-width`, `--topbar-height`, `--bottom-nav-height`, `--touch-target`). The content column is centred, at most `--content-max` (1280px) wide, with the concept's padding; pages must not add their own outer padding and must not overflow 360px.
+- **Lazy pages and prefetch:** each page is a chunk from `PAGE_LOADERS` (`app/pages.ts`). Shell links use `shell/PageLink.tsx`, which prefetches on hover, focus and touch; `AppShell` prefetches every permitted page one per idle period (`requestIdleCallback`, `setTimeout` fallback). The router loads a chunk before it commits the navigation, so no loading fallback is needed.
+- **Page transitions:** a 180ms (`--duration-base`) fade with a 6px rise of `<main>` only. `PageLink` passes react-router's `viewTransition` when `data-motion="full"` and `document.startViewTransition` exists (checked at click time, `app/transitions.ts`); `<main>` is the only element with a `view-transition-name` (`page`), and the root snapshot is not animated (`shell/view-transitions.css`). Any navigation that did not run as a view transition replays the `ms-shell__main--enter` CSS animation instead. Reduced motion makes both instant. Never add wipe or slide transitions or a stripe band on the sidebar (rejected by the client).
+- **Splash:** `#ms-splash` in `index.html` is plain HTML (no inline script or style, so a strict CSP works) styled by `app/splash.css`, which is in the main stylesheet. `RootLayout` removes it once the first `/api/auth/me` has answered and the first page chunk is loaded. It shows the logo trace only after `--duration-fast`, and a still logo with reduced motion.
+- **Keyboard:** the first Tab stop is the "Skip to main content" link (`#main`, which takes focus). Ctrl/Cmd+K or `/` (outside text fields) opens Quick Actions.
 
 ## Git workflow
 
@@ -221,16 +235,24 @@ resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schem
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
 frontend/src/
+  main.tsx             entry: imports styles/index.css and renders app/App.tsx
+  app/                 App.tsx (AuthProvider + RouterProvider), router.tsx (createBrowserRouter), routes.tsx (the route
+                       table), guards.tsx (RequireAuth, RedirectIfAuthed, RequirePermission), pages.ts (lazy page
+                       loaders + prefetch), RootLayout.tsx, splash.ts/.css, transitions.ts
+  shell/               AppShell (the layout route, mounted once), Sidebar (+ rail), Topbar, BottomNav, MoreSheet,
+                       PageLink (prefetch + view transition), useUnreadAudit (the badge poll)
   api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
   api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
   auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
-  routes/navigation.ts every page with its path, icon and required permission (router, sidebar and palette use it)
+  routes/navigation.ts every page with its path, icon, group, required permission and mobilePriority (router, sidebar,
+                       bottom bar, More sheet and palette use it)
   styles/              index.css (the only CSS entry), tokens/, base/, legacy/ (see "Frontend styles and design tokens")
   theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
   ui/                  Modal, Toggle, PageHeader, QuickActions, brand/Logo.tsx
   utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
-  **/*.test.ts         unit tests, next to the module they cover
+  **/*.test.ts(x)      unit tests, next to the module they cover
+frontend/scripts/check-bundle.mjs  the bundle size budget, run by npm run build
 ```
 
 TypeScript migration:
@@ -244,7 +266,7 @@ Conventions:
 - **Errors:** throw `ApiException.badRequest/forbidden/notFound/conflict("human message")`. The frontend shows `err.message` as-is, so write the message for an end user.
 - **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
 - **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. No migration is needed: the database deliberately has no CHECK listing permission names. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
-- **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`) and a component to the `COMPONENTS` map in `routes/AppRoutes.jsx`.
+- **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`; set `mobilePriority` if it should be able to appear in the phone bottom bar) and a loader to `PAGE_LOADERS` in `app/pages.ts` (`() => import("../pages/MyPage")`, default export). `app/routes.tsx` turns every entry into a lazy route inside the shell behind `RequirePermission`, and the sidebar, bottom bar, More sheet and Quick Actions pick it up. Keep each page chunk under the 40 kB budget; never import a page statically, or it lands in the entry bundle. A page outside the shell (like `/login`) is added to `app/routes.tsx` directly.
 - **Request bodies** are records in `dto/` named after what they carry (`ChangePasswordRequest`), never `Map<String, ...>`, so the contract describes them. Keep field names stable: the frontend sends them as-is.
 - **API changes** go with a regenerated `api/openapi.json` in the same pull request.
 - **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly.

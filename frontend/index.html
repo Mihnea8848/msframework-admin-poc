@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>MSFramework</title>
     <!-- Blocking on purpose: sets data-theme, data-accent, data-density and data-motion on
@@ -10,7 +10,23 @@
     <script src="/theme-init.js"></script>
   </head>
   <body>
+    <!-- Start-up splash: the logo outline being traced, shown while the first /api/auth/me call
+         answers. Pure HTML and CSS (src/app/splash.css, in the main stylesheet), no inline script
+         or style, so a strict CSP works. React removes it (src/app/splash.ts). -->
+    <div id="ms-splash" class="ms-splash" role="status">
+      <svg class="ms-splash__logo" viewBox="0 0 694 1000" width="56" height="81" aria-hidden="true" focusable="false">
+        <g class="ms-splash__fill">
+          <path class="ms-splash__upper" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z" />
+          <path class="ms-splash__lower" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z" />
+        </g>
+        <g class="ms-splash__trace">
+          <path pathLength="1" d="M347 199.95L0 0L0 175.651L347.121 375.527L520 275.975V475.738L693 575.354V0.576L347 199.95Z" />
+          <path pathLength="1" d="M347.077 999.716L0 799.312L0 529.601L174 629.026V724.312L347 823.412L507.958 731.264L0 438.774L0 263.196L694 663.095V799.42L347.077 999.716Z" />
+        </g>
+      </svg>
+      <span class="ms-visually-hidden">Loading MSFramework</span>
+    </div>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

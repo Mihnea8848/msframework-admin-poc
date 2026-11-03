@@ -1,5 +1,5 @@
 /*
- * The only CSS entry point (imported once, from main.jsx).
+ * The only CSS entry point (imported once, from main.tsx).
  *
  * Cascade layers, lowest priority first. A later layer always wins over an earlier one,
  * whatever the selector specificity:
@@ -10,7 +10,7 @@
  *   components  ms- component styles (src/ui), one file per component
  *   shell       the app shell (sidebar, top bar, bottom navigation)
  *   pages       page-specific styles
- *   utilities   single-purpose helpers
+ *   utilities   single-purpose helpers (utilities.css)
  */
 @layer legacy, reset, tokens, base, components, shell, pages, utilities;
 
@@ -28,3 +28,4 @@
 @import url("./tokens/legacy-aliases.css") layer(tokens);
 @import url("./base/fonts.css") layer(base);
 @import url("./base/typography.css") layer(base);
+@import url("./utilities.css") layer(utilities);

@@ -1,0 +1,45 @@
+/*
+ * View transitions between pages (src/app/transitions.ts). Only <main> is named ("page"), so
+ * only the content fades and rises; the root snapshot switches at once, which keeps the sidebar,
+ * top bar and bottom bar still. Durations come from the motion tokens: 0 with reduced motion.
+ */
+@layer shell {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  ::view-transition-old(page) {
+    animation: ms-vt-out var(--duration-fast) var(--ease-exit) both;
+  }
+
+  ::view-transition-new(page) {
+    animation: ms-vt-in var(--duration-base) var(--ease-standard) both;
+  }
+
+  /* Same place before and after: no geometry morph, just the cross-fade */
+  ::view-transition-group(page) {
+    animation: none;
+  }
+
+  @keyframes ms-vt-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes ms-vt-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none;
+    }
+  }
+}

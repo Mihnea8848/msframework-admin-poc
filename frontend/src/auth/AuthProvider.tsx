@@ -1,14 +1,29 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import * as authApi from "./auth";
 import { setUnauthorizedHandler } from "../api/client";
+import type { CurrentUserDto } from "../api/types";
 
-const AuthContext = createContext(null);
+export interface AuthContextValue {
+    user: CurrentUserDto | null;
+    /** True until the first /api/auth/me call has answered. */
+    loading: boolean;
+    /** Set when the backend rejects the session (expired, deactivated, deleted). Shown on the login page. */
+    sessionExpired: boolean;
+    login: (email: string, password: string) => Promise<CurrentUserDto>;
+    logout: () => Promise<void>;
+    refresh: () => Promise<CurrentUserDto | null>;
+    setUser: Dispatch<SetStateAction<CurrentUserDto | null>>;
+    forgotPassword: typeof authApi.forgotPassword;
+    resetPassword: typeof authApi.resetPassword;
+}
 
-export default function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export default function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<CurrentUserDto | null>(null);
     const [loading, setLoading] = useState(true);
-    // Set when the backend rejects the session (expired, deactivated, deleted). Shown on the login page.
     const [sessionExpired, setSessionExpired] = useState(false);
 
     const refresh = useCallback(async () => {
@@ -17,7 +32,7 @@ export default function AuthProvider({ children }) {
             setUser(currentUser || null);
             return currentUser || null;
         } catch (err) {
-            console.warn("[AuthProvider] could not load the current user:", err.message);
+            console.warn("[AuthProvider] could not load the current user:", err instanceof Error ? err.message : err);
             setUser(null);
             return null;
         } finally {
@@ -29,7 +44,7 @@ export default function AuthProvider({ children }) {
         refresh();
     }, [refresh]);
 
-    const userRef = useRef(null);
+    const userRef = useRef<CurrentUserDto | null>(null);
     useEffect(() => {
         userRef.current = user;
     }, [user]);
@@ -42,7 +57,7 @@ export default function AuthProvider({ children }) {
         return () => setUnauthorizedHandler(null);
     }, []);
 
-    const login = useCallback(async (email, password) => {
+    const login = useCallback(async (email: string, password: string) => {
         const currentUser = await authApi.login(email, password);
         setSessionExpired(false);
         setUser(currentUser);
@@ -59,7 +74,7 @@ export default function AuthProvider({ children }) {
         setUser(null);
     }, []);
 
-    const value = useMemo(() => ({
+    const value = useMemo<AuthContextValue>(() => ({
         user,
         loading,
         sessionExpired,
@@ -74,7 +89,7 @@ export default function AuthProvider({ children }) {
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextValue => {
     const context = useContext(AuthContext);
     if (!context) throw new Error("useAuth must be used within AuthProvider");
     return context;
