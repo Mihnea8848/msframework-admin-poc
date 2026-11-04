@@ -7,6 +7,13 @@
             "description": "Display name, at most 60 characters. Defaults to \"API key\" when missing or blank",
             "maxLength": 60,
             "type": "string"
+          },
+          "scopes": {
+            "description": "What the key may do. Known scopes: ingest:checkins (POST /api/ingest/checkins). Defaults to none",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -33,6 +40,12 @@
           "name": {
             "type": "string"
           },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "secret": {
             "type": "string"
           }
@@ -56,6 +69,170 @@
           },
           "id": {
             "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "BudgetImportRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetImportRow"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "BudgetImportRow": {
+        "description": "Department and category by name; quarter 1 to 4 (or Q1 to Q4)",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "quarter": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BudgetLine": {
+        "description": "A budget line with what has been spent against it. Lines with a null id have spending but no budget (amount 0).",
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "committed": {
+            "description": "SUBMITTED expenses dated in the quarter",
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "quarter": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "remaining": {
+            "description": "amount - spent - committed (negative when over budget)",
+            "type": "number"
+          },
+          "spent": {
+            "description": "APPROVED plus PAID expenses dated in the quarter",
+            "type": "number"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "year": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "BudgetRequest": {
+        "description": "One budget line: a department, a category and a quarter",
+        "properties": {
+          "amount": {
+            "example": 12500.0,
+            "type": "number"
+          },
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "quarter": {
+            "format": "int32",
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "year": {
+            "example": 2026,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amount",
+          "categoryId",
+          "departmentId",
+          "quarter",
+          "year"
+        ],
+        "type": "object"
+      },
+      "BudgetSummary": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetLine"
+            },
+            "type": "array"
+          },
+          "quarter": {
+            "description": "Null when the whole year was asked for",
+            "format": "int32",
+            "type": "integer"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotals"
+          },
+          "year": {
+            "format": "int32",
             "type": "integer"
           }
         },
@@ -91,6 +268,61 @@
         "required": [
           "currentPassword",
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "CheckinImportRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CheckinImportRow"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CheckinImportRow": {
+        "description": "The goal by goalId, or by department and goal name (the goal of the quarter that contains the date); date as YYYY-MM-DD, default today",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "goal": {
+            "type": "string"
+          },
+          "goalId": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CheckinRequest": {
+        "properties": {
+          "date": {
+            "description": "Defaults to today. Must be inside the goal's quarter and not in the future",
+            "format": "date",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value"
         ],
         "type": "object"
       },
@@ -164,7 +396,14 @@
                 "WORKSPACE_UPDATE",
                 "API_KEY_READ",
                 "API_KEY_CREATE",
-                "API_KEY_DELETE"
+                "API_KEY_DELETE",
+                "FINANCE_READ",
+                "FINANCE_MANAGE",
+                "EXPENSE_SUBMIT",
+                "EXPENSE_APPROVE",
+                "GOALS_READ",
+                "GOALS_MANAGE",
+                "REPORTS_READ"
               ],
               "type": "string"
             },
@@ -204,6 +443,47 @@
           },
           "name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DepartmentPerformance": {
+        "properties": {
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "goalCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalAttainment"
+            },
+            "type": "array"
+          },
+          "goalsWithData": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "score": {
+            "description": "Weighted average attainment of the goals that have check-ins; null when none",
+            "format": "double",
+            "type": "number"
+          },
+          "trend": {
+            "description": "Six monthly scores, oldest first, ending with the quarter's last month (or this month)",
+            "items": {
+              "$ref": "#/components/schemas/PerformanceTrendPoint"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -265,6 +545,326 @@
         ],
         "type": "object"
       },
+      "Expense": {
+        "properties": {
+          "actions": {
+            "$ref": "#/components/schemas/ExpenseActions"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedByEmail": {
+            "type": "string"
+          },
+          "decisionNote": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "overBudget": {
+            "description": "True when, at submission, the amount exceeded the remaining budget of its line",
+            "type": "boolean"
+          },
+          "paidByEmail": {
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "SUBMITTED",
+              "APPROVED",
+              "REJECTED",
+              "PAID"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submittedByEmail": {
+            "type": "string"
+          },
+          "submittedById": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "submittedByName": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseActions": {
+        "description": "What the caller may do with this expense right now",
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "delete": {
+            "type": "boolean"
+          },
+          "edit": {
+            "type": "boolean"
+          },
+          "pay": {
+            "type": "boolean"
+          },
+          "reject": {
+            "type": "boolean"
+          },
+          "submit": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseCategory": {
+        "description": "A spending category shared by budgets and expenses",
+        "properties": {
+          "active": {
+            "description": "Inactive categories stay on old records but cannot be picked for new ones",
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "usageCount": {
+            "description": "Budget lines plus expenses that use this category",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseCategoryRequest": {
+        "properties": {
+          "active": {
+            "description": "Defaults to true",
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Unique, at most 60 characters",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "ExpenseDecisionRequest": {
+        "description": "Approve (note optional) or reject (note required)",
+        "properties": {
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseImportRequest": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseImportRow"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseImportRow": {
+        "description": "Department and category by name; date as YYYY-MM-DD; status DRAFT, SUBMITTED, APPROVED or PAID (default SUBMITTED); submitterEmail defaults to the importer",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submitterEmail": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ExpensePage": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Expense"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalAmount": {
+            "description": "Sum of every matching expense, not only this page",
+            "type": "number"
+          },
+          "totalItems": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ExpensePaymentRequest": {
+        "description": "Mark an approved expense as paid",
+        "properties": {
+          "paidOn": {
+            "description": "Defaults to today; not in the future",
+            "format": "date",
+            "type": "string"
+          },
+          "paymentReference": {
+            "description": "Bank or transfer reference",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ExpenseRequest": {
+        "description": "Create or edit an expense",
+        "properties": {
+          "amount": {
+            "example": 249.0,
+            "type": "number"
+          },
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "date": {
+            "description": "When the money was spent; not in the future",
+            "format": "date",
+            "type": "string"
+          },
+          "departmentId": {
+            "description": "Defaults to the caller's department",
+            "format": "int64",
+            "type": "integer"
+          },
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reference": {
+            "description": "Invoice number or other external reference",
+            "maxLength": 80,
+            "type": "string"
+          },
+          "submit": {
+            "description": "Create only: true submits it straight away instead of saving a draft",
+            "type": "boolean"
+          },
+          "vendor": {
+            "maxLength": 120,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "categoryId",
+          "date",
+          "vendor"
+        ],
+        "type": "object"
+      },
       "ForgotPasswordRequest": {
         "properties": {
           "email": {
@@ -274,6 +874,239 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "Goal": {
+        "properties": {
+          "attainment": {
+            "description": "Progress from baseline to target in percent, clamped to 0..120; null without check-ins",
+            "format": "double",
+            "type": "number"
+          },
+          "baseline": {
+            "type": "number"
+          },
+          "canCheckIn": {
+            "description": "The caller may record check-ins",
+            "type": "boolean"
+          },
+          "canEdit": {
+            "description": "The caller may edit or delete the goal",
+            "type": "boolean"
+          },
+          "checkinCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currentValue": {
+            "description": "Value of the latest check-in; null when there is none",
+            "type": "number"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastCheckinDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "quarter": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "target": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "weight": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "year": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "GoalAttainment": {
+        "properties": {
+          "attainment": {
+            "format": "double",
+            "type": "number"
+          },
+          "baseline": {
+            "type": "number"
+          },
+          "currentValue": {
+            "type": "number"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "goalId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastCheckinDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "target": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "weight": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "GoalCheckin": {
+        "properties": {
+          "canDelete": {
+            "description": "The caller may delete this check-in",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "goalId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "note": {
+            "type": "string"
+          },
+          "recordedBy": {
+            "description": "Email of the person, or \"API key: name\" for integrations",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "UI",
+              "CSV",
+              "API"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "GoalRequest": {
+        "description": "Create or edit a goal (a KPI with a target for one quarter)",
+        "properties": {
+          "baseline": {
+            "description": "Where the quarter starts",
+            "type": "number"
+          },
+          "departmentId": {
+            "description": "Defaults to the caller's department",
+            "format": "int64",
+            "type": "integer"
+          },
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "HIGHER_IS_BETTER",
+              "LOWER_IS_BETTER"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "quarter": {
+            "description": "Defaults to the current quarter",
+            "format": "int32",
+            "type": "integer"
+          },
+          "target": {
+            "description": "Above the baseline when higher is better, below it when lower is better",
+            "type": "number"
+          },
+          "unit": {
+            "description": "Free text, e.g. %, count, hours, days, EUR, score",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "weight": {
+            "description": "1 to 100, default 1. Weights the goal in the department score",
+            "format": "int32",
+            "type": "integer"
+          },
+          "year": {
+            "description": "Defaults to the current year",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "baseline",
+          "direction",
+          "name",
+          "target",
+          "unit"
         ],
         "type": "object"
       },
@@ -308,6 +1141,46 @@
         },
         "type": "object"
       },
+      "IngestCheckin": {
+        "properties": {
+          "date": {
+            "description": "Defaults to today. Must be inside the goal's quarter and not in the future",
+            "format": "date",
+            "type": "string"
+          },
+          "goalId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "goalId",
+          "value"
+        ],
+        "type": "object"
+      },
+      "IngestCheckinsRequest": {
+        "properties": {
+          "checkins": {
+            "description": "1 to 500 check-ins",
+            "items": {
+              "$ref": "#/components/schemas/IngestCheckin"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "checkins"
+        ],
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -327,6 +1200,23 @@
         ],
         "type": "object"
       },
+      "MoneyTotals": {
+        "properties": {
+          "budget": {
+            "type": "number"
+          },
+          "committed": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "spent": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "OrgSetting": {
         "properties": {
           "key": {
@@ -338,6 +1228,171 @@
           },
           "value": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Payment": {
+        "description": "An outgoing payment: a PAID expense",
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "expenseId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "paidByEmail": {
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "submittedByEmail": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PaymentLedger": {
+        "properties": {
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "items": {
+            "description": "This page of payments, newest first",
+            "items": {
+              "$ref": "#/components/schemas/Payment"
+            },
+            "type": "array"
+          },
+          "months": {
+            "description": "Every month in the range, oldest first, including empty ones",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMonth"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/PaymentProvider"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PaymentMonth": {
+        "properties": {
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "month": {
+            "example": "2026-05",
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "PaymentProvider": {
+        "description": "No payment provider is connected: payments are recorded, not sent",
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PerformanceOverview": {
+        "properties": {
+          "departments": {
+            "items": {
+              "$ref": "#/components/schemas/DepartmentPerformance"
+            },
+            "type": "array"
+          },
+          "quarter": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "year": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PerformanceTrendPoint": {
+        "properties": {
+          "month": {
+            "example": "2026-06",
+            "type": "string"
+          },
+          "score": {
+            "description": "Department score at the end of the month; null when no goal had data",
+            "format": "double",
+            "type": "number"
           }
         },
         "type": "object"
@@ -372,6 +1427,213 @@
           "password",
           "phone"
         ],
+        "type": "object"
+      },
+      "ReportBudgetVsSpend": {
+        "properties": {
+          "budget": {
+            "description": "Budget for the range: each quarter's budget times the share of its days in the range",
+            "type": "number"
+          },
+          "committed": {
+            "type": "number"
+          },
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "spent": {
+            "type": "number"
+          },
+          "utilisation": {
+            "description": "spent / budget in percent; null when there is no budget",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ReportCategorySpend": {
+        "properties": {
+          "categoryId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "spent": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDepartmentScore": {
+        "properties": {
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "score": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ReportDepartmentSpend": {
+        "properties": {
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "spent": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ReportHeadcount": {
+        "description": "Users per department; departmentId is null for unassigned users",
+        "properties": {
+          "active": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ReportMonthSpend": {
+        "properties": {
+          "committed": {
+            "type": "number"
+          },
+          "month": {
+            "example": "2026-05",
+            "type": "string"
+          },
+          "spent": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ReportOverview": {
+        "properties": {
+          "budgetVsSpend": {
+            "items": {
+              "$ref": "#/components/schemas/ReportBudgetVsSpend"
+            },
+            "type": "array"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "headcount": {
+            "items": {
+              "$ref": "#/components/schemas/ReportHeadcount"
+            },
+            "type": "array"
+          },
+          "monthlySpend": {
+            "description": "Every month in the range, oldest first, including empty ones",
+            "items": {
+              "$ref": "#/components/schemas/ReportMonthSpend"
+            },
+            "type": "array"
+          },
+          "performance": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDepartmentScore"
+            },
+            "type": "array"
+          },
+          "performanceQuarter": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "performanceYear": {
+            "description": "The quarter the performance scores are for: the one that contains 'to'",
+            "format": "int32",
+            "type": "integer"
+          },
+          "spendByCategory": {
+            "items": {
+              "$ref": "#/components/schemas/ReportCategorySpend"
+            },
+            "type": "array"
+          },
+          "spendByDepartment": {
+            "items": {
+              "$ref": "#/components/schemas/ReportDepartmentSpend"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ReportTotals"
+          }
+        },
+        "type": "object"
+      },
+      "ReportTotals": {
+        "properties": {
+          "activeHeadcount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "budget": {
+            "type": "number"
+          },
+          "committed": {
+            "type": "number"
+          },
+          "remaining": {
+            "type": "number"
+          },
+          "spent": {
+            "type": "number"
+          }
+        },
         "type": "object"
       },
       "ResetPasswordRequest": {
@@ -1102,6 +2364,283 @@
         ]
       }
     },
+    "/api/budgets": {
+      "get": {
+        "description": "Defaults to the current quarter. Give only the year for all its quarters. Spent is APPROVED plus PAID expenses dated in the quarter, committed is SUBMITTED ones. Lines with a null id have spending but no budget.",
+        "operationId": "listBudgets",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quarter",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departmentId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetSummary"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Budget lines with spent, committed and remaining amounts",
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "post": {
+        "description": "One line per department, category and quarter; a second one is a conflict (409).",
+        "operationId": "createBudget",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetLine"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Set a budget line",
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}": {
+      "delete": {
+        "description": "Expenses are kept.",
+        "operationId": "deleteBudget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Remove a budget line",
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "get": {
+        "operationId": "getBudget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetLine"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "One budget line",
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "put": {
+        "operationId": "updateBudget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetLine"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Change a budget line",
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
     "/api/connections": {
       "get": {
         "operationId": "listConnections",
@@ -1544,6 +3083,1333 @@
         ]
       }
     },
+    "/api/expenses": {
+      "get": {
+        "description": "FINANCE_READ sees every expense, approvers their department's and their own, everyone else their own. Dates filter on the expense date; q searches vendor, description and reference.",
+        "operationId": "listExpenses",
+        "parameters": [
+          {
+            "description": "DRAFT, SUBMITTED, APPROVED, REJECTED or PAID",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departmentId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "submitterId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "0-based",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "1 to 200",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpensePage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Expenses the caller may see, newest first, one page",
+        "tags": [
+          "Expenses"
+        ]
+      },
+      "post": {
+        "description": "Members file for their own department; FINANCE_MANAGE for any. When submitted, overBudget says whether it needs more than the remaining budget (allowed, but flagged).",
+        "operationId": "createExpense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Create an expense as a draft, or submit it straight away",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/expenses/{id}": {
+      "delete": {
+        "operationId": "deleteExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Delete a draft",
+        "tags": [
+          "Expenses"
+        ]
+      },
+      "get": {
+        "operationId": "getExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "One expense",
+        "tags": [
+          "Expenses"
+        ]
+      },
+      "put": {
+        "description": "Editing a submitted expense keeps it submitted and re-checks the budget.",
+        "operationId": "updateExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Edit your own expense while it is a draft or submitted",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/expenses/{id}/approve": {
+      "post": {
+        "description": "The department's approver (EXPENSE_APPROVE) or FINANCE_MANAGE; never your own expense.",
+        "operationId": "approveExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Approve a submitted expense",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/expenses/{id}/pay": {
+      "post": {
+        "description": "Records the payment; no money is moved. The body is optional.",
+        "operationId": "markExpensePaid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpensePaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Mark an approved expense as paid (FINANCE_MANAGE)",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/expenses/{id}/reject": {
+      "post": {
+        "description": "Same people as approve. The note is required.",
+        "operationId": "rejectExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Reject a submitted expense, with a reason",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/expenses/{id}/submit": {
+      "post": {
+        "operationId": "submitExpense",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Expense"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Submit your draft for approval",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/api/finance/categories": {
+      "get": {
+        "description": "Any signed-in user may read them (the expense form needs them).",
+        "operationId": "listExpenseCategories",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseCategory"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Expense categories, by name",
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "post": {
+        "operationId": "createExpenseCategory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategory"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Add an expense category",
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/finance/categories/{id}": {
+      "delete": {
+        "description": "A category with budget lines or expenses cannot be deleted (409); make it inactive instead.",
+        "operationId": "deleteExpenseCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Delete an unused expense category",
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "put": {
+        "operationId": "updateExpenseCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategory"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Rename, describe or (de)activate an expense category",
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/goals": {
+      "get": {
+        "description": "Defaults to the current quarter.",
+        "operationId": "listGoals",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quarter",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departmentId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Goal"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Goals of one quarter with their latest value and attainment",
+        "tags": [
+          "Goals"
+        ]
+      },
+      "post": {
+        "description": "GOALS_MANAGE: admins for any department, managers for their own.",
+        "operationId": "createGoal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Create a goal",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/goals/{id}": {
+      "delete": {
+        "operationId": "deleteGoal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Delete a goal and its check-ins",
+        "tags": [
+          "Goals"
+        ]
+      },
+      "get": {
+        "operationId": "getGoal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "One goal",
+        "tags": [
+          "Goals"
+        ]
+      },
+      "put": {
+        "operationId": "updateGoal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Edit a goal",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/goals/{id}/checkins": {
+      "get": {
+        "operationId": "listGoalCheckins",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GoalCheckin"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Check-ins of a goal, newest first",
+        "tags": [
+          "Goals"
+        ]
+      },
+      "post": {
+        "description": "Members and managers of the goal's department, and admins.",
+        "operationId": "createGoalCheckin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalCheckin"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Record a check-in",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/goals/{id}/checkins/{checkinId}": {
+      "delete": {
+        "description": "The person who recorded it, or someone who manages the goal.",
+        "operationId": "deleteGoalCheckin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "checkinId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Delete a check-in",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/import/budgets": {
+      "post": {
+        "description": "IMPORT_DATA and FINANCE_MANAGE. A line that already exists is reported, not overwritten.",
+        "operationId": "importBudgets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Create budget lines from CSV rows",
+        "tags": [
+          "Import"
+        ]
+      }
+    },
+    "/api/import/checkins": {
+      "post": {
+        "description": "IMPORT_DATA or GOALS_MANAGE; each row also needs the right to record a check-in for that goal (own department, or admin). Invalid rows are skipped and reported.",
+        "operationId": "importCheckins",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckinImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Record goal check-ins from CSV rows",
+        "tags": [
+          "Import"
+        ]
+      }
+    },
     "/api/import/departments": {
       "post": {
         "description": "Invalid rows are skipped and reported; the others are created.",
@@ -1591,6 +4457,58 @@
           }
         },
         "summary": "Create departments from CSV rows",
+        "tags": [
+          "Import"
+        ]
+      }
+    },
+    "/api/import/expenses": {
+      "post": {
+        "description": "IMPORT_DATA and FINANCE_MANAGE. Invalid rows are skipped and reported; the others are created.",
+        "operationId": "importExpenses",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Create expenses from CSV rows",
         "tags": [
           "Import"
         ]
@@ -1645,6 +4563,58 @@
         "summary": "Create users from CSV rows",
         "tags": [
           "Import"
+        ]
+      }
+    },
+    "/api/ingest/checkins": {
+      "post": {
+        "description": "Send Authorization: Bearer <API key>; the key needs the ingest:checkins scope (401 without a valid key, 403 without the scope, 429 above the per-key rate limit). No session cookie is used or created. Invalid items are skipped and reported by their 1-based position; the others are stored with source API.",
+        "operationId": "ingestCheckins",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestCheckinsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Record goal check-ins from an integration",
+        "tags": [
+          "Ingest"
         ]
       }
     },
@@ -1784,6 +4754,294 @@
         "summary": "Revoke an API key",
         "tags": [
           "API keys"
+        ]
+      }
+    },
+    "/api/payments": {
+      "get": {
+        "description": "Filters on the payment date. Defaults to the last six whole months up to today. No payment provider is connected (provider.connected is false).",
+        "operationId": "listPayments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departmentId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "0-based",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "1 to 200",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentLedger"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Paid expenses with monthly totals",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/api/performance": {
+      "get": {
+        "description": "Per department: the score (weighted average attainment of its goals with data), each goal's attainment, and a six-month trend. Defaults to the current quarter. GOALS_READ or REPORTS_READ.",
+        "operationId": "getPerformance",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quarter",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceOverview"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Department performance for a quarter",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/reports/export.csv": {
+      "get": {
+        "description": "expenses (needs FINANCE_READ too): every expense dated in the range; budgets: the budget lines of the quarters that overlap it, with spent and remaining; performance: every goal of those quarters with its attainment. UTF-8, comma separated, header row first.",
+        "operationId": "exportReportCsv",
+        "parameters": [
+          {
+            "description": "expenses, budgets or performance",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The CSV file"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Download a CSV export",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/reports/overview": {
+      "get": {
+        "description": "Defaults to the last six whole months up to today. Spend is APPROVED plus PAID expenses dated in the range; budget is prorated by day (a quarter's budget times the share of its days inside the range); performance is for the quarter that contains 'to'.",
+        "operationId": "getReportOverview",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOverview"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Spending, budget, performance and headcount for a date range",
+        "tags": [
+          "Reports"
         ]
       }
     },
@@ -2318,6 +5576,10 @@
       "name": "Auth"
     },
     {
+      "description": "Budget lines per department, quarter and category, and the expense categories",
+      "name": "Budgets"
+    },
+    {
       "description": "Third-party integrations",
       "name": "Connections"
     },
@@ -2330,8 +5592,28 @@
       "name": "Departments"
     },
     {
+      "description": "Expenses and their approval workflow",
+      "name": "Expenses"
+    },
+    {
+      "description": "Department goals (KPIs), their check-ins and the performance scores",
+      "name": "Goals"
+    },
+    {
       "description": "Bulk import from CSV rows",
       "name": "Import"
+    },
+    {
+      "description": "Metric ingest for integrations, authenticated with an API key",
+      "name": "Ingest"
+    },
+    {
+      "description": "The ledger of outgoing payments (paid expenses)",
+      "name": "Payments"
+    },
+    {
+      "description": "Spending, budget, performance and headcount reports, and CSV exports",
+      "name": "Reports"
     },
     {
       "description": "Organisation-wide settings",
