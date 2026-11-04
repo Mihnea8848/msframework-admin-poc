@@ -506,6 +506,7 @@ function GoalDetail({ goal, now, onClose, onChanged }: { goal: Goal; now: Date; 
                     <dt>Current</dt><dd>{formatGoalValue(goal.currentValue, goal.unit)}{goal.attainment !== null ? `, ${Math.round(goal.attainment)}% of the way` : ""}</dd>
                     <dt>Owner</dt><dd>{goal.ownerName ?? "No owner"}</dd>
                     <dt>Weight</dt><dd>{goal.weight}</dd>
+                    <dt>Goal id</dt><dd>{goal.id} <span className="ms-muted">(for CSV imports and the check-in API)</span></dd>
                 </dl>
 
                 {checkins && checkins.length > 1 && (

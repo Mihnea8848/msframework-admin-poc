@@ -115,6 +115,8 @@ export interface ApiKeyDto {
     createdBy?: string;
     createdAt?: IsoDateTime;
     lastUsed?: string;
+    /** What the key may do, for example "ingest:checkins" (POST /api/ingest/checkins). */
+    scopes?: string[];
     /** Only present in the response that creates the key. */
     secret?: string;
 }

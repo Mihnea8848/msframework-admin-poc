@@ -77,7 +77,7 @@ export function Pager({ page, totalPages, total, noun, busy = false, onPage }: {
     busy?: boolean;
     onPage: (page: number) => void;
 }) {
-    if (total === 0) return null;
+    if (total === 0 || totalPages <= 1) return null;
     return (
         <nav className="ms-pager" aria-label="Pages">
             <span aria-live="polite">Page {page + 1} of {Math.max(1, totalPages)} · {total} {noun}</span>
