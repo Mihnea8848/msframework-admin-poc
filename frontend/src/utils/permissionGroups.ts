@@ -59,6 +59,7 @@ export const PERMISSION_META: Record<Permission, PermissionMeta> = {
     SESSIONS_MANAGE: { area: "Security", label: "Manage everyone's sessions" },
 
     ORG_SETTINGS_MANAGE: { area: "Settings", label: "Manage organisation settings" },
+    DIRECTORY_SYNC: { area: "Settings", label: "Sync staff from Authentik" },
     WORKSPACE_READ: { area: "Settings", label: "View workspace settings" },
     WORKSPACE_UPDATE: { area: "Settings", label: "Change workspace settings" },
     APPEARANCE_READ: { area: "Settings", label: "View appearance defaults" },

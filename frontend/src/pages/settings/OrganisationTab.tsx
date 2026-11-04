@@ -16,6 +16,7 @@ import {
 } from "./orgSettingsForm";
 import type { OrgForm, OrgFormErrors } from "./orgSettingsForm";
 import TimezonePicker from "./TimezonePicker";
+import DirectorySync from "./DirectorySync";
 import "../../ui/field.css";
 import "../../ui/surface.css";
 import "./account.css";
@@ -244,6 +245,7 @@ export default function OrganisationTab() {
 
                 <WorldClocks />
             </div>
+            <DirectorySync />
         </div>
     );
 }

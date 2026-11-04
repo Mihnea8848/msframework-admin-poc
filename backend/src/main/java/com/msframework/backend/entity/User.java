@@ -60,6 +60,21 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    /**
+     * The directory the account is linked to ("authentik"), or null for a local account. A linked
+     * account follows the directory on every sync; a local one is never changed by it.
+     */
+    @Column(name = "external_source", length = 32)
+    private String externalSource;
+
+    /** The account's id in that directory (the Authentik user pk). */
+    @Column(name = "external_id", length = 64)
+    private String externalId;
+
+    /** The account's user name in that directory, shown to admins. */
+    @Column(name = "external_username")
+    private String externalUsername;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();

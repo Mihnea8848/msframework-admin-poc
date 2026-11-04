@@ -1,7 +1,7 @@
 import {
     Banknote, Building2, Cable, ChartColumn, CircleCheck, CircleX, Clock3, Crown, Download, FilePen, Hourglass, Key,
     Link2, ListPlus, Lock, LogIn, LogOut, PiggyBank, Receipt, RefreshCw, Send, Settings, Shield, ShieldAlert, Tags,
-    Target, Trash2, UserCheck, UserCog, UserMinus, UserPlus, UserX, Webhook,
+    Target, Trash2, UserCheck, UserCog, UserMinus, UserPlus, Users, UserX, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,6 +55,7 @@ export const AUDIT_TYPES = {
     session_revoked: { label: "Session ended", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
+    directory_synced: { label: "Directory sync", pill: "changed", Icon: Users, color: "var(--status-info-fg)", category: "Users" },
     // People: access requests, department managers and reset links (PEOPLE-UI).
     // export_generated and password_reset_completed are listed above.
     access_requested: { label: "Access requested", pill: "created", Icon: UserPlus, color: "var(--status-info-fg)", category: "Users" },
