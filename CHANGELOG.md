@@ -31,8 +31,8 @@ section into a version (see `AGENTS.md`, Git workflow).
   Swagger UI), open without login unless `API_DOCS_ENABLED=false`. The
   committed contract `api/openapi.json` is checked by `OpenApiContractTest`;
   regenerate it with `./mvnw verify -Dopenapi.write=true`.
-- Stylelint for new frontend CSS, and `eslint-plugin-jsx-a11y` (warnings
-  for now) and `typescript-eslint` in the frontend lint.
+- Stylelint for the frontend CSS, and `eslint-plugin-jsx-a11y` and
+  `typescript-eslint` in the frontend lint.
 - Chevron design foundation: colour, seal, spacing, type, density and
   motion tokens in `frontend/src/styles/tokens/`, layered CSS
   (`styles/index.css`), a contrast test that fails CI when a text pair
@@ -55,13 +55,16 @@ section into a version (see `AGENTS.md`, Git workflow).
 - A logo-trace splash (plain HTML and CSS in `index.html`) while the first
   session check runs.
 - Bundle size budget (`frontend/scripts/check-bundle.mjs`, part of
-  `npm run build`): entry JS 130 kB, all CSS 25 kB, each lazy chunk 40 kB
+  `npm run build`): entry JS 130 kB, all CSS 30 kB, each lazy chunk 40 kB
   and the latin fonts 70 kB, gzip.
 - Dashboard System status: API, database, integrations and security score
   cards from live checks (request latency, paused integrations, the
   Security page's checks), a one-line summary, "Checked X ago" and a
   *Refresh status* button. Anything the role may not read is shown as
   "Not checked" instead of a number.
+- `Dialog` (native modal `<dialog>`, a bottom sheet on phones), department
+  seal components, shared list blocks (toolbar, table, status pills) and a
+  `ghost-danger` Button variant for Delete on a row or card.
 
 ### Fixed
 - Changing your own email no longer logs you out.
@@ -84,8 +87,8 @@ section into a version (see `AGENTS.md`, Git workflow).
 - `dev-run.sh` checks prerequisites instead of killing processes.
 - The frontend starts moving to TypeScript: the API client, auth helpers,
   navigation and utilities are typed `.ts` modules, `api/types.ts` mirrors
-  the backend DTOs, and `npm run build` type checks first. Pages stay
-  JavaScript until they are restyled.
+  the backend DTOs, and `npm run build` type checks first. The pages
+  followed as they were restyled, so the whole frontend is TypeScript.
 - Removed the unused `bootstrap` dependency.
 - Request bodies that were untyped maps (change email or password, forgot
   and reset password, client audit events, API keys, webhooks, settings)
@@ -122,3 +125,20 @@ section into a version (see `AGENTS.md`, Git workflow).
   instead of an inline script. Saved accents from the old palette move to
   the new accent keys (Lime and Rose become Cyan).
 - Removed the 1.4 MB PNG logo and unused images.
+- Every page is rebuilt on the Chevron design in TypeScript: Home, User
+  management, Departments, Notifications, Appearance, Account & security,
+  Security, Connections, Timezones, Database, Documentation, Import,
+  Export and Payments. They use the shared components and their own
+  `ms-` stylesheets, fit a 360 px screen without sideways scrolling, and
+  keep their API calls, permissions, validation and messages. Payments
+  and the department performance and budget figures are labelled as
+  sample data.
+- Departments show their seal (emblem and colour) instead of a flat
+  colour; new installs seed each default department with its own seal.
+- Quick Actions is a native dialog with a combobox and grouped list, and
+  returns focus to where it was when it closes.
+- Home tiles are links, and a count that could not be loaded says "Could
+  not load" instead of 0.
+- The legacy stylesheet, the old colour variable bridge, `Modal.jsx` and
+  `allowJs` are gone; the jsx-a11y lint rules are errors again. The CSS
+  budget is 30 kB, since it counts every page's own stylesheet.

@@ -1,4 +1,4 @@
-| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters) |# MSFramework Dashboard
+# MSFramework Dashboard
 
 ![CI Pipeline](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)
 ![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
@@ -18,17 +18,17 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Page | Route | Description |
 |---|---|---|
 | Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left, the grain-and-gradient logo on the right (hidden on phones). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
-| Home | `/` | Overview grid of every section your role can open, with live counts |
+| Home | `/` | A card for every section your role can open, with live counts (a count that could not be loaded says so) |
 | Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
-| Departments | `/departments` | Create, rename, recolor and delete departments with live member counts |
-| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar, category filters) |
+| Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows its seal and live member count, plus performance and budget figures labelled as sample data |
+| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters) |
 | Appearance | `/appearance` | Dark, light or system theme; 6 brand accents (cyan, cobalt, violet, jade, gold, silver); comfortable or compact density; full or reduced motion (defaults to the device setting); live token preview. Saved per browser |
 | Database | `/database` | Live schema, row counts and sizes of every application table |
-| Documentation | `/docs` | In-app guide, including the role/permission matrix |
+| Documentation | `/docs` | In-app guide in collapsible sections with jump links, including the role/permission matrix |
 | Account & security | `/auth` | Change your own email (password-confirmed) and password; MFA / SSO marked as coming soon |
 | Security | `/security` | Security score and checks computed from live data + recent security events |
-| Payments | `/payments` | Proof-of-concept view with sample data (no payment provider connected) |
+| Payments | `/payments` | Proof-of-concept view: balance, spending chart, transactions and a simulated Quick Pay, all labelled as sample data or demo (no payment provider connected) |
 | Import Data | `/import` | CSV upload with preview; rows are validated and created by the backend, errors reported per row |
 | Export Data | `/export` | Column-selectable UTF-8 CSV of users, departments or the audit log |
 | Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted |
@@ -36,10 +36,10 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 **Cross-cutting UI features:**
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
-- Quick Actions palette (⌘K / Ctrl+K or `/`) — search and jump to any page you have access to
+- Quick Actions palette (⌘K / Ctrl+K or `/`): search and jump to any page you have access to with the arrow keys and Enter; Escape closes it and returns focus
 - Clear error messages from the server everywhere (no silent failures)
 - Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
-- Chevron visual identity (Multimedia Entertainment Hub): Manrope and Montserrat, self-hosted; clipped-corner buttons; colours from design tokens, checked for WCAG AA contrast in tests
+- Chevron visual identity (Multimedia Entertainment Hub) on every page: Manrope and Montserrat, self-hosted; clipped-corner buttons and cards; department seals; colours from design tokens, checked for WCAG AA contrast in tests
 - App shell mounted once (the sidebar, top bar and unread-notifications poll survive navigation): full sidebar from 1024 px, an icon rail from 768 px, and on phones a bottom tab bar (the first four pages your role may open) with a More sheet for the rest; no horizontal scrolling at 360 px
 - Every page is a lazy-loaded chunk, prefetched on hover or focus and when the browser is idle; a bundle size budget fails the build when it grows
 - Short fade-and-rise page transitions (View Transitions API where supported), all off with reduced motion; a logo-trace splash while the session loads
@@ -72,7 +72,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite 7, React Router 7, Lucide Icons, TypeScript 5 (incremental migration from JavaScript) |
+| Frontend | React 19, Vite 7, React Router 7, Lucide Icons, TypeScript 5 |
 | Styling | Plain CSS in cascade layers with design tokens (CSS custom properties, no framework); theme, accent, density and motion via `data-*` attributes on `<html>`; Manrope and Montserrat self-hosted with Fontsource (OFL-1.1) |
 | Backend | Java 21+, Spring Boot 4.0, Spring Security 7, Spring Data JPA, Lombok |
 | Database | PostgreSQL 16 (Docker); schema managed by Flyway migrations |
@@ -133,12 +133,12 @@ msframework-admin-poc/
 │       ├── api/client.ts       # fetch wrapper: JSON, error messages, 401 handling
 │       ├── api/types.ts        # TypeScript types for the backend's JSON responses
 │       ├── auth/               # AuthProvider, auth API calls, permission helpers
-│       ├── pages/              # 15 page components; auth/ (AuthLayout + sign-in pages), dashboard/
+│       ├── pages/              # 15 page components (.tsx, each with its own .css); auth/ (AuthLayout + sign-in pages), dashboard/
 │       ├── routes/             # navigation.ts (single page/permission registry, bottom bar order)
 │       ├── shell/              # AppShell, Sidebar (and rail), Topbar, BottomNav, MoreSheet
-│       ├── styles/             # index.css entry: tokens/ (colours, seals, scale, motion), base/, legacy/
+│       ├── styles/             # index.css entry: tokens/ (colours, seals, scale, motion), base/
 │       ├── theme/              # appearance preferences (theme, accent, density, motion)
-│       ├── ui/                 # Button, Alert, PageHeader, Modal, Toggle, QuickActions, brand/Logo and LogoArt
+│       ├── ui/                 # Button, Alert, PageHeader, Dialog, Toggle, QuickActions, seal/, brand/; field, surface and list CSS
 │       ├── test/setup.ts       # Vitest setup (unit tests live next to their modules as *.test.ts)
 │       └── utils/              # validators, CSV parse/export, formatting, audit event types
 └── backend/
@@ -168,7 +168,7 @@ The schema is created and changed by **Flyway** migrations in `backend/src/main/
 After the migrations, `DatabaseSeeder`:
 
 - **syncs the permissions** of the four built-in roles with `SystemRoles.java`
-- seeds **7 departments**, the **admin user** and **12 service connections** when those tables are empty
+- seeds **7 departments** (each with its own seal), the **admin user** and **12 service connections** when those tables are empty
 
 ---
 
