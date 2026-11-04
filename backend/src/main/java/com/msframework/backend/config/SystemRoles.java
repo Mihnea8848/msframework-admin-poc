@@ -37,7 +37,8 @@ public final class SystemRoles {
                 DEPARTMENT_READ, DEPARTMENT_UPDATE,
                 AUDIT_READ,
                 DOCUMENTATION_READ,
-                TIMEZONES_READ
+                TIMEZONES_READ,
+                ROLES_READ
         ));
 
         defs.put(MEMBER, EnumSet.of(
