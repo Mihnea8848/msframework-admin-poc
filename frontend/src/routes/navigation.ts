@@ -1,6 +1,6 @@
 import {
     Activity, BookText, Box, Building2, Cable, Clock3, CreditCard, Database, Download, Home, Inbox,
-    KeyRound, ListChecks, Palette, ScrollText, Shield, Upload, UserRound, UsersRound,
+    KeyRound, ListChecks, MonitorSmartphone, Palette, ScrollText, Shield, Upload, UserRound, UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { matchPath } from "react-router-dom";
@@ -13,7 +13,7 @@ export type PageKey =
     | "users" | "departments" | "roles" | "accessRequests"
     | "payments"
     | "import" | "export" | "database" | "connections"
-    | "security" | "audit"
+    | "security" | "audit" | "sessions"
     | "timezones" | "docs";
 
 /**
@@ -47,7 +47,8 @@ export interface PageEntry {
 export const PAGES: readonly PageEntry[] = [
     { key: "home", label: "Home", path: "/", icon: Home, group: "Overview", permission: null, mobilePriority: 1 },
     { key: "dashboard", label: "Dashboard", path: "/dashboard", icon: Box, group: "Overview", permission: "DASHBOARD_READ", mobilePriority: 2 },
-    { key: "activity", label: "Activity", path: "/activity", icon: Activity, group: "Overview", permission: "AUDIT_READ", mobilePriority: 5 },
+    // Activity is your own feed (GET /api/audit/me), so everyone signed in has it.
+    { key: "activity", label: "Activity", path: "/activity", icon: Activity, group: "Overview", permission: null, mobilePriority: 5 },
     { key: "users", label: "Users", path: "/users", icon: UsersRound, group: "People", permission: "USER_READ", mobilePriority: 3 },
     { key: "departments", label: "Departments", path: "/departments", icon: Building2, group: "People", permission: "DEPARTMENT_READ", mobilePriority: 4 },
     { key: "roles", label: "Roles", path: "/roles", icon: ListChecks, group: "People", permission: "ROLES_READ" },
@@ -59,6 +60,9 @@ export const PAGES: readonly PageEntry[] = [
     { key: "connections", label: "Connections", path: "/connections", icon: Cable, group: "Operations", permission: "CONNECTIONS_READ" },
     { key: "security", label: "Security", path: "/security", icon: Shield, group: "Security", permission: "SECURITY_READ" },
     { key: "audit", label: "Audit log", path: "/audit", icon: ScrollText, group: "Security", permission: "AUDIT_READ" },
+    // Everyone manages their own sessions, so every signed-in user sees the Security group with at
+    // least this page; SESSIONS_MANAGE adds the "Sessions by user" panel on it.
+    { key: "sessions", label: "Sessions", path: "/sessions", icon: MonitorSmartphone, group: "Security", permission: null },
     { key: "timezones", label: "Timezones", path: "/timezones", icon: Clock3, group: "Resources", permission: "TIMEZONES_READ", mobilePriority: 7 },
     { key: "docs", label: "Documentation", path: "/docs", icon: BookText, group: "Resources", permission: "DOCUMENTATION_READ", mobilePriority: 6 },
 ];
@@ -127,9 +131,9 @@ export const SETTINGS_PATH = "/settings";
 
 export const SETTINGS_TABS: readonly SettingsTab[] = [
     { key: "account", label: "Account", path: "/settings/account", icon: UserRound, hint: "Your profile and email address" },
-    { key: "security", label: "Security", path: "/settings/security", icon: KeyRound, hint: "Password, two-factor and connected accounts" },
+    { key: "security", label: "Security", path: "/settings/security", icon: KeyRound, hint: "Password, sessions, two-factor and connected accounts" },
     { key: "appearance", label: "Appearance", path: "/settings/appearance", icon: Palette, hint: "Theme, accent, density and motion" },
-    { key: "organisation", label: "Organisation", path: "/settings/organisation", icon: Building2, hint: "Organisation-wide settings" },
+    { key: "organisation", label: "Organisation", path: "/settings/organisation", icon: Building2, hint: "Company name, registration, password policy and timezone" },
 ];
 
 export function settingsTabByKey(key: string | undefined): SettingsTab | undefined {

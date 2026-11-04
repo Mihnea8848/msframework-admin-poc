@@ -13,11 +13,11 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 ## Features
 
-### Frontend (17 pages, plus Settings and the profile and department detail pages)
+### Frontend (18 pages, plus Settings and the profile and department detail pages)
 
 | Page | Route | Description |
 |---|---|---|
-| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left and, filling the rest of the screen, a night sky with a slowly drifting star field and a cluster of the mark as extruded tiles around a white core, fading in from the form (a pale variant in light mode; hidden on phones; still under reduced motion). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
+| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left and, filling the rest of the screen, a night sky with a slowly drifting star field and a cluster of the mark as extruded tiles around a white core, fading in from the form (a pale variant in light mode; hidden on phones; still under reduced motion). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place. Sign-in shows a rate limit or an account lock as its own notice with "Try again in N minutes" (from `Retry-After`), and a request still waiting for approval as information. "Request access" is hidden while registration is closed, and `/register` then says so. Register checks passwords against the organisation's minimum length |
 | Home | `/` | A card for every section your role can open, with live counts (a count that could not be loaded says so) |
 | Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Paged list (25 per page) with a debounced search, role, status and department filters and sortable columns, all kept in the URL; job title and last sign-in ("2 days ago", exact time on hover); create, edit and delete; select users (one page at a time) for bulk Activate, Deactivate, Change role or Move to department, with the result per user |
@@ -26,8 +26,9 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Department detail | `/departments/:id` | The official seal, the manager (admins choose one from the eligible members), the members with Add and Remove, the performance (goals) and budget panels where permitted, and the department's activity |
 | Roles | `/roles` | A card per role (description, members, active) and the permission matrix by area; on phones a list per role |
 | Access requests | `/access-requests` | Pending, Approved and Rejected tabs; approve with a role and department, or reject with an optional note. A pending count shows in the sidebar |
-| Activity | `/activity` | Live audit feed (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters). `/notifications` redirects here |
-| Audit log | `/audit` | The same feed under Security, until it gets a page of its own |
+| Activity | `/activity` | Everyone: your own events, the ones you did and the ones about you (`GET /api/audit/me`), with category filters, "Load older events" and a background refresh every 30 s. The unread badge in the sidebar and phone bar counts what others did to your account and sign-in warnings, never your own actions. `/notifications` redirects here |
+| Audit log | `/audit` | `AUDIT_READ`: every event, with category chips, an actor search and a date range over the latest 500 events, 50 rows at a time |
+| Sessions | `/sessions` | Everyone: where you are signed in (browser and device read from the User-Agent, IP, signed in, last active, expires, a "This device" tag), sign out one session or all others; signing out this device asks first and lands on Login. Admins (`SESSIONS_MANAGE`) also find a user and sign them out everywhere. Members find it in the Security group of the sidebar and from Settings > Security |
 | Database | `/database` | Live schema, row counts and sizes of every application table |
 | Documentation | `/docs` | In-app guide in collapsible sections with jump links, including the role/permission matrix |
 | Security | `/security` | Security score and checks computed from live data + recent security events |
@@ -36,7 +37,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Export Data | `/export` | Column-selectable UTF-8 CSV of users, departments or the audit log |
 | Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted |
 | Timezones | `/timezones` | Live world clocks and org default timezone, saved organisation-wide |
-| Settings | `/settings/account`, `/security`, `/appearance`, `/organisation` | One page with a tab per link, opened from the top bar cog or your name. Account: profile and email change (password-confirmed). Security: password change; MFA and SSO marked as coming soon. Appearance: dark, light or system theme, 6 brand accents (cobalt by default, cyan, violet, jade, gold, silver), density and motion, saved per browser. Organisation: the organisation timezone and world clocks. `/auth` and `/appearance` redirect to their tabs |
+| Settings | `/settings/account`, `/security`, `/appearance`, `/organisation` | One page with a tab per link, opened from the top bar cog or your name. Account: profile and email change (password-confirmed). Security: password change checked against the organisation's minimum length, with the rules and the common-password hint, a sessions summary with "Sign out other sessions"; MFA and SSO marked as coming soon. Appearance: dark, light or system theme, 6 brand accents (cobalt by default, cyan, violet, jade, gold, silver), density and motion, saved per browser. Organisation: company name, open registration, minimum password length (8 to 64), default timezone (searchable) and the session timeout (read only, set by the server), editable with `ORG_SETTINGS_MANAGE` and read only for everyone else, plus the world clocks. `/auth` and `/appearance` redirect to their tabs |
 
 **Cross-cutting UI features:**
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
@@ -59,7 +60,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | `DepartmentController` | `GET`, `GET /{id}` (with members), `GET /{id}/activity`, `POST`, `PUT /{id}`, `PUT /{id}/manager`, `POST` and `DELETE /{id}/members/{userId}`, `DELETE /{id}` under `/api/departments` |
 | `AccessRequestController` | `GET /api/access-requests?status=`, `POST /{id}/approve`, `POST /{id}/reject` |
 | `RoleController` | `GET /api/roles` (permissions and member counts) |
-| `AuditController` | `GET /api/audit?limit=`, `POST /api/audit/event` (export events only) |
+| `AuditController` | `GET /api/audit?limit=`, `GET /api/audit/me` (your own events, keyset paged, any signed-in user), `POST /api/audit/event` (export events only) |
 | `ConnectionsController` | `GET /api/connections`, `POST /{id}/connect`, `POST /{id}/disconnect`, `PATCH /{id}/toggle` |
 | `WebhookController` | `GET /api/webhooks`, `POST`, `DELETE /{id}`, `PATCH /{id}/toggle` |
 | `ApiKeyController` | `GET /api/keys`, `POST` (returns the secret once), `DELETE /{id}` |

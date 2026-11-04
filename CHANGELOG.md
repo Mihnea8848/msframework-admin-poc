@@ -47,6 +47,23 @@ section into a version (see `AGENTS.md`, Git workflow).
   changed, reset link created).
 
 ### Added (sessions and organisation)
+- Sessions page (`/sessions`, every signed-in user): your sessions with the
+  browser and device, IP and times, a "This device" tag, signing out one or
+  all others (this device asks first, then goes to Login); admins find a
+  user and sign them out everywhere. Settings > Security has a sessions
+  summary and checks new passwords against the organisation's minimum
+  length, listing the rules and the common-password hint.
+- Settings > Organisation edits the organisation settings (company name,
+  registration, minimum password length, searchable default timezone) and
+  shows the session timeout; read only without `ORG_SETTINGS_MANAGE`.
+- Login shows rate limits and account locks with "Try again in N minutes"
+  (from `Retry-After`) and a pending access request as information; it
+  hides "Request access" while registration is closed, and `/register`
+  shows a closed page.
+- `GET /api/audit/me`: the caller's own audit events, keyset paged, for any
+  signed-in user. Activity now shows only your own events and is visible to
+  everyone; its unread badge ignores your own actions. The Audit log is a
+  separate page (`AUDIT_READ`) with category, actor and date filters.
 - Sessions API: list and sign out your own sessions; admins
   (`SESSIONS_MANAGE`) can sign a user out everywhere.
 - Organisation settings API (`/api/org/settings`, `ORG_SETTINGS_MANAGE`):

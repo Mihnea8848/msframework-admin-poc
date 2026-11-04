@@ -188,6 +188,25 @@ describe("router guards", () => {
         await settlesAt(router, "/access-requests");
     });
 
+    it("opens Activity and Sessions for anyone signed in, and keeps the Audit log for AUDIT_READ", async () => {
+        backend(viewer);
+        const router = start("/activity");
+        await settlesAt(router, "/activity");
+        expect(await screen.findByRole("heading", { name: /Activity/ }, { timeout: 4000 })).toBeInTheDocument();
+        await act(() => router.navigate("/sessions"));
+        await settlesAt(router, "/sessions");
+        expect(await screen.findByRole("heading", { name: "Your sessions" }, { timeout: 4000 })).toBeInTheDocument();
+        await act(() => router.navigate("/audit"));
+        await settlesAt(router, "/");
+    });
+
+    it("opens the Audit log with AUDIT_READ", async () => {
+        backend(auditor);
+        const router = start("/audit");
+        await settlesAt(router, "/audit");
+        expect(await screen.findByRole("heading", { name: /Audit log/ }, { timeout: 4000 })).toBeInTheDocument();
+    });
+
     it("redirects the old paths to where their pages live now", async () => {
         backend(auditor);
         const router = start("/auth");

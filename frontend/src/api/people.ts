@@ -1,9 +1,10 @@
 /**
  * Types for the people APIs: paged user search, bulk changes, user and department details,
- * activity pages, reset links, roles and access requests. They mirror the records in
- * backend/src/main/java/com/msframework/backend/dto/ (see api/openapi.json). Keep them in sync.
+ * reset links, roles and access requests. The activity feeds use AuditPage from api/security.ts.
+ * They mirror the records in backend/src/main/java/com/msframework/backend/dto/ (see
+ * api/openapi.json). Keep them in sync.
  */
-import type { AuditEventDto, IsoDateTime, Permission, UserDto, UserStatus } from "./types";
+import type { IsoDateTime, Permission, UserDto, UserStatus } from "./types";
 
 /** GET /api/users/search: one page of users. `page` is zero-based. */
 export interface UserPage {
@@ -70,13 +71,6 @@ export interface UserDetailsDto {
     passwordChangedAt: IsoDateTime | null;
     /** Whether the caller may edit this user (USER_UPDATE and the manager scope rules). */
     canEdit: boolean;
-}
-
-/** GET /api/users/{id}/activity and /api/departments/{id}/activity: keyset paged, newest first. */
-export interface AuditPage {
-    items: AuditEventDto[];
-    /** Pass back as `cursor` for the next (older) page; null on the last page. */
-    nextCursor: string | null;
 }
 
 /** POST /api/users/{id}/password-reset */

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { get } from "../api/client";
 import type { AuditEventDto } from "../api/types";
-import type { AuditPage } from "../api/people";
+import type { AuditPage } from "../api/security";
 import { auditMeta } from "../utils/auditTypes";
 import { formatDateTime, relTime } from "../utils/format";
 import Alert from "./Alert";
