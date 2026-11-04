@@ -594,7 +594,8 @@
                 "GOALS_MANAGE",
                 "REPORTS_READ",
                 "SESSIONS_MANAGE",
-                "ORG_SETTINGS_MANAGE"
+                "ORG_SETTINGS_MANAGE",
+                "DIRECTORY_SYNC"
               ],
               "type": "string"
             },
@@ -761,6 +762,279 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "DirectoryChange": {
+        "description": "What the sync does, or did, for one person",
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "link",
+              "update",
+              "deactivate",
+              "skip",
+              "unchanged"
+            ],
+            "type": "string"
+          },
+          "applied": {
+            "description": "Null in a preview; after a sync, true when the change was written",
+            "type": "boolean"
+          },
+          "department": {
+            "description": "The department after the sync",
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "externalId": {
+            "description": "The Authentik user id (pk), or null for a linked user no longer in Authentik",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/DirectoryFieldChange"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "description": "Warnings, e.g. a missing department",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "description": "Why the person is skipped or deactivated",
+            "type": "string"
+          },
+          "role": {
+            "description": "The role after the sync",
+            "type": "string"
+          },
+          "userId": {
+            "description": "The MSFramework user, or null when there is none (yet)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "fields",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "DirectoryFieldChange": {
+        "description": "One field of a user that the sync changes",
+        "properties": {
+          "field": {
+            "enum": [
+              "name",
+              "email",
+              "username",
+              "status",
+              "role",
+              "department",
+              "manages"
+            ],
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DirectoryMapping": {
+        "description": "How Authentik groups become MSFramework users. Group names match without regard to case, and an entry ending in * matches every group that starts with the rest (\"admin-*\").",
+        "properties": {
+          "adminGroups": {
+            "description": "Members get the ADMIN role (the highest matching role wins)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "departments": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Group name to department name, in order: the first group with a department wins. An empty value means the group gives no department. Staff in none of these groups keep their current department",
+            "type": "object"
+          },
+          "ignoredUsernames": {
+            "description": "Authentik user names that are never imported (system accounts)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "managerGroups": {
+            "description": "Members get the MANAGER role",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "memberGroups": {
+            "description": "Members get the MEMBER role. Staff in none of the role groups also get MEMBER",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "staffGroups": {
+            "description": "Only members of at least one of these groups are imported",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "DirectoryMappingState": {
+        "properties": {
+          "custom": {
+            "description": "False while the built-in defaults are used",
+            "type": "boolean"
+          },
+          "mapping": {
+            "$ref": "#/components/schemas/DirectoryMapping"
+          },
+          "updatedAt": {
+            "description": "When an admin last saved it; null for the defaults",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mapping"
+        ],
+        "type": "object"
+      },
+      "DirectoryStatus": {
+        "properties": {
+          "configured": {
+            "description": "True when AUTHENTIK_URL is set",
+            "type": "boolean"
+          },
+          "host": {
+            "description": "Host name of AUTHENTIK_URL, or null",
+            "type": "string"
+          },
+          "lastSyncAt": {
+            "description": "When the last applied sync ran, or null",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastSyncBy": {
+            "description": "Who ran it",
+            "type": "string"
+          },
+          "lastSyncCounts": {
+            "$ref": "#/components/schemas/DirectorySyncCounts",
+            "description": "What it changed"
+          },
+          "linkedUsers": {
+            "description": "Users currently linked to the directory",
+            "format": "int64",
+            "type": "integer"
+          },
+          "provider": {
+            "example": "authentik",
+            "type": "string"
+          },
+          "tokenSource": {
+            "description": "Where the token comes from: env (AUTHENTIK_TOKEN), file (AUTHENTIK_TOKEN_FILE) or null. The token itself is never sent",
+            "enum": [
+              "env",
+              "file"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DirectorySyncCounts": {
+        "description": "How many people each kind of change applies to",
+        "properties": {
+          "created": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "deactivated": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "linked": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "skipped": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "unchanged": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DirectorySyncResult": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/DirectoryChange"
+            },
+            "type": "array"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/DirectorySyncCounts"
+          },
+          "directoryUsers": {
+            "description": "People returned by Authentik",
+            "format": "int32",
+            "type": "integer"
+          },
+          "dryRun": {
+            "description": "True for a preview, which changes nothing",
+            "type": "boolean"
+          },
+          "host": {
+            "type": "string"
+          },
+          "sessionsRevoked": {
+            "description": "Sessions ended because their user was deactivated (0 in a preview)",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "changes",
+          "counts"
+        ],
         "type": "object"
       },
       "ErrorResponse": {
@@ -2081,7 +2355,8 @@
                 "GOALS_MANAGE",
                 "REPORTS_READ",
                 "SESSIONS_MANAGE",
-                "ORG_SETTINGS_MANAGE"
+                "ORG_SETTINGS_MANAGE",
+                "DIRECTORY_SYNC"
               ],
               "type": "string"
             },
@@ -2337,7 +2612,8 @@
                 "GOALS_MANAGE",
                 "REPORTS_READ",
                 "SESSIONS_MANAGE",
-                "ORG_SETTINGS_MANAGE"
+                "ORG_SETTINGS_MANAGE",
+                "DIRECTORY_SYNC"
               ],
               "type": "string"
             },
@@ -4314,6 +4590,262 @@
         "summary": "Move a user into the department",
         "tags": [
           "Departments"
+        ]
+      }
+    },
+    "/api/directory/mapping": {
+      "delete": {
+        "operationId": "resetDirectoryMapping",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryMappingState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Go back to the default group mapping",
+        "tags": [
+          "Directory"
+        ]
+      },
+      "get": {
+        "operationId": "getDirectoryMapping",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryMappingState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "The group mapping the sync uses",
+        "tags": [
+          "Directory"
+        ]
+      },
+      "put": {
+        "description": "Department names must exist. Takes effect on the next preview or sync.",
+        "operationId": "saveDirectoryMapping",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectoryMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryMappingState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Change the group mapping",
+        "tags": [
+          "Directory"
+        ]
+      }
+    },
+    "/api/directory/status": {
+      "get": {
+        "description": "Never contacts Authentik and never returns the token.",
+        "operationId": "getDirectoryStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryStatus"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Whether directory sync is configured, and the last sync",
+        "tags": [
+          "Directory"
+        ]
+      }
+    },
+    "/api/directory/sync": {
+      "post": {
+        "description": "Plans again from fresh data and applies it in one transaction: creates, links, updates and deactivates users. Every change is audited with the actor \"Authentik sync\".",
+        "operationId": "runDirectorySync",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectorySyncResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Sync users from Authentik",
+        "tags": [
+          "Directory"
+        ]
+      }
+    },
+    "/api/directory/sync/preview": {
+      "post": {
+        "description": "Reads Authentik and returns what a sync would do for each person. Errors talking to Authentik are answered with 502 and a message.",
+        "operationId": "previewDirectorySync",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectorySyncResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Plan a sync without changing anything",
+        "tags": [
+          "Directory"
         ]
       }
     },
@@ -7552,6 +8084,10 @@
     {
       "description": "Departments, their managers and members",
       "name": "Departments"
+    },
+    {
+      "description": "Import and update users from the Authentik directory",
+      "name": "Directory"
     },
     {
       "description": "Expenses and their approval workflow",

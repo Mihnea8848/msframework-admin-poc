@@ -25,6 +25,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     List<User> findAllByOrderByIdAsc();
 
+    /** Every account linked to the directory, e.g. "authentik" (directory sync). */
+    List<User> findByExternalSourceOrderByIdAsc(String externalSource);
+
     List<User> findByDepartmentIdOrderByFullNameAscIdAsc(Long departmentId);
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.department.id = :deptId")

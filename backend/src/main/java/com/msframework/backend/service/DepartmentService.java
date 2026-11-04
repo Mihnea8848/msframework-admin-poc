@@ -147,6 +147,8 @@ public class DepartmentService {
         boolean unchanged = previous == null ? manager == null : manager != null && previous.getId().equals(manager.getId());
         if (!unchanged) {
             department.setManager(manager);
+            // Chosen by a person now, so the directory sync leaves it alone.
+            department.setManagerSource(null);
             departmentRepository.save(department);
             auditService.log("dept_manager_changed", actor.getEmail(), manager == null
                             ? department.getName() + " no longer has a manager (was " + name(previous) + ")"

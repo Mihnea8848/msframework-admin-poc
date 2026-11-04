@@ -33,6 +33,13 @@ public class Department {
     @JoinColumn(name = "manager_id")
     private User manager;
 
+    /**
+     * "authentik" when the directory sync chose {@link #manager}, null when a person did. The sync
+     * only replaces a manager it set itself.
+     */
+    @Column(name = "manager_source", length = 32)
+    private String managerSource;
+
     @OneToMany(mappedBy = "department")
     @JsonIgnore
     private List<User> users;

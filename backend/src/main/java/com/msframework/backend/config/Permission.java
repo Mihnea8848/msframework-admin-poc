@@ -65,5 +65,8 @@ public enum Permission {
 
     // Sessions and organisation settings (sessions-security)
     SESSIONS_MANAGE,
-    ORG_SETTINGS_MANAGE
+    ORG_SETTINGS_MANAGE,
+
+    // Import and update users from the Authentik directory (ADMIN only)
+    DIRECTORY_SYNC
 }
