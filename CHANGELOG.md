@@ -75,14 +75,32 @@ section into a version (see `AGENTS.md`, Git workflow).
 - `Dialog` (native modal `<dialog>`, a bottom sheet on phones), department
   seal components, shared list blocks (toolbar, table, status pills) and a
   `ghost-danger` Button variant for Delete on a row or card.
+- People API: paged user search (`GET /api/users/search`), user profiles
+  and activity feeds, bulk activate, deactivate, role and department
+  changes with per-user results, admin-made password reset links,
+  department details with members, department managers and member
+  add/remove, the roles overview (`GET /api/roles`, new permission
+  `ROLES_READ`) and access requests (`ACCESS_REQUESTS_MANAGE`). Users gain a
+  job title and last sign-in time; audit events can name the user and
+  department they are about.
+- Demo people for MEH Studios (`DemoPeopleSeeder`, `SEED_DEMO_DATA`): about
+  45 users, five department managers, access requests and 60 days of audit
+  history, added once on top of existing data. Password `MehDemo!2026`.
 
 ### Fixed
+- The user list no longer runs one query per user (roles and departments
+  are batch-fetched).
 - Changing your own email no longer logs you out.
 - Deleting a department with members unassigns them instead of failing.
 - Export columns and CSV escaping; compact density; reset link survival
   across restarts; errors reported with the right HTTP status.
 
 ### Changed
+- Registering creates an access request instead of an account
+  (`POST /api/auth/register` answers 202 with a message). An admin approves
+  or rejects it; signing in before that says the request is still waiting.
+- Emails are unique regardless of capitals (index on `lower(email)`,
+  migration `V3`).
 - The database schema is managed by Flyway migrations instead of Hibernate
   `ddl-auto=update`; Hibernate now only validates it. Databases created by
   older versions are recognised, baselined and upgraded in place (legacy

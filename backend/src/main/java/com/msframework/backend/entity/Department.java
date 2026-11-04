@@ -25,6 +25,14 @@ public class Department {
     @Column(nullable = true)
     private String color;
 
+    /**
+     * The head of the department: an active member of it with the MANAGER or ADMIN role. Cleared by
+     * the database when the user is deleted, and by UserService when they leave or lose the role.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
+
     @OneToMany(mappedBy = "department")
     @JsonIgnore
     private List<User> users;

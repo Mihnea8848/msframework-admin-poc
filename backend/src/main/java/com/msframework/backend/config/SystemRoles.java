@@ -38,6 +38,7 @@ public final class SystemRoles {
                 AUDIT_READ,
                 DOCUMENTATION_READ,
                 TIMEZONES_READ,
+                ROLES_READ,
                 // Business: approvals and goals are limited to their own department (BusinessAccess).
                 FINANCE_READ, EXPENSE_SUBMIT, EXPENSE_APPROVE, GOALS_READ, GOALS_MANAGE, REPORTS_READ
         ));

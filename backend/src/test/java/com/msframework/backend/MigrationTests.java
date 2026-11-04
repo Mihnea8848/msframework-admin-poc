@@ -80,10 +80,10 @@ class MigrationTests {
         DataSource db = createDatabase("empty");
         FlywayConfig.migrate(flyway(db));
 
-        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema")
+        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema", "3 SQL people")
                 .contains("5 SQL business");
         assertThat(tables(db)).containsAll(Set.of("users", "role", "user_roles", "departments", "audit_events",
-                "password_reset_tokens", "flyway_schema_history"));
+                "password_reset_tokens", "access_requests", "flyway_schema_history"));
         assertThat(new JdbcTemplate(db).queryForObject("SELECT COUNT(*) FROM role", Integer.class))
                 .as("V2 inserts no data on a fresh database").isZero();
     }
@@ -95,8 +95,8 @@ class MigrationTests {
         Flyway.configure().configuration(flyway.getConfiguration()).target("1").load().migrate();
         Map<String, List<String>> afterV1 = schema(db);
 
-        assertThat(Flyway.configure().configuration(flyway.getConfiguration()).target("2").load()
-                .migrate().migrationsExecuted).isEqualTo(1);
+        Flyway toV2 = Flyway.configure().configuration(flyway.getConfiguration()).target("2").load();
+        assertThat(toV2.migrate().migrationsExecuted).isEqualTo(1);
         assertThat(schema(db)).isEqualTo(afterV1);
     }
 
@@ -142,8 +142,8 @@ class MigrationTests {
 
         // (a) same schema as a database migrated from empty
         assertThat(schema(db)).isEqualTo(freshSchema);
-        assertThat(history(db)).startsWith("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema")
-                .contains("5 SQL business");
+        assertThat(history(db)).startsWith("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema",
+                "3 SQL people").contains("5 SQL business");
 
         // (b) the data survived, and every user has exactly the expected role and a status
         assertThat(rows(db, legacyColumns)).isEqualTo(legacyRows);
@@ -162,9 +162,40 @@ class MigrationTests {
         // (c) running the migrations again changes nothing
         List<String> migrated = history(db);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
+        int applied = history(db).size();
         FlywayConfig.migrate(flyway);
         assertThat(history(db)).isEqualTo(migrated);
         assertThat(schema(db)).isEqualTo(freshSchema);
+    }
+
+    // ------------------------------------------------------------------ V3 people
+
+    @Test
+    void duplicateEmailsThatDifferOnlyInCaseStopV3WithAClearMessage() {
+        DataSource db = createDatabase("dupes");
+        Flyway flyway = flyway(db);
+        Flyway.configure().configuration(flyway.getConfiguration()).target("2").load().migrate();
+        JdbcTemplate jdbc = new JdbcTemplate(db);
+        jdbc.update("INSERT INTO users (email, full_name, status) VALUES ('Dup@Example.com', 'One', 'Active')");
+        jdbc.update("INSERT INTO users (email, full_name, status) VALUES ('dup@example.com', 'Two', 'Active')");
+
+        assertThatThrownBy(flyway::migrate)
+                .hasMessageContaining("These email addresses belong to more than one user")
+                .hasMessageContaining("dup@example.com");
+    }
+
+    @Test
+    void deletingADepartmentManagerClearsTheManager() {
+        DataSource db = createDatabase("manager");
+        FlywayConfig.migrate(flyway(db));
+        JdbcTemplate jdbc = new JdbcTemplate(db);
+        Long dept = jdbc.queryForObject("INSERT INTO departments (name) VALUES ('Ops') RETURNING id", Long.class);
+        Long user = jdbc.queryForObject("INSERT INTO users (email, department_id) VALUES ('boss@example.com', ?) "
+                + "RETURNING id", Long.class, dept);
+        jdbc.update("UPDATE departments SET manager_id = ? WHERE id = ?", user, dept);
+
+        jdbc.update("DELETE FROM users WHERE id = ?", user);
+        assertThat(jdbc.queryForObject("SELECT manager_id FROM departments WHERE id = ?", Long.class, dept)).isNull();
     }
 
     // ------------------------------------------------------------------ foreign databases

@@ -34,6 +34,9 @@ public class User {
     private String status;
     private String phone;
 
+    /** Job title, e.g. "Senior Producer". Optional. */
+    private String title;
+
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
@@ -52,6 +55,10 @@ public class User {
 
     @Column(name = "password_changed_at")
     private LocalDateTime passwordChangedAt;
+
+    /** Last successful sign-in, or null when the user never signed in. */
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 
     @PrePersist
     void prePersist() {
