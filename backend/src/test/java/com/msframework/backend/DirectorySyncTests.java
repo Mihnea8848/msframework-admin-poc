@@ -227,8 +227,12 @@ class DirectorySyncTests {
         if (server != null) server.stop(0);
     }
 
+    /** The highest user id before the test: every user above it was made by the test and is removed after it. */
+    private long lastUserIdBefore;
+
     @BeforeEach
     void pointAtStub() {
+        lastUserIdBefore = jdbc.queryForObject("SELECT COALESCE(MAX(id), 0) FROM users", Long.class);
         STUB.reset();
         settings.setUrl("http://127.0.0.1:" + server.getAddress().getPort());
         settings.setToken(TOKEN);
@@ -250,8 +254,14 @@ class DirectorySyncTests {
         settings.setUrl("");
         settings.setToken("");
         settings.setTokenFile("");
+        // Put the shared database back: other classes assume admin@test.com is the only active admin.
         clearSyncedManagers();
-        jdbc.update("DELETE FROM org_settings WHERE key = 'directory.authentik.mapping'");
+        jdbc.update("DELETE FROM spring_session WHERE principal_name IN (SELECT email FROM users WHERE id > ?)",
+                lastUserIdBefore);
+        jdbc.update("DELETE FROM password_reset_tokens WHERE user_id > ?", lastUserIdBefore);
+        jdbc.update("DELETE FROM user_roles WHERE user_id > ?", lastUserIdBefore);
+        jdbc.update("DELETE FROM users WHERE id > ?", lastUserIdBefore);
+        jdbc.update("DELETE FROM org_settings WHERE key IN ('directory.authentik.mapping', 'directory.authentik.lastSync')");
     }
 
     // ------------------------------------------------------------------ helpers
