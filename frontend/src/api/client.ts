@@ -8,7 +8,7 @@
  * - Marks polls with X-Background-Request: 1 (`background: true`), so they do not keep an idle
  *   session alive.
  * - Parses JSON responses (empty bodies become null).
- * - Throws ApiError with the backend's human-readable message on failure.
+ * - Throws ApiError with the backend's human-readable message on failure (and Retry-After on a 429).
  * - Reports 401s on authenticated calls to the AuthProvider, which sends the user to the login page.
  */
 
@@ -17,12 +17,15 @@ export class ApiError extends Error {
     readonly status: number;
     /** The parsed response body (usually an ErrorResponse), if there was one. */
     readonly data: unknown;
+    /** Seconds from the Retry-After header of a 429 (too many attempts), or null. */
+    readonly retryAfterSeconds: number | null;
 
-    constructor(status: number, message: string, data?: unknown) {
+    constructor(status: number, message: string, data?: unknown, retryAfterSeconds: number | null = null) {
         super(message);
         this.name = "ApiError";
         this.status = status;
         this.data = data;
+        this.retryAfterSeconds = retryAfterSeconds;
     }
 }
 
@@ -109,6 +112,13 @@ function messageFor(status: number, data: unknown): string {
     return `Request failed (${status})`;
 }
 
+/** The Retry-After header in whole seconds (the backend sends seconds, never a date), or null. */
+function retryAfterOf(res: Response): number | null {
+    const raw = res.headers?.get?.("Retry-After");
+    if (!raw || !/^\d+$/.test(raw.trim())) return null;
+    return Number(raw.trim());
+}
+
 /**
  * Calls the backend and resolves with the parsed body. `T` is the expected response type;
  * it is not checked at run time, so pick it from `api/types.ts`.
@@ -172,7 +182,7 @@ async function request<T>(
         if (res.status === 401 && authRedirect && unauthorizedHandler) {
             unauthorizedHandler();
         }
-        throw new ApiError(res.status, messageFor(res.status, data), data);
+        throw new ApiError(res.status, messageFor(res.status, data), data, retryAfterOf(res));
     }
     return data as T;
 }

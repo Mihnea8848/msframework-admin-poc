@@ -113,6 +113,16 @@ describe("errors", () => {
         expect(err.status).toBe(409);
         expect(err.data).toEqual(body);
         expect(err.name).toBe("ApiError");
+        expect(err.retryAfterSeconds).toBeNull();
+    });
+
+    it("carries the Retry-After seconds of a 429", async () => {
+        const body: ErrorResponse = { status: 429, error: "Too Many Requests", message: "Too many sign-in attempts." };
+        fetchMock.mockResolvedValue(new Response(JSON.stringify(body), { status: 429, headers: { "Retry-After": "900" } }));
+        expect((await rejection(post("/api/auth/login", {}))).retryAfterSeconds).toBe(900);
+
+        fetchMock.mockResolvedValue(new Response(JSON.stringify(body), { status: 429, headers: { "Retry-After": "soon" } }));
+        expect((await rejection(post("/api/auth/login", {}))).retryAfterSeconds).toBeNull();
     });
 
     it("uses a plain-text body, but not an HTML error page", async () => {

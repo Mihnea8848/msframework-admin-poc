@@ -174,6 +174,17 @@
     font-size: 13px;
   }
 
+  /* A 429 on sign-in: what happened, the server's words, and when to try again */
+  .ms-auth__notice-title,
+  .ms-auth__notice-text,
+  .ms-auth__notice-retry {
+    display: block;
+  }
+
+  .ms-auth__notice-retry {
+    margin-top: var(--space-1);
+  }
+
   .ms-auth__or {
     display: flex;
     align-items: center;
