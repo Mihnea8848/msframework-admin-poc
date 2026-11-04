@@ -219,6 +219,15 @@
     letter-spacing: 0.04em;
   }
 
+  /* Grey like the other providers' icons, not the brand cyan and cobalt */
+  .ms-auth__sso-logo {
+    --logo-upper: currentcolor;
+    --logo-lower: currentcolor;
+
+    width: auto;
+    height: 18px;
+  }
+
   .ms-auth__sso-note {
     display: flex;
     align-items: center;

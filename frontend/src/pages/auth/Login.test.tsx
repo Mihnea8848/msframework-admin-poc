@@ -79,7 +79,7 @@ describe("Login", () => {
     it("keeps single sign-on disabled and marked as coming soon", () => {
         vi.stubGlobal("fetch", vi.fn(async () => json(200, null)));
         renderLogin();
-        for (const name of ["Apple", "Google", "GitHub"]) {
+        for (const name of ["MS:AUTH", "Google", "GitHub"]) {
             expect(screen.getByRole("button", { name: `Sign in with ${name} (coming soon)` })).toBeDisabled();
         }
         expect(screen.getByText("Coming soon")).toBeInTheDocument();

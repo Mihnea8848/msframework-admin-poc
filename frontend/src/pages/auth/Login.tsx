@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SiApple, SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import Logo from "../../ui/brand/Logo";
 import { TriangleAlert } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
 import { fetchRegistrationStatus } from "../../api/security";
@@ -122,8 +123,8 @@ export default function Login() {
 
             <div className="ms-auth__or" aria-hidden="true">or</div>
             <div className="ms-auth__sso" title="Single sign-on is not available yet">
-                <Button full disabled aria-label="Sign in with Apple (coming soon)" icon={<SiApple aria-hidden="true" />}>
-                    Apple
+                <Button full disabled aria-label="Sign in with MS:AUTH (coming soon)" icon={<Logo className="ms-auth__sso-logo" />}>
+                    MS:AUTH
                 </Button>
                 <Button full disabled aria-label="Sign in with Google (coming soon)" icon={<SiGoogle aria-hidden="true" />}>
                     Google

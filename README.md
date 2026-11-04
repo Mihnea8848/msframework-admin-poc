@@ -142,7 +142,7 @@ Open **http://localhost:5173** and sign in with the seeded admin account:
 | Email | `admin@test.com` |
 | Password | `password123` |
 
-The first start also adds **demo people** for MEH Studios (about 45 users in the seven departments, five department managers, access requests and 60 days of audit history). Every demo user, for example `radu.constantinescu@mehstudios.net` (MANAGER of Development) or `andreea.popescu@mehstudios.net` (ADMIN), signs in with the password **`MehDemo!2026`**. Set `SEED_DEMO_DATA=false` to start without them.
+The first start also adds the studio's **leadership** (the director and five heads of department, `SEED_STAFF`), who sign in through a reset link or the Authentik sync, and **demo people** for MEH Studios (about 45 users in the seven departments, five department managers, access requests and 60 days of audit history). Every demo user, for example `radu.constantinescu@mehstudios.net` (MANAGER of Development) or `andreea.popescu@mehstudios.net` (ADMIN), signs in with the password **`MehDemo!2026`**. Set `SEED_DEMO_DATA=false` to start without them.
 
 Manual start, configuration, tests and troubleshooting: [`AGENTS.md`](AGENTS.md).
 
