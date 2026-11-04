@@ -33,6 +33,8 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final AuditService auditService;
+    private final PasswordPolicy passwordPolicy;
+    private final UserSessionService userSessionService;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -102,7 +104,7 @@ public class PasswordResetService {
         if (token == null || token.isBlank()) {
             throw ApiException.badRequest("Reset token is required");
         }
-        UserService.validatePassword(newPassword);
+        passwordPolicy.validate(newPassword);
 
         PasswordResetToken stored = tokenRepository.findByTokenHash(SecureTokens.sha256Hex(token.trim()))
                 .orElseThrow(() -> ApiException.badRequest("This reset link is invalid or has already been used"));
@@ -117,6 +119,8 @@ public class PasswordResetService {
 
         userService.setPassword(user, newPassword);
         tokenRepository.deleteByUserId(user.getId());
+        // Whoever knew the old password is signed out too.
+        userSessionService.revokeAll(user.getEmail());
         auditService.log("password_reset_completed", user.getEmail(), user.getEmail() + " reset their password",
                 AuditService.Subject.user(user.getId()));
     }

@@ -81,9 +81,10 @@ class MigrationTests {
         FlywayConfig.migrate(flyway(db));
 
         assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema", "3 SQL people")
-                .contains("5 SQL business");
+                .contains("5 SQL business", "6 SQL sessions security");
         assertThat(tables(db)).containsAll(Set.of("users", "role", "user_roles", "departments", "audit_events",
-                "password_reset_tokens", "access_requests", "flyway_schema_history"));
+                "password_reset_tokens", "access_requests", "spring_session", "spring_session_attributes",
+                "auth_throttle", "flyway_schema_history"));
         assertThat(new JdbcTemplate(db).queryForObject("SELECT COUNT(*) FROM role", Integer.class))
                 .as("V2 inserts no data on a fresh database").isZero();
     }

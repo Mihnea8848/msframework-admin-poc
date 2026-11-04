@@ -59,6 +59,9 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | `WebhookController` | `GET /api/webhooks`, `POST`, `DELETE /{id}`, `PATCH /{id}/toggle` |
 | `ApiKeyController` | `GET /api/keys`, `POST` (returns the secret once), `DELETE /{id}` |
 | `OrgSettingController` | `GET /api/settings/{key}`, `PUT /api/settings/{key}` (`orgTimezone`, `worldClocks`) |
+| `AuthSupportController` | `GET /api/auth/csrf` (sets the CSRF cookie), `GET /api/auth/registration` (is sign-up open) |
+| `SessionController` | `GET /api/sessions/me`, `DELETE /me/{id}`, `DELETE /me/others`; admins: `GET /api/sessions?userId=`, `DELETE /user/{userId}` |
+| `OrgSettingsController` | `GET /api/org/settings`, `PUT /api/org/settings` (company name, registration, password policy, default timezone) |
 | `ImportController` | `POST /api/import/users`, `/departments`, `/expenses`, `/budgets`, `/checkins` |
 | `DatabaseController` | `GET /api/database/tables` |
 | `BudgetController` | `GET /api/budgets?year=&quarter=&departmentId=` (with spent, committed, remaining), `GET`/`PUT`/`DELETE /{id}`, `POST`; expense categories under `/api/finance/categories` |
@@ -74,7 +77,11 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 - **People management:** paged user search, user profiles with an activity feed, bulk activate, deactivate, role and department changes (every rule checked per user), department managers, and admin-made password reset links (shown once, until email exists).
 - **Access requests:** registering no longer creates an account. It sends a request that an admin approves (choosing the role and department) or rejects; until then, signing in says the request is still waiting.
 - **Audit logging** on every mutating action, including failed and blocked sign-ins.
-- **Security:** BCrypt passwords, session cookies (`HttpOnly`, `SameSite=Lax`), session-id rotation on login, password hashes never leave the server, API keys and reset tokens stored only as SHA-256 hashes, deactivated users lose access immediately.
+- **Security:** BCrypt passwords (cost 12, older hashes upgraded at sign-in) checked against a list of the 1000 most common passwords, session cookies (`HttpOnly`, `SameSite=Lax`), session-id rotation on login, password hashes never leave the server, API keys and reset tokens stored only as SHA-256 hashes.
+- **Sessions:** stored in PostgreSQL (Spring Session JDBC), so they survive restarts and work across instances. A session ends after 30 minutes without activity (`SESSION_TIMEOUT`); background polls do not count as activity. Users can see and sign out their sessions; admins can sign a user out everywhere. Deactivating or deleting a user, or resetting their password, ends their sessions at once.
+- **CSRF protection:** every POST, PUT, PATCH and DELETE must echo the `XSRF-TOKEN` cookie in the `X-XSRF-TOKEN` header (the frontend's API client does this).
+- **Throttling:** sign-in (20 per IP per minute), password reset and registration are rate-limited per IP, and 5 failed sign-ins lock an account for 15 minutes. Over a limit the API answers 429 with `Retry-After`. The counters are in the database, so they hold across instances.
+- **Organisation settings:** company name, whether self-registration is open, and the minimum password length.
 - **OpenAPI contract:** the backend serves its OpenAPI 3.1 description at `/v3/api-docs` (springdoc; switched off in production with `API_DOCS_ENABLED=false`), and a copy is committed as [`api/openapi.json`](api/openapi.json). A test fails when the two drift apart; see [`AGENTS.md`](AGENTS.md) (API contract) for how to regenerate it.
 - **Consistent JSON errors:** `{"status": 409, "error": "Conflict", "message": "…"}` with the correct HTTP status.
 
@@ -210,6 +217,7 @@ With `SEED_DEMO_DATA=true` (the default), `DemoBusinessSeeder` then adds demo bu
 - [x] Granular RBAC with manager/department scoping, enforced on every endpoint
 - [x] Real CSV import with per-row validation
 - [x] Backend integration test suite
+- [x] Database-backed sessions, CSRF tokens, sign-in throttling and account lockout
 - [ ] Email delivery (reset links are printed to the backend log for now)
 - [ ] Real webhook delivery
 - [x] Budgets, expenses with approvals, goals and KPIs, reports (backend)

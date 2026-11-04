@@ -35,9 +35,10 @@ export default function Notifications() {
     // Snapshot of what was already seen when the page opened, so new rows can be highlighted.
     const [seenBefore] = useState(() => getLastSeenAuditId(user));
 
-    const load = useCallback(async () => {
+    /** `background` marks the timed refresh, which must not keep an idle session alive. */
+    const load = useCallback(async (background = false) => {
         try {
-            const data = await get<AuditEventDto[]>(`/api/audit?limit=${LIMIT}`);
+            const data = await get<AuditEventDto[]>(`/api/audit?limit=${LIMIT}`, { background });
             const list = Array.isArray(data) ? data : [];
             setEvents(list);
             setError(null);
@@ -52,7 +53,7 @@ export default function Notifications() {
 
     useEffect(() => {
         load();
-        const id = setInterval(load, POLL_MS);
+        const id = setInterval(() => load(true), POLL_MS);
         return () => clearInterval(id);
     }, [load]);
 
@@ -66,7 +67,7 @@ export default function Notifications() {
                 count={events.length > 0 ? events.length : undefined}
                 description={`Audit trail of all activity across the platform (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
                 actions={
-                    <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={load}>Refresh</Button>
+                    <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={() => load()}>Refresh</Button>
                 }
             />
 

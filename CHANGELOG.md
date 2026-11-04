@@ -12,6 +12,26 @@ section into a version (see `AGENTS.md`, Git workflow).
   permissions; session ids rotate on login; deactivated users lose their
   session immediately.
 - API keys and password reset tokens are stored only as hashes.
+- Sessions are stored in PostgreSQL (Spring Session JDBC) and survive
+  restarts. They end after 30 minutes without activity (`SESSION_TIMEOUT`);
+  background polls (`X-Background-Request: 1`) do not count. Deactivating
+  or deleting a user, or resetting their password, ends all their sessions.
+- CSRF protection with the `XSRF-TOKEN` cookie and `X-XSRF-TOKEN` header;
+  the API client sends it and recovers from a stale token.
+- Sign-in, password reset and registration are rate-limited per IP, and 5
+  failed sign-ins lock an account for 15 minutes (429 with `Retry-After`),
+  with database-backed counters. `TRUSTED_PROXY` controls whether
+  `X-Forwarded-For` is used.
+- BCrypt cost raised to 12; older hashes are upgraded at the next sign-in.
+  New passwords may not be one of the 1000 most common passwords.
+
+### Added (sessions and organisation)
+- Sessions API: list and sign out your own sessions; admins
+  (`SESSIONS_MANAGE`) can sign a user out everywhere.
+- Organisation settings API (`/api/org/settings`, `ORG_SETTINGS_MANAGE`):
+  company name, registration on or off, minimum password length, default
+  timezone, and the session timeout (read-only). `GET
+  /api/auth/registration` tells the sign-in page whether sign-up is open.
 
 ### Added
 - Business backend (migration V5): budgets per department, quarter and

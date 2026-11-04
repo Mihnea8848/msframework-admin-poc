@@ -31,7 +31,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,8 +61,6 @@ public class UserService {
     // Same rules as frontend/src/utils/validators.js
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
     private static final Pattern PHONE = Pattern.compile("^\\+?[0-9 ()-]{7,32}$");
-    private static final Pattern DIGIT = Pattern.compile("[0-9]");
-    private static final Pattern SYMBOL = Pattern.compile("[^A-Za-z0-9]");
 
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
@@ -71,6 +68,8 @@ public class UserService {
     private final PasswordResetTokenRepository resetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final PasswordPolicy passwordPolicy;
+    private final UserSessionService userSessionService;
 
     // ------------------------------------------------------------------ validation
 
@@ -114,21 +113,6 @@ public class UserService {
         if (title.isEmpty()) return null;
         if (title.length() > 100) throw ApiException.badRequest("Job title must be at most 100 characters");
         return title;
-    }
-
-    public static void validatePassword(String password) {
-        if (password == null || password.length() < 8) {
-            throw ApiException.badRequest("Password must be at least 8 characters long");
-        }
-        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw ApiException.badRequest("Password is too long (maximum 72 bytes)");
-        }
-        if (!DIGIT.matcher(password).find()) {
-            throw ApiException.badRequest("Password must include a number");
-        }
-        if (!SYMBOL.matcher(password).find()) {
-            throw ApiException.badRequest("Password must include a symbol");
-        }
     }
 
     public static String requireStatus(String raw) {
@@ -357,7 +341,7 @@ public class UserService {
         String email = requireValidEmail(request.email());
         String phone = normalizePhone(request.phone(), false);
         String title = normalizeTitle(request.title());
-        validatePassword(request.password());
+        passwordPolicy.validate(request.password());
         Role role = requireRole(request.role());
         String status = requireStatus(request.status());
         Department department = findDepartment(request.departmentId());
@@ -424,6 +408,8 @@ public class UserService {
         }
         ensureEmailAvailable(email, target.getId());
 
+        boolean wasActive = target.isActive();
+        String previousEmail = target.getEmail();
         List<String> changes = new ArrayList<>();
         diff(changes, "name", target.getFullName(), fullName);
         diff(changes, "email", target.getEmail(), email);
@@ -456,6 +442,11 @@ public class UserService {
         target.setDepartment(department);
         User saved = userRepository.save(target);
 
+        // A deactivated user is signed out everywhere at once (sessions are keyed by email).
+        if (wasActive && !saved.isActive()) {
+            userSessionService.revokeAll(previousEmail);
+        }
+
         if (!changes.isEmpty()) {
             // Shown in the feed of the new department, or of the one the user left.
             Long subjectDepartment = department != null ? department.getId() : previousDepartmentId;
@@ -486,6 +477,7 @@ public class UserService {
         }
         resetTokenRepository.deleteByUserId(target.getId());
         userRepository.delete(target);
+        userSessionService.revokeAll(target.getEmail());
         auditService.log("user_deleted", actor.getEmail(),
                 "Deleted user " + target.getFullName() + " (" + target.getEmail() + ")",
                 new AuditService.Subject(target.getId(),
@@ -513,7 +505,7 @@ public class UserService {
     @Transactional
     public void changeOwnPassword(User user, String currentPassword, String newPassword) {
         requireCurrentPassword(user, currentPassword);
-        validatePassword(newPassword);
+        passwordPolicy.validate(newPassword);
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw ApiException.badRequest("The new password must be different from the current one");
         }

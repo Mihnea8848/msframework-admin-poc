@@ -3,6 +3,7 @@ package com.msframework.backend.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApi(ApiException ex) {
+        if (ex instanceof TooManyRequestsException tooMany) {
+            return ResponseEntity.status(ex.getStatus())
+                    .header(HttpHeaders.RETRY_AFTER, Long.toString(tooMany.getRetryAfterSeconds()))
+                    .body(ErrorResponse.of(ex.getStatus(), ex.getMessage()));
+        }
         return build(ex.getStatus(), ex.getMessage());
     }
 

@@ -52,7 +52,10 @@ export type Permission =
     | "EXPENSE_APPROVE"
     | "GOALS_READ"
     | "GOALS_MANAGE"
-    | "REPORTS_READ";
+    | "REPORTS_READ"
+    // Sessions and organisation settings (sessions-security)
+    | "SESSIONS_MANAGE"
+    | "ORG_SETTINGS_MANAGE";
 
 /** The built-in roles in config/SystemRoles.java. */
 export type RoleName = "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";

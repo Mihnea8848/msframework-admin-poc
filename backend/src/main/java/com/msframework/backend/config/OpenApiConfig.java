@@ -31,7 +31,9 @@ import java.util.Comparator;
                 title = "MSFramework API",
                 version = "${app.version}",
                 description = "JSON API of the MSFramework admin dashboard. Authentication is a session cookie "
-                        + "set by POST /api/auth/login. Every error has the ErrorResponse body."),
+                        + "(SESSION) set by POST /api/auth/login. POST, PUT, PATCH and DELETE also need the "
+                        + "X-XSRF-TOKEN header, echoing the XSRF-TOKEN cookie (GET /api/auth/csrf sets it). "
+                        + "Every error has the ErrorResponse body."),
         servers = @Server(url = "/"))
 public class OpenApiConfig {
 
@@ -56,7 +58,8 @@ public class OpenApiConfig {
             openApi.getPaths().values().forEach(path -> path.readOperations().forEach(operation -> {
                 operation.getResponses().addApiResponse("4XX", errorResponse(
                         "The request was rejected: invalid input (400), not signed in (401), "
-                                + "missing permission (403), not found (404) or a conflict (409). "
+                                + "missing permission or CSRF token (403), not found (404), a conflict (409) or too many "
+                                + "attempts (429, with a Retry-After header in seconds). "
                                 + "The message is written for the end user."));
                 operation.getResponses().addApiResponse("5XX", errorResponse("Unexpected server error"));
             }));
