@@ -57,8 +57,16 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | `WebhookController` | `GET /api/webhooks`, `POST`, `DELETE /{id}`, `PATCH /{id}/toggle` |
 | `ApiKeyController` | `GET /api/keys`, `POST` (returns the secret once), `DELETE /{id}` |
 | `OrgSettingController` | `GET /api/settings/{key}`, `PUT /api/settings/{key}` (`orgTimezone`, `worldClocks`) |
-| `ImportController` | `POST /api/import/users`, `POST /api/import/departments` |
+| `ImportController` | `POST /api/import/users`, `/departments`, `/expenses`, `/budgets`, `/checkins` |
 | `DatabaseController` | `GET /api/database/tables` |
+| `BudgetController` | `GET /api/budgets?year=&quarter=&departmentId=` (with spent, committed, remaining), `GET`/`PUT`/`DELETE /{id}`, `POST`; expense categories under `/api/finance/categories` |
+| `ExpenseController` | `GET /api/expenses` (filters, paged), `POST`, `GET`/`PUT`/`DELETE /{id}`, `POST /{id}/submit`, `/approve`, `/reject`, `/pay` |
+| `PaymentController` | `GET /api/payments?from=&to=` (paid expenses with monthly totals) |
+| `GoalController` | `GET`, `POST`, `GET`/`PUT`/`DELETE /{id}` under `/api/goals`, `GET`/`POST /{id}/checkins`, `DELETE /{id}/checkins/{checkinId}`, `GET /api/performance?year=&quarter=` |
+| `ReportController` | `GET /api/reports/overview?from=&to=`, `GET /api/reports/export.csv?type=expenses\|budgets\|performance` |
+| `IngestController` | `POST /api/ingest/checkins` with `Authorization: Bearer <API key>` (scope `ingest:checkins`, no session) |
+
+- **Budgets, expenses and goals:** each department has a budget per quarter and category. Expenses go DRAFT, SUBMITTED, APPROVED (or REJECTED), PAID: the department's manager or finance approves, nobody approves their own, finance marks them paid, and going over the remaining budget is allowed but flagged. Paid expenses are the payments ledger (no payment provider is connected). Goals are department KPIs with a baseline and a target per quarter; check-ins come from the UI, a CSV import or an integration's API key; a department's score is the weighted average attainment of its goals. Money is in one organisation currency (`FINANCE_CURRENCY`, EUR by default), never converted.
 
 - **Role-based access control:** ADMIN, MANAGER, MEMBER and VIEWER roles, permission-checked on every endpoint. Managers can only edit their own department and its members. The system always keeps one active admin.
 - **Audit logging** on every mutating action, including failed and blocked sign-ins.
@@ -170,6 +178,8 @@ After the migrations, `DatabaseSeeder`:
 - **syncs the permissions** of the four built-in roles with `SystemRoles.java`
 - seeds **7 departments** (each with its own seal), the **admin user** and **12 service connections** when those tables are empty
 
+With `SEED_DEMO_DATA=true` (the default), `DemoBusinessSeeder` then adds demo business data once per database: budgets, about 350 expenses with realistic vendors and a mix of statuses, and 2 to 3 goals per department with weekly check-ins, for the current and the two previous quarters. It uses the users and departments that exist and changes nothing already there.
+
 ---
 
 ## Roadmap
@@ -193,6 +203,8 @@ After the migrations, `DatabaseSeeder`:
 - [x] Backend integration test suite
 - [ ] Email delivery (reset links are printed to the backend log for now)
 - [ ] Real webhook delivery
-- [ ] API-key authentication for the REST API
+- [x] Budgets, expenses with approvals, goals and KPIs, reports (backend)
+- [x] API-key ingest of goal check-ins (`/api/ingest/checkins`)
+- [ ] API-key authentication for the rest of the REST API
 - [ ] MFA (two-factor authentication)
 - [x] Versioned schema migrations (Flyway) instead of `ddl-auto=update`

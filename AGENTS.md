@@ -59,6 +59,9 @@ Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@test.com` / `password123` | First admin account, created on an empty database only |
 | `SHOW_SQL` | `false` | Log Hibernate SQL |
 | `API_DOCS_ENABLED` | `true` | Serve the OpenAPI description at `/v3/api-docs` without login. Set it to `false` in production |
+| `SEED_DEMO_DATA` | `true` | Run the demo seeders once per database (`app.seed.demo`; `false` in the test profile) |
+| `FINANCE_CURRENCY` | `EUR` | The organisation's one ISO 4217 currency. Nothing is converted, so set it before any money is recorded |
+| `INGEST_REQUESTS_PER_MINUTE` | `60` | Requests per API key per minute on `POST /api/ingest/checkins` (in memory, per instance) |
 
 ## Roles and permissions
 
@@ -78,6 +81,26 @@ Additional rules, enforced in `UserService`:
 - You cannot delete or deactivate yourself.
 - Deactivating a user ends their session on their next request.
 
+### Business permissions (budgets, expenses, goals, reports)
+
+| Permission | ADMIN | MANAGER | MEMBER | VIEWER |
+|---|---|---|---|---|
+| `FINANCE_READ` (budgets, every expense, payments) | yes | yes | | |
+| `FINANCE_MANAGE` (budgets, categories, approve any, mark paid, expense/budget import) | yes | | | |
+| `EXPENSE_SUBMIT` | any department | own department | own department | |
+| `EXPENSE_APPROVE` | any department | own department | | |
+| `GOALS_READ` (goals, performance; check-ins for your own department) | yes | yes | yes | yes |
+| `GOALS_MANAGE` (goal CRUD) | any department | own department | | |
+| `REPORTS_READ` (overview, budget and performance CSV) | yes | yes | | yes |
+
+The "own department" scoping is enforced in `service/BusinessAccess.java`, not by the permission:
+- FINANCE_MANAGE works everywhere; EXPENSE_APPROVE alone only for the approver's department.
+- Nobody approves or rejects their own expense, admins included.
+- GOALS_MANAGE is org-wide for the ADMIN role and own-department otherwise.
+- Check-ins: members of the goal's department, its managers, and admins.
+- Without FINANCE_READ you see your own expenses (approvers also their department's).
+- The expense CSV export needs FINANCE_READ as well as REPORTS_READ.
+
 ## Data, seeding and migrations
 
 - **Flyway owns the schema.** Migrations live in `backend/src/main/resources/db/migration` and run on every start, before anything else touches the database. Hibernate only checks that the entities match (`ddl-auto=validate`); it never creates or changes tables.
@@ -91,6 +114,8 @@ Additional rules, enforced in `UserService`:
 - `DatabaseSeeder` is idempotent and runs on every start, after the migrations, under a PostgreSQL advisory lock (so several instances can start at once). It:
   - syncs role permissions;
   - seeds departments, the admin and the integrations only when their tables are empty.
+- `V5__business.sql` adds the business tables (`expense_categories` with 9 defaults, `budgets`, `expenses`, `goals`, `goal_checkins`) and `api_keys.scopes` (default empty, so existing keys keep doing what they did). Expenses, goals and check-ins point at users with `ON DELETE SET NULL` and keep a copy of the email, so deleting a user keeps the history. A department that has budgets, expenses or goals cannot be deleted (409).
+- `DemoBusinessSeeder` (when `app.seed.demo` is true) runs on `ApplicationReadyEvent` with `@Order(200)`, so after every start-up runner including `DatabaseSeeder` and the demo people seeder, under the same advisory lock. It seeds once per database (marker `demo.business.v1` in `org_settings`): budgets, about 350 expenses and 2 to 3 goals per department with weekly check-ins for the current and the two previous quarters. Departments are matched by name (missing standard ones are created); submitters are the department's members (the admin when there are none) and approvers its MANAGER-role users or an admin.
 - **Password reset doesn't send email yet.** The link is written to the backend log (`Password reset link for ...`). Tokens are stored hashed in `password_reset_tokens`, are single-use, last 30 minutes and survive restarts.
 - To wipe everything and start fresh: `docker compose down -v`. This deletes all local data.
 - Connect to the database directly: `psql -h localhost -p 5433 -U msframework msframework` (password `msframework`).
@@ -145,6 +170,16 @@ Frontend scripts (in `frontend/`):
   `OPENAPI_WRITE=true` in the environment does the same. The test finds the repository root from its own class files, so it works whichever directory Maven runs from.
 - Changes that alter the contract: an endpoint, a path or query parameter, a request or response DTO field, a `@Schema`/`@Operation`/`@Tag` annotation, or the project version in `pom.xml` (it is the `info.version`).
 - How endpoints are documented: every controller has a `@Tag`, every endpoint an `@Operation` with an explicit `operationId` (names must stay unique and stable, because generated clients use them) and a `summary`. Endpoints that answer 201 or 204 declare it with `@ApiResponse`. `config/OpenApiConfig` adds the `ErrorResponse` body as the `4XX` and `5XX` response of every operation, so don't repeat it per endpoint.
+
+## Business domain (budgets, expenses, goals, reports)
+
+- **Money** is `numeric(14,2)` plus a currency code; the organisation has one currency (`FINANCE_CURRENCY`) and nothing is converted. Quarters follow the calendar year (`service/FiscalPeriods`).
+- **Budgets:** one line per department, category and quarter. Spent = APPROVED + PAID expenses dated in the quarter, committed = SUBMITTED, remaining = budget − spent − committed (`service/SpendLedger` does the sums in SQL). `GET /api/budgets` also returns spending that has no budget line (id null, amount 0).
+- **Expenses:** DRAFT → SUBMITTED → APPROVED → PAID, or SUBMITTED → REJECTED (a note is required). The submitter edits while DRAFT or SUBMITTED and deletes drafts. Submitting over the remaining budget is allowed and stored as `overBudget`. Each expense in a response carries `actions` (edit, submit, approve, reject, pay, delete) for the caller, so the UI does not repeat the rules. Every transition is audited.
+- **Payments** are PAID expenses (`GET /api/payments`, by payment date, with monthly totals); `provider.connected` is always false: MSFramework records payments, it does not move money.
+- **Goals:** a KPI per department and quarter with unit, direction, baseline, target, weight and owner. Attainment = progress from baseline to target in percent, clamped to 0..120 (`GoalService.attainment`); the department score is the weighted average attainment of its goals that have check-ins. Check-in dates must be inside the goal's quarter and not in the future. `GET /api/performance` adds a six-month trend (each month's score as of its last day).
+- **Reports:** `GET /api/reports/overview` prorates each quarter's budget by the days inside the range; `GET /api/reports/export.csv` writes CSV straight to the response.
+- **API-key ingest:** `config/IngestSecurityConfig` is a separate, stateless filter chain for `/api/ingest/**`, ordered before the session chain. It is CSRF-exempt (no cookie is used), authenticates `Authorization: Bearer <key>` in `ApiKeyAuthenticationFilter` (401 for a missing or unknown key), and needs the key's scope (403 without it). Scopes are granted when the key is created (`POST /api/keys` with `"scopes": ["ingest:checkins"]`). Ingests are audited (`checkins_ingested`) and rate-limited per key.
 
 ## Troubleshooting
 
@@ -232,11 +267,15 @@ The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any
 ```
 backend/src/main/java/com/msframework/backend/
   config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations,
-               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses)
+               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses),
+               IngestSecurityConfig + ApiKeyAuthenticationFilter (stateless API-key chain for /api/ingest/**),
+               FinanceSettings (org currency), DemoBusinessSeeder
 resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schema changes)
   controller/  REST controllers under /api/* (thin: authorize, then delegate)
   service/     CurrentUserService (who is calling + permission checks), UserService (validation + rules),
-               PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService
+               PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService,
+               BudgetService, ExpenseService, GoalService, ReportService, IngestService, SpendLedger (SQL sums),
+               BusinessAccess (department scoping), FiscalPeriods, Money
   dto/         records for every request/response (request bodies are never a Map). Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
