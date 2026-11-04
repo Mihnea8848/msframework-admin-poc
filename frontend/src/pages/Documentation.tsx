@@ -37,7 +37,7 @@ MANAGER  — dashboard, users and departments (read), edit their own
            department and its members, notifications, timezones
 MEMBER   — dashboard, users and departments (read), timezones, docs
 VIEWER   — dashboard and documentation only`}</pre>
-                <p>Everyone can change their own email and password under <strong>Settings</strong> (Account and Security) and their look and feel under <strong>Settings Everyone can change their own email and password under <strong>Account &amp; security</strong> and their look and feel under <strong>Appearance</strong>.gt; Appearance</strong>.</p>
+                <p>Everyone can change their own email and password under <strong>Settings</strong> (Account and Security) and their look and feel under <strong>Settings &gt; Appearance</strong>.</p>
             </>
         ),
     },
@@ -46,14 +46,20 @@ VIEWER   — dashboard and documentation only`}</pre>
         title: "User Management",
         content: (
             <>
-                <p>The <strong>User management</strong> page lists every account with its role, status and department, and has a search box.</p>
+                <p>The <strong>User management</strong> page lists accounts 25 at a time with their job title, role, status, department and last sign-in. Search by name, email or job title, filter by role, status and department, and sort by a column; the filters stay in the address, so a filtered list can be shared or bookmarked.</p>
+                <p>Click a name to open the <strong>profile</strong>: contact details, department and manager, what the role allows, account dates and the person's activity. From there you can edit them, activate or deactivate them, or create a <strong>password reset link</strong> to hand over privately (it works once and expires after 30 minutes).</p>
+                <p>Tick users to change several at once: <strong>Activate</strong>, <strong>Deactivate</strong>, <strong>Change role</strong> or <strong>Move to department</strong>. Each user is checked on its own, and the page lists anyone who could not be changed and why.</p>
                 <p>Admins can <strong>add</strong>, <strong>edit</strong> and <strong>delete</strong> users. Managers can edit members and viewers of their own department, but cannot promote anyone to Admin or Manager or move people to another department.</p>
                 <p>Setting a user to <strong>Inactive</strong> signs them out immediately and blocks sign-in. The system always keeps at least one active admin, and you cannot delete or deactivate yourself.</p>
-                <pre>{`GET    /api/users        — list users
-POST   /api/users        — create user (admin)
-PUT    /api/users/{id}   — update user
-DELETE /api/users/{id}   — delete user (admin)
-POST   /api/auth/register — self-service sign-up (MEMBER role)`}</pre>
+                <pre>{`GET    /api/users/search          — paged search with filters and sort
+GET    /api/users/{id}            — one user's profile
+GET    /api/users/{id}/activity   — events about the user (keyset paged)
+POST   /api/users                 — create user (admin)
+PUT    /api/users/{id}            — update user
+POST   /api/users/bulk            — bulk activate, deactivate, role or department
+POST   /api/users/{id}/password-reset — one-time reset link
+DELETE /api/users/{id}            — delete user (admin)
+POST   /api/auth/register         — request access (an admin approves it)`}</pre>
             </>
         ),
     },
@@ -63,10 +69,15 @@ POST   /api/auth/register — self-service sign-up (MEMBER role)`}</pre>
         content: (
             <>
                 <p>The <strong>Departments</strong> page lets admins create, rename, re-seal and delete departments; managers can edit their own department.</p>
-                <p>Member counts are live. Each department shows its seal (emblem and colour). The performance and budget figures are illustrative sample data. Deleting a department keeps its members — they simply become unassigned.</p>
+                <p>Each department shows its seal, its manager and member count, and this quarter's performance score (with a six-month trend) and budget used, for roles that may read goals, reports or budgets. Click a department for its members, manager, figures and activity. Admins choose the manager among the department's active members with the Manager or Admin role. Deleting a department keeps its members — they simply become unassigned.</p>
+                <p><strong>Roles</strong> shows what each role may do, and <strong>Access requests</strong> is where admins approve or reject the people who asked for an account.</p>
                 <pre>{`GET    /api/departments      — list departments
 POST   /api/departments      — create department
+GET    /api/departments/{id} — one department with its members
 PUT    /api/departments/{id} — update department
+PUT    /api/departments/{id}/manager — choose the manager (admin)
+POST   /api/departments/{id}/members/{userId} — add a member
+DELETE /api/departments/{id}/members/{userId} — remove a member
 DELETE /api/departments/{id} — delete department`}</pre>
             </>
         ),

@@ -13,15 +13,19 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 ## Features
 
-### Frontend (15 pages, plus Settings)
+### Frontend (17 pages, plus Settings and the profile and department detail pages)
 
 | Page | Route | Description |
 |---|---|---|
 | Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left and, filling the rest of the screen, a night sky with a slowly drifting star field and a cluster of the mark as extruded tiles around a white core, fading in from the form (a pale variant in light mode; hidden on phones; still under reduced motion). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
 | Home | `/` | A card for every section your role can open, with live counts (a count that could not be loaded says so) |
 | Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
-| User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
-| Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows the department's official seal (redrawn from the brand artwork) and live member count, plus performance and budget figures labelled as sample data |
+| User Management | `/users` | Paged list (25 per page) with a debounced search, role, status and department filters and sortable columns, all kept in the URL; job title and last sign-in ("2 days ago", exact time on hover); create, edit and delete; select users (one page at a time) for bulk Activate, Deactivate, Change role or Move to department, with the result per user |
+| User profile | `/users/:id` | Avatar, name, title, role, status and department seal; contact, department and manager, account dates, permissions by area, and the user's activity (Load more). Edit, activate or deactivate, and create a one-time password reset link to copy and share privately, when you may edit them |
+| Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows the department's official seal (redrawn from the brand artwork), its manager and member count, and, for roles that may read them, this quarter's performance score with a six-month trend and the share of its budget spent. Click a card for the detail |
+| Department detail | `/departments/:id` | The official seal, the manager (admins choose one from the eligible members), the members with Add and Remove, the performance (goals) and budget panels where permitted, and the department's activity |
+| Roles | `/roles` | A card per role (description, members, active) and the permission matrix by area; on phones a list per role |
+| Access requests | `/access-requests` | Pending, Approved and Rejected tabs; approve with a role and department, or reject with an optional note. A pending count shows in the sidebar |
 | Activity | `/activity` | Live audit feed (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters). `/notifications` redirects here |
 | Audit log | `/audit` | The same feed under Security, until it gets a page of its own |
 | Database | `/database` | Live schema, row counts and sizes of every application table |
@@ -36,7 +40,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 **Cross-cutting UI features:**
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
-- Sidebar grouped as Overview, People, Finance, Operations, Security and Resources (Performance appears once it has pages)
+- Sidebar grouped as Overview, People, Finance, Operations, Security and Resources (Performance appears once it has pages); badges for unread activity and pending access requests
 - Quick Actions palette (⌘K / Ctrl+K or `/`): search and jump to any page you have access to, or a Settings tab, with the arrow keys and Enter; Escape closes it and returns focus
 - Clear error messages from the server everywhere (no silent failures)
 - Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
