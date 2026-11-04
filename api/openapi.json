@@ -3122,6 +3122,70 @@
         ]
       }
     },
+    "/api/audit/me": {
+      "get": {
+        "description": "Events the caller did (by their current email) or that were about them. Any signed-in user may read their own. Keyset paged: pass nextCursor back as cursor to get older events.",
+        "operationId": "listMyActivity",
+        "parameters": [
+          {
+            "description": "nextCursor from the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Events per page, 1 to 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "The caller's own audit events, newest first",
+        "tags": [
+          "Audit"
+        ]
+      }
+    },
     "/api/auth/csrf": {
       "get": {
         "description": "Sets the XSRF-TOKEN cookie. Send its value in the X-XSRF-TOKEN header on every POST, PUT, PATCH and DELETE.",

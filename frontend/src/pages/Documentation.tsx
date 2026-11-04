@@ -73,11 +73,13 @@ DELETE /api/departments/{id} — delete department`}</pre>
     },
     {
         id: "activity",
-        title: "Activity & Audit Log",
+        title: "Activity, Audit Log & Sessions",
         content: (
             <>
                 <p>Every important action — sign-ins (including failed ones), user and department changes, integration changes, API keys, settings, imports and exports — is written to the audit log.</p>
-                <p>The <strong>Activity</strong> page (and <strong>Audit log</strong> under Security) refreshes every 15 seconds and highlights events you haven&apos;t seen; the sidebar badge counts unseen events.</p>
+                <p><strong>Activity</strong> is yours: what you did and what happened to your account, for every role. It refreshes on its own and highlights what others did to your account since your last visit; the sidebar badge counts those events and sign-in warnings, never your own actions.</p>
+                <p>The <strong>Audit log</strong> under Security (roles with audit access) shows every event, filtered by category, actor and date.</p>
+                <p><strong>Sessions</strong> under Security lists where you are signed in. Sign out a device you do not recognise, or every other session at once. Administrators can sign any user out everywhere.</p>
             </>
         ),
     },

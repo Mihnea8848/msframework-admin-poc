@@ -61,7 +61,7 @@ describe("navigation permissions", () => {
 
     it("shows a manager only the pages they may open", () => {
         const visible = PAGES.filter((p) => hasPermission(manager, p.permission)).map((p) => p.key);
-        expect(visible).toEqual(["home", "dashboard", "users", "departments"]);
+        expect(visible).toEqual(["home", "dashboard", "activity", "users", "departments", "sessions"]);
     });
 
     it("finds a page by key", () => {

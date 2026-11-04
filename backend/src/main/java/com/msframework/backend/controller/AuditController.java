@@ -2,6 +2,7 @@ package com.msframework.backend.controller;
 
 import com.msframework.backend.config.Permission;
 import com.msframework.backend.dto.AuditEventDto;
+import com.msframework.backend.dto.AuditPage;
 import com.msframework.backend.dto.ClientAuditEventRequest;
 import com.msframework.backend.entity.User;
 import com.msframework.backend.exception.ApiException;
@@ -41,6 +42,23 @@ public class AuditController {
         return auditEventRepository.findAllByOrderByCreatedAtDescIdDesc(PageRequest.of(0, size)).stream()
                 .map(AuditService::toDto)
                 .toList();
+    }
+
+    /**
+     * The caller's own activity: events they did or that were about them. Unlike the full log it
+     * needs no permission, so every signed-in user has an Activity page.
+     */
+    @Operation(operationId = "listMyActivity", summary = "The caller's own audit events, newest first",
+            description = "Events the caller did (by their current email) or that were about them. Any signed-in "
+                    + "user may read their own. Keyset paged: pass nextCursor back as cursor to get older events.")
+    @GetMapping("/me")
+    public AuditPage mine(@Parameter(description = "nextCursor from the previous page")
+                          @RequestParam(required = false) String cursor,
+                          @Parameter(description = "Events per page, 1 to 100")
+                          @RequestParam(defaultValue = "50") int limit,
+                          Principal principal) {
+        User me = currentUserService.require(principal);
+        return auditService.userActivity(me.getId(), me.getEmail(), cursor, limit);
     }
 
     /**

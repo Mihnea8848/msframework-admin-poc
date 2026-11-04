@@ -1,7 +1,8 @@
 /*
- * Notifications (pages/Notifications.tsx): the audit feed in a panel, with category chips.
- * Each event has a tinted icon tile, its type label, the actor, the text and the time; events
- * that arrived since the last visit get an accent edge and a "New" tag.
+ * Activity and the Audit log (pages/activity/): the event feed in a panel (FeedList.tsx), with
+ * category chips, and on the Audit log an actor search and a date range. Each event has a tinted
+ * icon tile, its type label, the actor, the text and the time; on Activity, events that arrived
+ * since the last visit get an accent edge and a "New" tag.
  */
 @layer pages {
   .ms-notifications {
@@ -118,7 +119,50 @@
     white-space: nowrap;
   }
 
+  .ms-feed__more {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-4);
+  }
+
+  .ms-feed__end {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Audit log filters: chips on one line, then the actor search and the date range */
+  .ms-audit-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    margin-bottom: 10px;
+  }
+
+  .ms-audit-filters__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3);
+  }
+
+  .ms-audit-filters__actor {
+    flex: 1 1 240px;
+  }
+
+  .ms-audit-filters__date {
+    flex: 0 1 170px;
+    min-width: 0;
+  }
+
+  .ms-audit-filters .ms-result-count {
+    margin: 0;
+  }
+
   @media (width <= 767px) {
+    .ms-audit-filters__date {
+      flex: 1 1 140px;
+    }
+
     .ms-feed__item {
       grid-template-columns: 28px minmax(0, 1fr) auto;
       gap: var(--space-1) 10px;
