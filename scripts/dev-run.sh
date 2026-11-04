@@ -67,6 +67,17 @@ if [ ! -d "$ROOT/frontend/node_modules" ]; then
   (cd "$ROOT/frontend" && npm ci)
 fi
 
+# ---- directory sync (Authentik) ------------------------------------------------
+# When the owner's read-only Authentik token is on this machine, turn on "Sync from Authentik".
+# Only the path is passed on; the backend reads the token itself and never logs it. Values
+# already set in the environment win.
+AUTHENTIK_TOKEN_PATH="${HOME}/.config/mehstudios/authentik-token"
+if [ -z "${AUTHENTIK_TOKEN:-}" ] && [ -z "${AUTHENTIK_TOKEN_FILE:-}" ] && [ -r "$AUTHENTIK_TOKEN_PATH" ]; then
+  export AUTHENTIK_TOKEN_FILE="$AUTHENTIK_TOKEN_PATH"
+  export AUTHENTIK_URL="${AUTHENTIK_URL:-https://auth.mehstudios.net}"
+  log "Directory sync on: $AUTHENTIK_URL with the token in ~/.config/mehstudios/authentik-token."
+fi
+
 # ---- app processes -------------------------------------------------------------
 PIDS=()
 cleanup() {

@@ -33,6 +33,25 @@ section into a version (see `AGENTS.md`, Git workflow).
   timezone, and the session timeout (read-only). `GET
   /api/auth/registration` tells the sign-in page whether sign-up is open.
 
+### Added (directory sync)
+- "Sync from Authentik" (Settings, Organisation; permission `DIRECTORY_SYNC`,
+  ADMIN only): imports and updates users from the Authentik directory with
+  GET requests only. `POST /api/directory/sync/preview` plans without
+  changing anything; `POST /api/directory/sync` applies the plan in one
+  transaction and audits a `directory_synced` event plus a `user_created` or
+  `user_updated` per person (actor "Authentik sync"). Staff groups, the role
+  per group (highest wins) and the department per `admin-*` group are one
+  JSON organisation setting (`directory.authentik.mapping`) that admins can
+  edit. Users who leave the staff groups, turn inactive or disappear are
+  deactivated and signed out; the last active admin is never deactivated.
+  Imported users get an unusable random password.
+- Migration V7: `users.external_source`, `external_id` (unique together) and
+  `external_username`, and `departments.manager_source` (whether the sync
+  chose the head, so it never replaces a head an admin chose).
+- `AUTHENTIK_URL`, `AUTHENTIK_TOKEN` and `AUTHENTIK_TOKEN_FILE`;
+  `scripts/dev-run.sh` sets the URL and the token file when
+  `~/.config/mehstudios/authentik-token` exists.
+
 ### Added
 - Business backend (migration V5): budgets per department, quarter and
   category; expenses with an approval workflow (no self-approval, over-budget

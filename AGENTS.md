@@ -73,6 +73,8 @@ Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This
 | `SEED_DEMO_DATA` | `true` (`false` in tests) | Property `app.seed.demo`: add the demo data once (`DemoPeopleSeeder`, ...). Set it to `false` in production |
 | `FINANCE_CURRENCY` | `EUR` | The organisation's one ISO 4217 currency. Nothing is converted, so set it before any money is recorded |
 | `INGEST_REQUESTS_PER_MINUTE` | `60` | Requests per API key per minute on `POST /api/ingest/checkins` (in memory, per instance) |
+| `AUTHENTIK_URL` | empty (off) | Base URL of the Authentik server for directory sync, e.g. `https://auth.mehstudios.net`. Empty switches the feature off |
+| `AUTHENTIK_TOKEN` / `AUTHENTIK_TOKEN_FILE` | empty | The Authentik API token, or the path of a file holding it (read each time it is needed, so a rotated token works without a restart; `~/` is expanded). Never logged or sent to the browser. `scripts/dev-run.sh` sets `AUTHENTIK_TOKEN_FILE=~/.config/mehstudios/authentik-token` and `AUTHENTIK_URL=https://auth.mehstudios.net` when that file exists and neither variable is set |
 
 ## Roles and permissions
 
@@ -107,6 +109,7 @@ People endpoints and what they need:
 | `GET /api/access-requests`, `POST .../approve`, `POST .../reject` | ACCESS_REQUESTS_MANAGE (ADMIN) |
 | `GET /api/roles` | ROLES_READ (ADMIN, MANAGER) |
 | `GET /api/departments` | Public; the manager fields are null for anonymous callers |
+| `GET /api/directory/status`, `POST /api/directory/sync/preview`, `POST /api/directory/sync`, `GET`/`PUT`/`DELETE /api/directory/mapping` | DIRECTORY_SYNC (ADMIN). See "Directory sync (Authentik)" |
 
 ### Business permissions (budgets, expenses, goals, reports)
 
@@ -144,6 +147,7 @@ The "own department" scoping is enforced in `service/BusinessAccess.java`, not b
   - seeds departments, the admin and the integrations only when their tables are empty.
 - **Sessions are in PostgreSQL** (Spring Session JDBC, tables `spring_session` and `spring_session_attributes`, created by `V6__sessions_security.sql`; Spring Session's own initializer is off). They survive restarts. The cookie is `SESSION`. `V6` also creates `auth_throttle`, the sign-in throttle counters.
 - The demo seeders run after it (`DatabaseSeeder` is `@Order(0)`, `DemoPeopleSeeder` `@Order(100)`; later demo seeders use larger numbers), only when `app.seed.demo` is true, under the same advisory lock. Each writes a marker row in `org_settings` (`demo.people.v1`) and does nothing once it is there. They add to existing data: departments are matched by name, existing emails are skipped, and the admin account is never touched.
+- `V7__directory_sync.sql`: `users.external_source`, `external_id` and `external_username` (a unique index on `(external_source, external_id)`, and a CHECK that the first two are both set or both null) and `departments.manager_source` (`authentik` when the sync chose the head).
 - `V5__business.sql` adds the business tables (`expense_categories` with 9 defaults, `budgets`, `expenses`, `goals`, `goal_checkins`) and `api_keys.scopes` (default empty, so existing keys keep doing what they did). Expenses, goals and check-ins point at users with `ON DELETE SET NULL` and keep a copy of the email, so deleting a user keeps the history. A department that has budgets, expenses or goals cannot be deleted (409).
 - `DemoBusinessSeeder` (when `app.seed.demo` is true) runs on `ApplicationReadyEvent` with `@Order(200)`, so after every start-up runner including `DatabaseSeeder` and the demo people seeder, under the same advisory lock. It seeds once per database (marker `demo.business.v1` in `org_settings`): budgets, about 350 expenses and 2 to 3 goals per department with weekly check-ins for the current and the two previous quarters. Departments are matched by name (missing standard ones are created); submitters are the department's members (the admin when there are none) and approvers its MANAGER-role users or an admin.
 - **Password reset doesn't send email yet.** The link is written to the backend log (`Password reset link for ...`). Tokens are stored hashed in `password_reset_tokens`, are single-use, last 30 minutes and survive restarts.
@@ -212,6 +216,27 @@ Frontend scripts (in `frontend/`):
 - **Reports:** `GET /api/reports/overview` prorates each quarter's budget by the days inside the range; `GET /api/reports/export.csv` writes CSV straight to the response.
 - **API-key ingest:** `config/IngestSecurityConfig` is a separate, stateless filter chain for `/api/ingest/**`, ordered before the session chain. It is CSRF-exempt (no cookie is used), authenticates `Authorization: Bearer <key>` in `ApiKeyAuthenticationFilter` (401 for a missing or unknown key), and needs the key's scope (403 without it). Scopes are granted when the key is created (`POST /api/keys` with `"scopes": ["ingest:checkins"]`). Ingests are audited (`checkins_ingested`) and rate-limited per key.
 
+## Directory sync (Authentik)
+
+MEH Studios' staff live in Authentik (API v3). Settings > Organisation > Directory sync (`pages/settings/DirectorySync.tsx`, shown with `DIRECTORY_SYNC`) previews and applies a sync; the backend is `DirectoryController`, `service/DirectorySyncService` (plan and apply), `service/AuthentikClient` (HTTP) and `service/DirectoryMappingService` (the mapping), with `config/AuthentikSettings` for the environment.
+
+- **The repository is public. Never commit a real name, email address, user name or token from Authentik**: not in code, tests, fixtures, docs, logs or commit messages. Tests use the JDK `HttpServer` stub in `DirectorySyncTests` with made-up people (`@example.com`). Group names are not personal data, so the default mapping lists them. When you check against the real server, report counts only.
+- **Requests:** only `GET /api/v3/core/users/?page_size=100` and `GET /api/v3/core/groups/?page_size=100&include_users=false`, following `pagination.next`, with `Authorization: Bearer <token>`. The client sends `User-Agent: MSFramework-DirectorySync/1.0` because Cloudflare in front of Authentik answers 403 to some default agents (Python's, for one). It never follows redirects.
+- **Errors** become a 502 `ApiException` with a message ("Authentik refused the token (401)", "... refused the request (403)", "Could not reach Authentik at ..."), never a 401 (the browser would take it as its own session ending). Not configured, or no token: 409.
+- **Mapping** (organisation setting `directory.authentik.mapping`, JSON, `GET`/`PUT`/`DELETE /api/directory/mapping`; missing means the defaults in `DirectoryMappingService.DEFAULTS`). Group names match ignoring case, and `admin-*` matches every group starting with `admin-`:
+  - `staffGroups`: `director`, `authentik Admins`, `administrator`, `admin-*`, `employee`. Only their members are imported.
+  - Role, highest wins: `adminGroups` (`director`, `authentik Admins`, `administrator`) give ADMIN, `managerGroups` (`admin-*`) MANAGER, `memberGroups` (`employee`) MEMBER; staff in none of them get MEMBER.
+  - `departments` (first match in this order wins; an empty name gives none): `admin-development` Development, `admin-engineering` Engineering & Innovation, `admin-ethics` Ethics & Regulations, `admin-externalaffairs` External Affairs, `admin-humanresources` Human Resources, `admin-qualitycontrol` Quality Control, `admin-hoa` Administration, `admin-support` none. Staff in none of them keep their current department (or none). Saving a mapping that names a missing department is a 400; a department deleted later is reported as a note.
+  - `ignoredUsernames`: `akadmin`.
+- **Rules**, per Authentik user (`DirectorySyncService.evaluate`):
+  - skipped with a reason: service accounts (`type` `service_account` or `internal_service_account`), ignored user names, users in no staff group (e.g. only `community-member`, `honorary-member`, `user`), inactive users never imported, and users without a valid email;
+  - otherwise linked by `(external_source, external_id)` (`authentik`, the user `pk`), else by `lower(email)` to an existing local user (action "link"; their password keeps working), else created: name from `name`, email lower-cased, status Active, and a BCrypt hash of a random secret nobody knows, so they set a password through "Forgot password" or an admin's reset link until SSO exists;
+  - linked users follow Authentik: name, email (unless another account has it), user name, active status, role and department. Local users (`admin@test.com`, the demo users, anyone not linked) are never changed;
+  - a linked user who leaves the staff groups, turns inactive or is gone from Authentik is deactivated (never deleted) and all their sessions are revoked through `UserSessionService`; back in a staff group, they are reactivated;
+  - department heads: a person stops heading a department when they will no longer be an active MANAGER or ADMIN member of it. A MANAGER mapped to a department becomes its head (`manager_source = 'authentik'`) when it has none or its head was chosen by the sync; a head an admin chose (`PUT /api/departments/{id}/manager` clears `manager_source`) is kept, with a note;
+  - at least one active admin: a change that would leave none is turned into a skip (deactivation) or keeps the ADMIN role (demotion), with the reason.
+- **Preview and apply:** both read Authentik first, outside any transaction. The preview plans in a read-only transaction and writes nothing. The sync plans again from fresh data and applies everything in one transaction under a PostgreSQL advisory lock. Audit: one `directory_synced` (actor: the admin, with the counts) and a `user_created` or `user_updated` per person changed, with the actor `Authentik sync`. The last sync (time, admin, counts) is stored in `directory.authentik.lastSync` for `GET /api/directory/status`.
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
@@ -227,6 +252,8 @@ Frontend scripts (in `frontend/`):
 | A POST/PUT/PATCH/DELETE answers 403 "Your security token (CSRF) is missing or out of date" | The request did not send `X-XSRF-TOKEN` matching the `XSRF-TOKEN` cookie. Use `api/client.ts` (it adds the header and retries once after priming `GET /api/auth/csrf`); in curl, call `/api/auth/csrf` first with a cookie jar and send the header. |
 | Sign-in answers 429 "This account is locked" | 5 failed sign-ins within 15 minutes. Wait for `Retry-After`, or in development: `DELETE FROM auth_throttle WHERE key = 'login-fail:<email>';` |
 | Everyone shares one rate limit behind a proxy | All requests come from the proxy's address. Set `TRUSTED_PROXY=true` if (and only if) the backend is reachable only through that proxy. |
+| Directory sync says "Authentik refused the token (401)" or "(403)" | The token is wrong, expired or may not read users and groups, or a firewall refused the request. Check `AUTHENTIK_TOKEN_FILE` and the token's permissions in Authentik. |
+| Directory sync is "off" in Settings | `AUTHENTIK_URL` is empty for the backend. Set it and a token, and restart the backend. |
 | `OpenApiContractTest` fails with "The API no longer matches api/openapi.json" | The API changed. If that was intended, regenerate the file (see API contract) and commit it with the change. |
 | Start-up fails with "does not look like an MSFramework schema" | `DB_URL` points at a database that has other tables and no Flyway history. Use an empty database, or this app's own database. |
 | Start-up fails with `Schema-validation: missing column` (or table) | An entity changed without a migration. Add a `V<n>__...sql` that makes the same change. |
@@ -317,7 +344,8 @@ resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schem
                BudgetService, ExpenseService, GoalService, ReportService, IngestService, SpendLedger (SQL sums),
                BusinessAccess (department scoping), FiscalPeriods, Money,
                AuthThrottleService (429s and lockout), PasswordPolicy, UserSessionService (sessions by user),
-               OrgSettingsService, AccountDetailsService (sign-in lookup + BCrypt re-hash), ClientIpResolver
+               OrgSettingsService, AccountDetailsService (sign-in lookup + BCrypt re-hash), ClientIpResolver,
+               DirectorySyncService + AuthentikClient + DirectoryMappingService (Authentik directory sync)
   dto/         records for every request/response (request bodies are never a Map). Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
@@ -330,6 +358,7 @@ frontend/src/
                        PageLink (prefetch + view transition), useUnreadAudit (the badge poll)
   api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
   api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
+  api/directory.ts     directory sync types and calls (dto/DirectoryDtos.java)
   auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
   routes/navigation.ts every page with its path, icon, group, required permission and mobilePriority (router, sidebar,
                        bottom bar, More sheet and palette use it), the Settings tabs and the redirected old paths
@@ -337,7 +366,8 @@ frontend/src/
   theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
   pages/auth/          AuthLayout (split layout, shared art, motion) + Login, Register, ForgotPassword, ResetPassword
   pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures)
-  pages/settings/      Settings.tsx (the tab row and panel) + AccountTab, SecurityTab, AppearanceTab, OrganisationTab
+  pages/settings/      Settings.tsx (the tab row and panel) + AccountTab, SecurityTab, AppearanceTab, OrganisationTab;
+                       DirectorySync.tsx (+ directorySync.ts, the grouping helpers) inside the Organisation tab
   pages/               the other pages (HomePage, UserManagement, Departments, Notifications (Activity and Audit
                        log), DatabasePage, Connections, Timezones, Documentation, Security, Payments, ImportData,
                        ExportData), each .tsx with its own .css
