@@ -111,6 +111,20 @@
         ],
         "type": "object"
       },
+      "CsrfToken": {
+        "properties": {
+          "headerName": {
+            "type": "string"
+          },
+          "parameterName": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CurrentUserDto": {
         "properties": {
           "departmentId": {
@@ -164,7 +178,9 @@
                 "WORKSPACE_UPDATE",
                 "API_KEY_READ",
                 "API_KEY_CREATE",
-                "API_KEY_DELETE"
+                "API_KEY_DELETE",
+                "SESSIONS_MANAGE",
+                "ORG_SETTINGS_MANAGE"
               ],
               "type": "string"
             },
@@ -342,6 +358,83 @@
         },
         "type": "object"
       },
+      "OrgSettingsDto": {
+        "properties": {
+          "companyName": {
+            "description": "The company name shown in the app",
+            "example": "Multimedia Entertainment Hub",
+            "type": "string"
+          },
+          "defaultTimezone": {
+            "description": "The organisation's default IANA timezone, or null when none was chosen",
+            "example": "Europe/Bucharest",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "passwordMinLength": {
+            "description": "Minimum length of new passwords (8 to 64)",
+            "example": 8,
+            "format": "int32",
+            "type": "integer"
+          },
+          "registrationEnabled": {
+            "description": "Whether the public Register page may create accounts",
+            "type": "boolean"
+          },
+          "sessionTimeoutMinutes": {
+            "description": "Minutes without activity after which a session ends. Read-only: set by the SESSION_TIMEOUT environment variable",
+            "example": 30,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "companyName",
+          "passwordMinLength",
+          "registrationEnabled",
+          "sessionTimeoutMinutes"
+        ],
+        "type": "object"
+      },
+      "OrgSettingsRequest": {
+        "properties": {
+          "companyName": {
+            "description": "1 to 100 characters",
+            "example": "Multimedia Entertainment Hub",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "defaultTimezone": {
+            "description": "An IANA timezone id",
+            "example": "Europe/Bucharest",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "passwordMinLength": {
+            "description": "Minimum length of new passwords, 8 to 64",
+            "example": 12,
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "registrationEnabled": {
+            "description": "Whether the public Register page may create accounts",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "RegisterRequest": {
         "properties": {
           "departmentId": {
@@ -371,6 +464,25 @@
           "fullName",
           "password",
           "phone"
+        ],
+        "type": "object"
+      },
+      "RegistrationStatusDto": {
+        "properties": {
+          "open": {
+            "description": "Whether the Register page may create accounts; hide \"Sign up\" when false",
+            "type": "boolean"
+          },
+          "passwordMinLength": {
+            "description": "Minimum length of new passwords",
+            "example": 8,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "open",
+          "passwordMinLength"
         ],
         "type": "object"
       },
@@ -407,6 +519,56 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "SessionDto": {
+        "properties": {
+          "createdAt": {
+            "description": "When the user signed in",
+            "format": "date-time",
+            "type": "string"
+          },
+          "current": {
+            "description": "True for the session that made this request",
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "When the session ends unless it is used again",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "SHA-256 of the session id (hex). Use it to sign the session out; the real session id is never sent",
+            "type": "string"
+          },
+          "ipAddress": {
+            "description": "The client IP address at sign-in",
+            "example": "203.0.113.7",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastActiveAt": {
+            "description": "The last request made by the user (background polls are not counted)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "description": "The browser's User-Agent at sign-in",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "createdAt",
+          "current",
+          "expiresAt",
+          "id",
+          "lastActiveAt"
+        ],
         "type": "object"
       },
       "SettingValueRequest": {
@@ -630,7 +792,7 @@
     }
   },
   "info": {
-    "description": "JSON API of the MSFramework admin dashboard. Authentication is a session cookie set by POST /api/auth/login. Every error has the ErrorResponse body.",
+    "description": "JSON API of the MSFramework admin dashboard. Authentication is a session cookie (SESSION) set by POST /api/auth/login. POST, PUT, PATCH and DELETE also need the X-XSRF-TOKEN header, echoing the XSRF-TOKEN cookie (GET /api/auth/csrf sets it). Every error has the ErrorResponse body.",
     "title": "MSFramework API",
     "version": "0.0.1-SNAPSHOT"
   },
@@ -674,7 +836,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -719,7 +881,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -735,6 +897,51 @@
         "summary": "Record an action that happened in the browser",
         "tags": [
           "Audit"
+        ]
+      }
+    },
+    "/api/auth/csrf": {
+      "get": {
+        "description": "Sets the XSRF-TOKEN cookie. Send its value in the X-XSRF-TOKEN header on every POST, PUT, PATCH and DELETE.",
+        "operationId": "primeCsrfToken",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CsrfToken"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cookie set"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Set the CSRF token cookie",
+        "tags": [
+          "Auth"
         ]
       }
     },
@@ -771,7 +978,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -816,7 +1023,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -868,7 +1075,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -902,7 +1109,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -944,7 +1151,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -988,7 +1195,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1039,7 +1246,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1053,6 +1260,48 @@
           }
         },
         "summary": "Create an account with the MEMBER role",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/registration": {
+      "get": {
+        "description": "Public, so the sign-in page can hide \"Sign up\" when it is closed.",
+        "operationId": "getRegistrationStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStatusDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Whether self-registration is open",
         "tags": [
           "Auth"
         ]
@@ -1083,7 +1332,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1127,7 +1376,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1178,7 +1427,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1229,7 +1478,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1280,7 +1529,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1324,7 +1573,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1369,7 +1618,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1418,7 +1667,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1464,7 +1713,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1525,7 +1774,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1577,7 +1826,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1629,7 +1878,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1674,7 +1923,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1723,7 +1972,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1768,7 +2017,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1784,6 +2033,323 @@
         "summary": "Revoke an API key",
         "tags": [
           "API keys"
+        ]
+      }
+    },
+    "/api/org/settings": {
+      "get": {
+        "description": "Any signed-in user may read them (forms need the password policy).",
+        "operationId": "getOrgSettings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgSettingsDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Read the organisation settings",
+        "tags": [
+          "Organisation"
+        ]
+      },
+      "put": {
+        "description": "Fields left out keep their value. sessionTimeoutMinutes cannot be changed here.",
+        "operationId": "updateOrgSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgSettingsDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Change the organisation settings",
+        "tags": [
+          "Organisation"
+        ]
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "operationId": "listUserSessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "A user's signed-in sessions (admin)",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/me": {
+      "get": {
+        "description": "Most recently active first; the session making this request has current = true.",
+        "operationId": "listMySessions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "The caller's signed-in sessions",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/me/others": {
+      "delete": {
+        "operationId": "revokeMyOtherSessions",
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Sign out everywhere except here",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/me/{id}": {
+      "delete": {
+        "description": "Signing out the current session is the same as signing out.",
+        "operationId": "revokeMySession",
+        "parameters": [
+          {
+            "description": "The session's id from the list (a hash)",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Sign out one of the caller's sessions",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/sessions/user/{userId}": {
+      "delete": {
+        "operationId": "revokeUserSessions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Sign a user out everywhere (admin)",
+        "tags": [
+          "Sessions"
         ]
       }
     },
@@ -1826,7 +2392,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1889,7 +2455,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1933,7 +2499,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -1983,7 +2549,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2028,7 +2594,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2089,7 +2655,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2133,7 +2699,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2182,7 +2748,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2227,7 +2793,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2279,7 +2845,7 @@
                 }
               }
             },
-            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission or CSRF token (403), not found (404), a conflict (409) or too many attempts (429, with a Retry-After header in seconds). The message is written for the end user."
           },
           "5XX": {
             "content": {
@@ -2332,6 +2898,14 @@
     {
       "description": "Bulk import from CSV rows",
       "name": "Import"
+    },
+    {
+      "description": "Company name, registration, password policy and session settings",
+      "name": "Organisation"
+    },
+    {
+      "description": "Signed-in sessions: your own, and any user's for admins",
+      "name": "Sessions"
     },
     {
       "description": "Organisation-wide settings",
