@@ -9,6 +9,7 @@ import com.msframework.backend.exception.ApiException;
 import com.msframework.backend.repository.ApiKeyRepository;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.CurrentUserService;
+import com.msframework.backend.service.IngestService;
 import com.msframework.backend.service.SecureTokens;
 import com.msframework.backend.service.Times;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * API keys are random secrets; only their SHA-256 hash is stored and the plain secret is returned
@@ -33,6 +36,9 @@ import java.util.List;
 public class ApiKeyController {
 
     private static final String PREFIX = "msk_";
+
+    /** Scopes a key can be granted. */
+    public static final List<String> SCOPES = List.of(IngestService.SCOPE_CHECKINS);
 
     private final ApiKeyRepository apiKeyRepository;
     private final CurrentUserService currentUserService;
@@ -56,15 +62,28 @@ public class ApiKeyController {
         if (name.isEmpty()) name = "API key";
         if (name.length() > 60) throw ApiException.badRequest("Key name must be at most 60 characters");
 
+        Set<String> scopes = new TreeSet<>();
+        if (body != null && body.scopes() != null) {
+            for (String scope : body.scopes()) {
+                String value = scope == null ? "" : scope.trim();
+                if (!SCOPES.contains(value)) {
+                    throw ApiException.badRequest("Unknown scope \"" + value + "\". Known scopes: " + String.join(", ", SCOPES));
+                }
+                scopes.add(value);
+            }
+        }
+
         String secret = PREFIX + SecureTokens.random(32);
         ApiKey saved = apiKeyRepository.save(ApiKey.builder()
                 .name(name)
+                .scopes(String.join(" ", scopes))
                 .maskedDisplay(PREFIX + "••••••••••••" + secret.substring(secret.length() - 4))
                 .keyHash(SecureTokens.sha256Hex(secret))
                 .createdBy(actor.getEmail())
                 .build());
 
-        auditService.log("key_generated", actor.getEmail(), "API key generated: " + name);
+        auditService.log("key_generated", actor.getEmail(), "API key generated: " + name
+                + (scopes.isEmpty() ? "" : " (scopes: " + String.join(", ", scopes) + ")"));
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(saved, secret));
     }
 
@@ -81,6 +100,6 @@ public class ApiKeyController {
 
     private static ApiKeyDto toDto(ApiKey key, String secret) {
         return new ApiKeyDto(key.getId(), key.getName(), key.getMaskedDisplay(), key.getCreatedBy(),
-                Times.toOffset(key.getCreatedAt()), key.getLastUsed(), secret);
+                Times.toOffset(key.getCreatedAt()), key.getLastUsed(), key.scopeSet().stream().sorted().toList(), secret);
     }
 }

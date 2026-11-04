@@ -6,11 +6,12 @@ import com.msframework.backend.dto.CurrentUserDto;
 import com.msframework.backend.dto.ForgotPasswordRequest;
 import com.msframework.backend.dto.LoginRequest;
 import com.msframework.backend.dto.RegisterRequest;
+import com.msframework.backend.dto.RegisterResponse;
 import com.msframework.backend.dto.ResetPasswordRequest;
-import com.msframework.backend.dto.UserDto;
 import com.msframework.backend.entity.User;
 import com.msframework.backend.exception.ApiException;
 import com.msframework.backend.repository.UserRepository;
+import com.msframework.backend.service.AccessRequestService;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.AuthSessionService;
 import com.msframework.backend.service.CurrentUserService;
@@ -32,6 +33,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Tag(name = "Auth", description = "Sign-in, registration, password reset and the caller's own account")
@@ -47,6 +49,7 @@ public class AuthController {
     private final UserService userService;
     private final PasswordResetService passwordResetService;
     private final AuditService auditService;
+    private final AccessRequestService accessRequestService;
 
     @Operation(operationId = "login", summary = "Sign in and start a session",
             description = "Sets the session cookie. An inactive account gets 403.")
@@ -61,6 +64,11 @@ public class AuthController {
             authentication = authenticationManager.authenticate(
                     UsernamePasswordAuthenticationToken.unauthenticated(email, request.password()));
         } catch (AuthenticationException e) {
+            Optional<String> pending = accessRequestService.pendingSignInMessage(email, request.password());
+            if (pending.isPresent()) {
+                auditService.log("login_pending", email, "Sign-in before approval by " + email);
+                throw ApiException.forbidden(pending.get());
+            }
             auditService.log("login_failed", email, "Failed sign-in attempt for " + email);
             throw ApiException.unauthorized("Invalid email or password");
         }
@@ -74,7 +82,9 @@ public class AuthController {
         }
 
         authSessionService.establish(authentication, httpRequest, httpResponse);
-        auditService.log("user_login", user.getEmail(), user.getFullName() + " signed in");
+        userRepository.touchLastLogin(user.getId(), LocalDateTime.now());
+        auditService.log("user_login", user.getEmail(), user.getFullName() + " signed in",
+                AuditService.Subject.user(user.getId()));
         return userService.toCurrentUserDto(user);
     }
 
@@ -94,12 +104,15 @@ public class AuthController {
         return ResponseEntity.ok(userService.toCurrentUserDto(user.get()));
     }
 
-    @Operation(operationId = "register", summary = "Create an account with the MEMBER role")
-    @ApiResponse(responseCode = "201", description = "Created")
+    @Operation(operationId = "register", summary = "Ask for an account",
+            description = "Creates an access request, not an account: an administrator approves it (the account "
+                    + "then gets this password) or rejects it. Signing in before approval answers 403 with a "
+                    + "message saying the request is still waiting.")
+    @ApiResponse(responseCode = "202", description = "Request recorded; show the message")
     @PostMapping("/register")
-    public ResponseEntity<UserDto> register(@Valid @RequestBody RegisterRequest request) {
-        User saved = userService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.toDto(saved));
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        accessRequestService.submit(request);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new RegisterResponse(AccessRequestService.SUBMITTED_MESSAGE));
     }
 
     @Operation(operationId = "logout", summary = "Sign out and end the session")

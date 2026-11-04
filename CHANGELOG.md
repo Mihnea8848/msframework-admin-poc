@@ -14,6 +14,16 @@ section into a version (see `AGENTS.md`, Git workflow).
 - API keys and password reset tokens are stored only as hashes.
 
 ### Added
+- Business backend (migration V5): budgets per department, quarter and
+  category; expenses with an approval workflow (no self-approval, over-budget
+  flag, finance marks them paid) that also form the payments ledger; goals
+  and KPIs with check-ins and weighted department performance scores; a
+  reports overview and CSV exports; CSV import of expenses, budgets and
+  check-ins; and `POST /api/ingest/checkins` for integrations, authenticated
+  with a scoped API key on its own stateless filter chain. New permissions
+  FINANCE_READ, FINANCE_MANAGE, EXPENSE_SUBMIT, EXPENSE_APPROVE, GOALS_READ,
+  GOALS_MANAGE and REPORTS_READ. Demo business data is seeded once per
+  database when `SEED_DEMO_DATA` is true.
 - Create and delete users, user search, and the missing status field.
 - Real CSV import with per-row errors, live database schema page, real
   dashboard activity feed and security checks.
@@ -65,6 +75,17 @@ section into a version (see `AGENTS.md`, Git workflow).
 - `Dialog` (native modal `<dialog>`, a bottom sheet on phones), department
   seal components, shared list blocks (toolbar, table, status pills) and a
   `ghost-danger` Button variant for Delete on a row or card.
+- People API: paged user search (`GET /api/users/search`), user profiles
+  and activity feeds, bulk activate, deactivate, role and department
+  changes with per-user results, admin-made password reset links,
+  department details with members, department managers and member
+  add/remove, the roles overview (`GET /api/roles`, new permission
+  `ROLES_READ`) and access requests (`ACCESS_REQUESTS_MANAGE`). Users gain a
+  job title and last sign-in time; audit events can name the user and
+  department they are about.
+- Demo people for MEH Studios (`DemoPeopleSeeder`, `SEED_DEMO_DATA`): about
+  45 users, five department managers, access requests and 60 days of audit
+  history, added once on top of existing data. Password `MehDemo!2026`.
 - A Settings page (`/settings/account`, `/security`, `/appearance`,
   `/organisation`), opened from the top bar cog or your name, with a tab
   per link. Account and Security take over Account & security, Appearance
@@ -79,12 +100,19 @@ section into a version (see `AGENTS.md`, Git workflow).
   figures that count up once. All of it is off with reduced motion.
 
 ### Fixed
+- The user list no longer runs one query per user (roles and departments
+  are batch-fetched).
 - Changing your own email no longer logs you out.
 - Deleting a department with members unassigns them instead of failing.
 - Export columns and CSV escaping; compact density; reset link survival
   across restarts; errors reported with the right HTTP status.
 
 ### Changed
+- Registering creates an access request instead of an account
+  (`POST /api/auth/register` answers 202 with a message). An admin approves
+  or rejects it; signing in before that says the request is still waiting.
+- Emails are unique regardless of capitals (index on `lower(email)`,
+  migration `V3`).
 - The database schema is managed by Flyway migrations instead of Hibernate
   `ddl-auto=update`; Hibernate now only validates it. Databases created by
   older versions are recognised, baselined and upgraded in place (legacy

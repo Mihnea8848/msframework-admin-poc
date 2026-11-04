@@ -47,7 +47,11 @@ docker compose up -d --wait                 # 1. database (healthy when this ret
 
 ### Log in
 
-Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This account is seeded only when the users table is empty. Accounts created through **Register** get the `MEMBER` role.
+Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This account is seeded only when the users table is empty.
+
+**Register** does not create an account: it creates an access request (`access_requests`) that an admin approves (with a role and department; the account gets the password chosen when registering) or rejects. Signing in before approval answers 403 "Your access request is still waiting for approval", but only when the password matches the request.
+
+**Demo users** (`DemoPeopleSeeder`, while `SEED_DEMO_DATA` is on): about 45 people `first.last@mehstudios.net` across the seven departments, all with the password **`MehDemo!2026`**. Useful ones: `andreea.popescu@` (ADMIN), `radu.constantinescu@` (MANAGER and manager of Development), `kenji.watanabe@` (MEMBER), `ioana.stan@` (VIEWER).
 
 ### Configuration (environment variables)
 
@@ -59,6 +63,9 @@ Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@test.com` / `password123` | First admin account, created on an empty database only |
 | `SHOW_SQL` | `false` | Log Hibernate SQL |
 | `API_DOCS_ENABLED` | `true` | Serve the OpenAPI description at `/v3/api-docs` without login. Set it to `false` in production |
+| `SEED_DEMO_DATA` | `true` (`false` in tests) | Property `app.seed.demo`: add the demo data once (`DemoPeopleSeeder`, ...). Set it to `false` in production |
+| `FINANCE_CURRENCY` | `EUR` | The organisation's one ISO 4217 currency. Nothing is converted, so set it before any money is recorded |
+| `INGEST_REQUESTS_PER_MINUTE` | `60` | Requests per API key per minute on `POST /api/ingest/checkins` (in memory, per instance) |
 
 ## Roles and permissions
 
@@ -67,7 +74,7 @@ The roles are defined in `backend/.../config/SystemRoles.java`, which is the sin
 | Role | Can do |
 |---|---|
 | ADMIN | Everything |
-| MANAGER | Dashboard; read users and departments; edit **their own department** and the MEMBER/VIEWER users in it; audit log; timezones; docs |
+| MANAGER | Dashboard; read users and departments; edit **their own department** and the MEMBER/VIEWER users in it (including bulk changes and reset links for them); audit log and activity feeds; roles overview; timezones; docs |
 | MEMBER | Dashboard; read users and departments; timezones; docs |
 | VIEWER | Dashboard; docs |
 
@@ -77,12 +84,48 @@ Additional rules, enforced in `UserService`:
 - At least one active admin must always exist.
 - You cannot delete or deactivate yourself.
 - Deactivating a user ends their session on their next request.
+- Bulk actions (`POST /api/users/bulk`) run each user through the same `UserService.update`, one transaction per user, and return one result per id.
+
+People endpoints and what they need:
+
+| Endpoint | Permission and scope |
+|---|---|
+| `GET /api/users/search`, `GET /api/users/{id}` | USER_READ |
+| `GET /api/users/{id}/activity`, `GET /api/departments/{id}/activity` | USER_READ or DEPARTMENT_READ, plus AUDIT_READ |
+| `POST /api/users/bulk`, `POST /api/users/{id}/password-reset` | USER_UPDATE, with the manager scope per user |
+| `GET /api/departments/{id}` | DEPARTMENT_READ and USER_READ |
+| `PUT /api/departments/{id}/manager` | DEPARTMENT_UPDATE and the ADMIN role. The manager must be an active member of the department with the MANAGER or ADMIN role; it is cleared when they leave, are deactivated, lose the role or are deleted |
+| `POST`/`DELETE /api/departments/{id}/members/{userId}` | USER_UPDATE; goes through `UserService.update`, so managers cannot move people between departments |
+| `GET /api/access-requests`, `POST .../approve`, `POST .../reject` | ACCESS_REQUESTS_MANAGE (ADMIN) |
+| `GET /api/roles` | ROLES_READ (ADMIN, MANAGER) |
+| `GET /api/departments` | Public; the manager fields are null for anonymous callers |
+
+### Business permissions (budgets, expenses, goals, reports)
+
+| Permission | ADMIN | MANAGER | MEMBER | VIEWER |
+|---|---|---|---|---|
+| `FINANCE_READ` (budgets, every expense, payments) | yes | yes | | |
+| `FINANCE_MANAGE` (budgets, categories, approve any, mark paid, expense/budget import) | yes | | | |
+| `EXPENSE_SUBMIT` | any department | own department | own department | |
+| `EXPENSE_APPROVE` | any department | own department | | |
+| `GOALS_READ` (goals, performance; check-ins for your own department) | yes | yes | yes | yes |
+| `GOALS_MANAGE` (goal CRUD) | any department | own department | | |
+| `REPORTS_READ` (overview, budget and performance CSV) | yes | yes | | yes |
+
+The "own department" scoping is enforced in `service/BusinessAccess.java`, not by the permission:
+- FINANCE_MANAGE works everywhere; EXPENSE_APPROVE alone only for the approver's department.
+- Nobody approves or rejects their own expense, admins included.
+- GOALS_MANAGE is org-wide for the ADMIN role and own-department otherwise.
+- Check-ins: members of the goal's department, its managers, and admins.
+- Without FINANCE_READ you see your own expenses (approvers also their department's).
+- The expense CSV export needs FINANCE_READ as well as REPORTS_READ.
 
 ## Data, seeding and migrations
 
 - **Flyway owns the schema.** Migrations live in `backend/src/main/resources/db/migration` and run on every start, before anything else touches the database. Hibernate only checks that the entities match (`ddl-auto=validate`); it never creates or changes tables.
   - `V1__baseline.sql` is the schema of a fresh install. It was generated from what Hibernate created for the entities, and keeps Hibernate's constraint names (`uk...`, `fk...`).
   - `V2__converge_legacy_schema.sql` brings databases created before Flyway in line with V1 (see below). It changes nothing on a fresh database.
+  - `V3__people.sql`: `users.title`, `users.last_login_at`, `departments.manager_id` (`ON DELETE SET NULL`), `audit_events.subject_user_id`/`subject_department_id` (no foreign keys, so history outlives deletions), the `access_requests` table, a unique index on `lower(email)` (with a preflight that stops with a list of the duplicate addresses) and indexes for search and the activity feeds.
 - **To change the schema**, add a new file `V3__short_description.sql` (next free number, two underscores), change the entity to match, and run `./mvnw verify`: the app refuses to start if the entities and the tables disagree, and `MigrationTests` checks the migrations. Never edit a migration that has been applied anywhere: Flyway validates checksums and stops at start-up if one changed.
 - **Databases from before Flyway** (created by `ddl-auto=update`, with no `flyway_schema_history` table) are handled by `config/FlywayConfig.java`:
   - if the tables look like an MSFramework schema (`users` and `departments` exist, and every table is one the app has created), it baselines the database at version 1 and runs V2, which adds missing tables, columns and constraints, fills a missing `status`/`created_at`, moves the legacy `users.role` value into `user_roles` (unknown values become MEMBER) and drops the old column. The log says `[FLYWAY] Found an MSFramework database from before Flyway ...`;
@@ -91,6 +134,9 @@ Additional rules, enforced in `UserService`:
 - `DatabaseSeeder` is idempotent and runs on every start, after the migrations, under a PostgreSQL advisory lock (so several instances can start at once). It:
   - syncs role permissions;
   - seeds departments, the admin and the integrations only when their tables are empty.
+- The demo seeders run after it (`DatabaseSeeder` is `@Order(0)`, `DemoPeopleSeeder` `@Order(100)`; later demo seeders use larger numbers), only when `app.seed.demo` is true, under the same advisory lock. Each writes a marker row in `org_settings` (`demo.people.v1`) and does nothing once it is there. They add to existing data: departments are matched by name, existing emails are skipped, and the admin account is never touched.
+- `V5__business.sql` adds the business tables (`expense_categories` with 9 defaults, `budgets`, `expenses`, `goals`, `goal_checkins`) and `api_keys.scopes` (default empty, so existing keys keep doing what they did). Expenses, goals and check-ins point at users with `ON DELETE SET NULL` and keep a copy of the email, so deleting a user keeps the history. A department that has budgets, expenses or goals cannot be deleted (409).
+- `DemoBusinessSeeder` (when `app.seed.demo` is true) runs on `ApplicationReadyEvent` with `@Order(200)`, so after every start-up runner including `DatabaseSeeder` and the demo people seeder, under the same advisory lock. It seeds once per database (marker `demo.business.v1` in `org_settings`): budgets, about 350 expenses and 2 to 3 goals per department with weekly check-ins for the current and the two previous quarters. Departments are matched by name (missing standard ones are created); submitters are the department's members (the admin when there are none) and approvers its MANAGER-role users or an admin.
 - **Password reset doesn't send email yet.** The link is written to the backend log (`Password reset link for ...`). Tokens are stored hashed in `password_reset_tokens`, are single-use, last 30 minutes and survive restarts.
 - To wipe everything and start fresh: `docker compose down -v`. This deletes all local data.
 - Connect to the database directly: `psql -h localhost -p 5433 -U msframework msframework` (password `msframework`).
@@ -126,7 +172,7 @@ Frontend scripts (in `frontend/`):
     `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` default to `msframework`. The tests build the schema with the real Flyway migrations, and run Flyway `clean` first so a database left over from an earlier run starts empty. That wipes everything in it, so never use your dev database. `clean` is allowed only in the test profile (`spring.flyway.clean-disabled=false` in `application-test.properties`, strategy in `TestcontainersConfiguration`); it stays disabled in the app.
   - `MigrationTests` creates and drops extra databases (`msf_mig_*`) on the same server, so the test user needs the `CREATEDB` right. It loads the legacy fixtures in `src/test/resources/db/legacy` (a pre-RBAC database from commit `371775c`, the same database after it was started by the last pre-Flyway `main`, and a database created by that `main`), migrates them, and requires the same columns, constraints and indexes as a database migrated from empty.
 - Every test class is annotated `@IntegrationTest` (`IntegrationTest.java`), so they all share one Spring context and one container. Don't add `@SpringBootTest` directly, or you'll start a second context and database.
-- When you change behaviour, add or adjust a test in `ApiIntegrationTests`. Use unique emails and names, because the tests share one database.
+- When you change behaviour, add or adjust a test in `ApiIntegrationTests` (people management lives in `PeopleApiTests`). Use unique emails and names, because the tests share one database.
 - ESLint runs the React Compiler rules (`eslint-plugin-react-hooks` v7). Two common failures:
   - calling `setState` synchronously inside `useEffect` (do it in a promise or callback instead);
   - calling `Date.now()` during render.
@@ -145,6 +191,16 @@ Frontend scripts (in `frontend/`):
   `OPENAPI_WRITE=true` in the environment does the same. The test finds the repository root from its own class files, so it works whichever directory Maven runs from.
 - Changes that alter the contract: an endpoint, a path or query parameter, a request or response DTO field, a `@Schema`/`@Operation`/`@Tag` annotation, or the project version in `pom.xml` (it is the `info.version`).
 - How endpoints are documented: every controller has a `@Tag`, every endpoint an `@Operation` with an explicit `operationId` (names must stay unique and stable, because generated clients use them) and a `summary`. Endpoints that answer 201 or 204 declare it with `@ApiResponse`. `config/OpenApiConfig` adds the `ErrorResponse` body as the `4XX` and `5XX` response of every operation, so don't repeat it per endpoint.
+
+## Business domain (budgets, expenses, goals, reports)
+
+- **Money** is `numeric(14,2)` plus a currency code; the organisation has one currency (`FINANCE_CURRENCY`) and nothing is converted. Quarters follow the calendar year (`service/FiscalPeriods`).
+- **Budgets:** one line per department, category and quarter. Spent = APPROVED + PAID expenses dated in the quarter, committed = SUBMITTED, remaining = budget − spent − committed (`service/SpendLedger` does the sums in SQL). `GET /api/budgets` also returns spending that has no budget line (id null, amount 0).
+- **Expenses:** DRAFT → SUBMITTED → APPROVED → PAID, or SUBMITTED → REJECTED (a note is required). The submitter edits while DRAFT or SUBMITTED and deletes drafts. Submitting over the remaining budget is allowed and stored as `overBudget`. Each expense in a response carries `actions` (edit, submit, approve, reject, pay, delete) for the caller, so the UI does not repeat the rules. Every transition is audited.
+- **Payments** are PAID expenses (`GET /api/payments`, by payment date, with monthly totals); `provider.connected` is always false: MSFramework records payments, it does not move money.
+- **Goals:** a KPI per department and quarter with unit, direction, baseline, target, weight and owner. Attainment = progress from baseline to target in percent, clamped to 0..120 (`GoalService.attainment`); the department score is the weighted average attainment of its goals that have check-ins. Check-in dates must be inside the goal's quarter and not in the future. `GET /api/performance` adds a six-month trend (each month's score as of its last day).
+- **Reports:** `GET /api/reports/overview` prorates each quarter's budget by the days inside the range; `GET /api/reports/export.csv` writes CSV straight to the response.
+- **API-key ingest:** `config/IngestSecurityConfig` is a separate, stateless filter chain for `/api/ingest/**`, ordered before the session chain. It is CSRF-exempt (no cookie is used), authenticates `Authorization: Bearer <key>` in `ApiKeyAuthenticationFilter` (401 for a missing or unknown key), and needs the key's scope (403 without it). Scopes are granted when the key is created (`POST /api/keys` with `"scopes": ["ingest:checkins"]`). Ingests are audited (`checkins_ingested`) and rate-limited per key.
 
 ## Troubleshooting
 
@@ -235,11 +291,17 @@ The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any
 ```
 backend/src/main/java/com/msframework/backend/
   config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations,
-               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses)
+               FlywayConfig (guarded baseline), DatabaseSeeder, DemoPeopleSeeder, DemoBusinessSeeder,
+               OpenApiConfig (title, server, error responses),
+               IngestSecurityConfig + ApiKeyAuthenticationFilter (stateless API-key chain for /api/ingest/**),
+               FinanceSettings (org currency)
 resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schema changes)
   controller/  REST controllers under /api/* (thin: authorize, then delegate)
   service/     CurrentUserService (who is calling + permission checks), UserService (validation + rules),
-               PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService
+               UserBulkService, DepartmentService, AccessRequestService, PasswordResetService, ImportService,
+               AuditService (+ activity feeds), AuthSessionService, DatabaseInfoService,
+               BudgetService, ExpenseService, GoalService, ReportService, IngestService, SpendLedger (SQL sums),
+               BusinessAccess (department scoping), FiscalPeriods, Money
   dto/         records for every request/response (request bodies are never a Map). Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
@@ -281,7 +343,7 @@ TypeScript:
 Conventions:
 - **Authorization lives in the backend.** Start each endpoint with `currentUserService.requirePermission(principal, Permission.X)`. Frontend checks only hide UI.
 - **Errors:** throw `ApiException.badRequest/forbidden/notFound/conflict("human message")`. The frontend shows `err.message` as-is, so write the message for an end user.
-- **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint. Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
+- **Audit:** call `auditService.log(type, actorEmail, description)` in every mutating endpoint, or `log(..., AuditService.Subject)` when the event is about a user or department, so it shows in their activity feed (`/api/users/{id}/activity`, `/api/departments/{id}/activity`; keyset paged with an opaque `cursor`). Add new types to `frontend/src/utils/auditTypes.ts` so they get a label, icon and filter category.
 - **New permission:** add it to `Permission.java`, then to the roles in `SystemRoles.java` (the seeder applies it on the next start), and to the `Permission` type in `frontend/src/api/types.ts`. No migration is needed: the database deliberately has no CHECK listing permission names. Gate the UI with `hasPermission(user, "NAME")` and, for a page, add `permission` in `routes/navigation.ts`.
 - **New page:** add an entry to `routes/navigation.ts` in its sidebar group (and its key to `PageKey`; set `mobilePriority` if it should be able to appear in the phone bottom bar) and a loader to `PAGE_LOADERS` in `app/pages.ts` (`() => import("../pages/MyPage")`, default export). `app/routes.tsx` turns every entry into a lazy route inside the shell behind `RequirePermission`, and the sidebar, bottom bar, More sheet and Quick Actions pick it up. Keep each page chunk under the 40 kB budget; never import a page statically, or it lands in the entry bundle. A page outside the shell (like `/login`) is added to `app/routes.tsx` directly.
 - **Request bodies** are records in `dto/` named after what they carry (`ChangePasswordRequest`), never `Map<String, ...>`, so the contract describes them. Keep field names stable: the frontend sends them as-is.
