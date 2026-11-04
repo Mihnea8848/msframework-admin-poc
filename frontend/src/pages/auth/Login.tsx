@@ -115,7 +115,7 @@ export default function Login() {
             </p>
 
             <p className="ms-auth__alt">
-                Don’t have an account yet? <Link className="ms-link" to="/register">Sign up</Link>
+                Don’t have an account yet? <Link className="ms-link" to="/register">Request access</Link>
             </p>
         </AuthLayout>
     );

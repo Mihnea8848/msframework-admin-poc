@@ -34,6 +34,9 @@ import java.io.IOException;
  * {@code XSRF-TOKEN} cookie and every POST, PUT, PATCH and DELETE must echo it in the
  * {@code X-XSRF-TOKEN} header. {@code GET /api/auth/csrf} sets the cookie. The session cookie is
  * also {@code SameSite=Lax}.</p>
+ *
+ * <p>{@code /api/ingest/**} is not handled here: {@link IngestSecurityConfig} gives it its own
+ * stateless chain (API key, no session, CSRF-exempt), ordered before this one.</p>
  */
 @Configuration
 @EnableWebSecurity

@@ -11,7 +11,7 @@ import org.springframework.session.web.http.SessionRepositoryFilter;
 
 /**
  * Sessions live in PostgreSQL through Spring Session JDBC (auto-configured by Spring Boot; the
- * tables come from the Flyway migration V4). This adds the idle-time handling for background
+ * tables come from the Flyway migration V6). This adds the idle-time handling for background
  * requests ({@link BackgroundRequests}) and the throttle settings.
  */
 @Configuration(proxyBeanMethods = false)

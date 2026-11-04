@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "api_keys")
@@ -32,6 +35,16 @@ public class ApiKey {
 
     @Column(name = "last_used")
     private String lastUsed;
+
+    /** Space-separated scopes, e.g. {@code ingest:checkins}. Empty means the key has no scopes. */
+    @Column(nullable = false)
+    @Builder.Default
+    private String scopes = "";
+
+    public Set<String> scopeSet() {
+        if (scopes == null || scopes.isBlank()) return Set.of();
+        return Arrays.stream(scopes.trim().split("\\s+")).collect(Collectors.toUnmodifiableSet());
+    }
 
     @PrePersist
     void prePersist() {

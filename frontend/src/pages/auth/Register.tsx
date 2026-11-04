@@ -99,14 +99,15 @@ export default function Register() {
         setLoading(true);
         setServerError("");
         try {
-            await post("/api/auth/register", {
+            const res = await post<{ message?: string }>("/api/auth/register", {
                 fullName: fullName.trim(),
                 phone: phone.replace(/\s/g, ""),
                 email: email.trim(),
                 departmentId: Number(departmentId),
                 password,
             }, { authRedirect: false });
-            navigate("/login", { state: { notice: "Account created. You can sign in now." } });
+            const notice = res?.message || "Your request was sent. An administrator will review it.";
+            navigate("/login", { state: { notice } });
         } catch (err) {
             setServerError((err instanceof Error && err.message) || "Registration failed.");
         } finally {
@@ -135,9 +136,9 @@ export default function Register() {
 
     return (
         <AuthLayout>
-            <h1 className="ms-auth__title">Create account</h1>
+            <h1 className="ms-auth__title">Request access</h1>
             <p className="ms-auth__lead">
-                Already have an account? <Link className="ms-link" to="/login">Sign in</Link>
+                An administrator reviews every request before you can sign in. Already have an account? <Link className="ms-link" to="/login">Sign in</Link>
             </p>
 
             <form className="ms-auth__form" onSubmit={onSubmit} autoComplete="off">
@@ -270,7 +271,7 @@ export default function Register() {
                 )}
 
                 <Button type="submit" variant="primary" full disabled={!canSubmit || loading}>
-                    {loading ? "Creating Account..." : "Create Account"}
+                    {loading ? "Sending request..." : "Send request"}
                 </Button>
             </form>
         </AuthLayout>

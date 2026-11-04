@@ -1,10 +1,12 @@
 package com.msframework.backend.service;
 
+import com.msframework.backend.config.Permission;
 import com.msframework.backend.config.SystemRoles;
 import com.msframework.backend.dto.CurrentUserDto;
-import com.msframework.backend.dto.RegisterRequest;
 import com.msframework.backend.dto.UserCreateRequest;
+import com.msframework.backend.dto.UserDetailsDto;
 import com.msframework.backend.dto.UserDto;
+import com.msframework.backend.dto.UserPage;
 import com.msframework.backend.dto.UserUpdateRequest;
 import com.msframework.backend.entity.Department;
 import com.msframework.backend.entity.Role;
@@ -14,16 +16,28 @@ import com.msframework.backend.repository.DepartmentRepository;
 import com.msframework.backend.repository.PasswordResetTokenRepository;
 import com.msframework.backend.repository.RoleRepository;
 import com.msframework.backend.repository.UserRepository;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Nulls;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -37,6 +51,12 @@ import static com.msframework.backend.config.SystemRoles.MANAGER;
 public class UserService {
 
     public static final List<String> STATUSES = List.of(User.STATUS_ACTIVE, User.STATUS_INACTIVE);
+
+    public static final int MAX_PAGE_SIZE = 100;
+
+    /** Sort keys accepted by {@link #search}; prefix with "-" for descending. */
+    public static final List<String> SORT_KEYS =
+            List.of("name", "email", "department", "status", "createdAt", "lastLoginAt");
 
     // Same rules as frontend/src/utils/validators.js
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
@@ -87,6 +107,14 @@ public class UserService {
         return phone;
     }
 
+    /** Returns the trimmed job title, or null when empty. */
+    public static String normalizeTitle(String raw) {
+        String title = raw == null ? "" : raw.trim().replaceAll("\\s+", " ");
+        if (title.isEmpty()) return null;
+        if (title.length() > 100) throw ApiException.badRequest("Job title must be at most 100 characters");
+        return title;
+    }
+
     public static String requireStatus(String raw) {
         if (raw == null || raw.isBlank()) return User.STATUS_ACTIVE;
         return STATUSES.stream()
@@ -101,7 +129,7 @@ public class UserService {
                 .orElseThrow(() -> ApiException.badRequest("Unknown role: " + name));
     }
 
-    private Department findDepartment(Long id) {
+    public Department findDepartment(Long id) {
         if (id == null) return null;
         return departmentRepository.findById(id)
                 .orElseThrow(() -> ApiException.badRequest("Department not found"));
@@ -119,9 +147,57 @@ public class UserService {
         }
     }
 
+    // ------------------------------------------------------------------ scope
+
+    /** Whether the actor's role lets them edit the target (see {@link #requireCanEdit}). */
+    public static boolean canEdit(User actor, User target) {
+        try {
+            requireCanEdit(actor, target);
+            return true;
+        } catch (ApiException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Admins may edit anyone. Managers may edit the MEMBER and VIEWER users of their own
+     * department. Nobody else may edit other users.
+     */
+    public static void requireCanEdit(User actor, User target) {
+        if (actor.hasRole(ADMIN)) return;
+        if (!actor.hasRole(MANAGER)) {
+            throw ApiException.forbidden("Only admins and managers can edit users");
+        }
+        if (target.hasRole(ADMIN) || target.hasRole(MANAGER)) {
+            throw ApiException.forbidden("Managers cannot edit admins or other managers");
+        }
+        Long managerDeptId = actor.getDepartment() != null ? actor.getDepartment().getId() : null;
+        if (managerDeptId == null) {
+            throw ApiException.forbidden("You are not assigned to a department");
+        }
+        if (target.getDepartment() == null || !managerDeptId.equals(target.getDepartment().getId())) {
+            throw ApiException.forbidden("Managers can only edit users in their own department");
+        }
+    }
+
     // ------------------------------------------------------------------ mapping
 
     public UserDto toDto(User user) {
+        Long managerOf = departmentRepository.findByManagerId(user.getId()).stream()
+                .map(Department::getId).findFirst().orElse(null);
+        return toDto(user, managerOf);
+    }
+
+    /** Maps a list with a single extra query for the department heads. */
+    public List<UserDto> toDtos(List<User> users) {
+        Map<Long, Long> managerOf = new HashMap<>();
+        for (Object[] row : departmentRepository.managerAssignments()) {
+            managerOf.putIfAbsent((Long) row[0], (Long) row[1]);
+        }
+        return users.stream().map(u -> toDto(u, managerOf.get(u.getId()))).toList();
+    }
+
+    private static UserDto toDto(User user, Long managerOf) {
         return new UserDto(
                 user.getId(),
                 user.getFullName(),
@@ -131,7 +207,10 @@ public class UserService {
                 user.getDepartment() != null ? user.getDepartment().getId() : null,
                 user.getDepartment() != null ? user.getDepartment().getName() : null,
                 roleNames(user),
-                Times.toOffset(user.getCreatedAt())
+                Times.toOffset(user.getCreatedAt()),
+                user.getTitle(),
+                Times.toOffset(user.getLastLoginAt()),
+                managerOf
         );
     }
 
@@ -157,39 +236,111 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserDto> list() {
-        return userRepository.findAllByOrderByIdAsc().stream().map(this::toDto).toList();
+        return toDtos(userRepository.findAllByOrderByIdAsc());
+    }
+
+    /**
+     * Paged search. {@code q} matches name, email, job title and phone (case-insensitive); the
+     * other filters are exact. Blank filters are ignored.
+     */
+    @Transactional(readOnly = true)
+    public UserPage search(String q, String role, String status, Long departmentId, String sort, int page, int size) {
+        int pageSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        int pageNumber = Math.max(0, page);
+        String roleName = role == null || role.isBlank() ? null : requireRole(role).getName();
+        String statusValue = status == null || status.isBlank() ? null : requireStatus(status);
+        String sortKey = sort == null || sort.isBlank() ? "name" : sort.trim();
+        boolean descending = sortKey.startsWith("-");
+        String sortField = descending ? sortKey.substring(1) : sortKey;
+        if (!SORT_KEYS.contains(sortField)) {
+            throw ApiException.badRequest("Unknown sort \"" + sortKey + "\". Use one of "
+                    + String.join(", ", SORT_KEYS) + ", with a leading \"-\" for descending.");
+        }
+        String pattern = q == null || q.isBlank() ? null : "%" + escapeLike(q.trim().toLowerCase(Locale.ROOT)) + "%";
+
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> where = new ArrayList<>();
+            if (pattern != null) {
+                where.add(cb.or(
+                        cb.like(cb.lower(root.get("fullName")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("email")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("title")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("phone")), pattern, '\\')));
+            }
+            if (roleName != null) {
+                Subquery<Long> withRole = query.subquery(Long.class);
+                Root<User> other = withRole.from(User.class);
+                withRole.select(other.get("id")).where(cb.equal(other.join("roles").get("name"), roleName));
+                where.add(root.get("id").in(withRole));
+            }
+            if (statusValue != null) {
+                where.add(cb.equal(cb.lower(root.get("status")), statusValue.toLowerCase(Locale.ROOT)));
+            }
+            if (departmentId != null) {
+                where.add(cb.equal(root.get("department").get("id"), departmentId));
+            }
+            // Only the page query is sorted; Spring Data drops the ordering from the count query.
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                Expression<?> key = switch (sortField) {
+                    case "email" -> root.get("email");
+                    case "department" -> cb.lower(root.join("department", JoinType.LEFT).get("name"));
+                    case "status" -> root.get("status");
+                    case "createdAt" -> root.get("createdAt");
+                    case "lastLoginAt" -> root.get("lastLoginAt");
+                    default -> cb.lower(root.get("fullName"));
+                };
+                Order primary = descending ? cb.desc(key, Nulls.LAST) : cb.asc(key, Nulls.LAST);
+                query.orderBy(primary, cb.asc(root.get("id")));
+            }
+            return cb.and(where.toArray(Predicate[]::new));
+        };
+
+        Page<User> result = userRepository.findAll(spec, PageRequest.of(pageNumber, pageSize));
+        return new UserPage(toDtos(result.getContent()), result.getTotalElements(), pageNumber, pageSize,
+                result.getTotalPages());
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    @Transactional(readOnly = true)
+    public UserDetailsDto details(Long id, User actor) {
+        User user = userRepository.findById(id).orElseThrow(() -> ApiException.notFound("User not found"));
+        Department department = user.getDepartment();
+        User head = department != null ? department.getManager() : null;
+        Department led = departmentRepository.findByManagerId(user.getId()).stream().findFirst().orElse(null);
+        return new UserDetailsDto(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getTitle(),
+                user.getStatus(),
+                department != null ? department.getId() : null,
+                department != null ? department.getName() : null,
+                department != null ? department.getColor() : null,
+                head != null ? head.getId() : null,
+                head != null ? head.getFullName() : null,
+                roleNames(user),
+                new TreeSet<>(user.getAllPermissions()),
+                led != null ? led.getId() : null,
+                led != null ? led.getName() : null,
+                Times.toOffset(user.getCreatedAt()),
+                Times.toOffset(user.getLastLoginAt()),
+                Times.toOffset(user.getPasswordChangedAt()),
+                actor.hasPermission(Permission.USER_UPDATE) && canEdit(actor, user)
+        );
     }
 
     // ------------------------------------------------------------------ commands
-
-    @Transactional
-    public User register(RegisterRequest request) {
-        String fullName = requireFullName(request.fullName());
-        String email = requireValidEmail(request.email());
-        String phone = normalizePhone(request.phone(), true);
-        passwordPolicy.validate(request.password());
-        Department department = findDepartment(request.departmentId());
-        ensureEmailAvailable(email, null);
-
-        User saved = userRepository.save(User.builder()
-                .fullName(fullName)
-                .email(email)
-                .phone(phone)
-                .password(passwordEncoder.encode(request.password()))
-                .status(User.STATUS_ACTIVE)
-                .department(department)
-                .roles(new HashSet<>(Set.of(requireRole(SystemRoles.MEMBER))))
-                .build());
-
-        auditService.log("user_created", email, fullName + " registered");
-        return saved;
-    }
 
     @Transactional
     public UserDto create(UserCreateRequest request, User actor) {
         String fullName = requireFullName(request.fullName());
         String email = requireValidEmail(request.email());
         String phone = normalizePhone(request.phone(), false);
+        String title = normalizeTitle(request.title());
         passwordPolicy.validate(request.password());
         Role role = requireRole(request.role());
         String status = requireStatus(request.status());
@@ -204,6 +355,7 @@ public class UserService {
                 .fullName(fullName)
                 .email(email)
                 .phone(phone)
+                .title(title)
                 .password(passwordEncoder.encode(request.password()))
                 .status(status)
                 .department(department)
@@ -211,19 +363,20 @@ public class UserService {
                 .build());
 
         auditService.log("user_created", actor.getEmail(),
-                "Created user " + fullName + " (" + email + ") as " + role.getName());
+                "Created user " + fullName + " (" + email + ") as " + role.getName(),
+                new AuditService.Subject(saved.getId(), department != null ? department.getId() : null));
         return toDto(saved);
+    }
+
+    /** The request that changes nothing: the user's current values, ready to have one field replaced. */
+    public static UserUpdateRequest currentValues(User user) {
+        return new UserUpdateRequest(user.getFullName(), user.getEmail(), null, user.getPrimaryRoleName(),
+                user.getStatus(), user.getDepartment() != null ? user.getDepartment().getId() : null, null);
     }
 
     @Transactional
     public User update(Long id, UserUpdateRequest request, User actor) {
         User target = userRepository.findById(id).orElseThrow(() -> ApiException.notFound("User not found"));
-
-        boolean actorIsAdmin = actor.hasRole(ADMIN);
-        boolean actorIsManager = !actorIsAdmin && actor.hasRole(MANAGER);
-        if (!actorIsAdmin && !actorIsManager) {
-            throw ApiException.forbidden("Only admins and managers can edit users");
-        }
 
         String fullName = requireFullName(request.fullName());
         String email = requireValidEmail(request.email());
@@ -231,18 +384,11 @@ public class UserService {
         String status = requireStatus(request.status());
         Department department = findDepartment(request.departmentId());
         String phone = request.phone() == null ? target.getPhone() : normalizePhone(request.phone(), false);
+        String title = request.title() == null ? target.getTitle() : normalizeTitle(request.title());
 
-        if (actorIsManager) {
-            if (target.hasRole(ADMIN) || target.hasRole(MANAGER)) {
-                throw ApiException.forbidden("Managers cannot edit admins or other managers");
-            }
-            Long managerDeptId = actor.getDepartment() != null ? actor.getDepartment().getId() : null;
-            if (managerDeptId == null) {
-                throw ApiException.forbidden("You are not assigned to a department");
-            }
-            if (target.getDepartment() == null || !managerDeptId.equals(target.getDepartment().getId())) {
-                throw ApiException.forbidden("Managers can only edit users in their own department");
-            }
+        requireCanEdit(actor, target);
+        if (!actor.hasRole(ADMIN)) {
+            Long managerDeptId = actor.getDepartment().getId();
             if (SystemRoles.isPrivileged(role.getName())) {
                 throw ApiException.forbidden("Managers cannot assign the ADMIN or MANAGER role");
             }
@@ -268,15 +414,29 @@ public class UserService {
         diff(changes, "name", target.getFullName(), fullName);
         diff(changes, "email", target.getEmail(), email);
         diff(changes, "phone", target.getPhone(), phone);
+        diff(changes, "title", target.getTitle(), title);
         diff(changes, "role", target.getPrimaryRoleName(), role.getName());
         diff(changes, "status", target.getStatus(), status);
         diff(changes, "department",
                 target.getDepartment() != null ? target.getDepartment().getName() : "none",
                 department != null ? department.getName() : "none");
 
+        // A department head must stay an active MANAGER or ADMIN member of the department they lead.
+        for (Department led : departmentRepository.findByManagerId(target.getId())) {
+            boolean stillLeads = User.STATUS_ACTIVE.equals(status) && SystemRoles.isPrivileged(role.getName())
+                    && department != null && department.getId().equals(led.getId());
+            if (!stillLeads) {
+                led.setManager(null);
+                departmentRepository.save(led);
+                changes.add("no longer manager of " + led.getName());
+            }
+        }
+
+        Long previousDepartmentId = target.getDepartment() != null ? target.getDepartment().getId() : null;
         target.setFullName(fullName);
         target.setEmail(email);
         target.setPhone(phone);
+        target.setTitle(title);
         target.setRoles(new HashSet<>(Set.of(role)));
         target.setStatus(status);
         target.setDepartment(department);
@@ -288,8 +448,11 @@ public class UserService {
         }
 
         if (!changes.isEmpty()) {
+            // Shown in the feed of the new department, or of the one the user left.
+            Long subjectDepartment = department != null ? department.getId() : previousDepartmentId;
             auditService.log("user_updated", actor.getEmail(),
-                    "Updated " + fullName + ": " + String.join(", ", changes));
+                    "Updated " + fullName + ": " + String.join(", ", changes),
+                    new AuditService.Subject(saved.getId(), subjectDepartment));
         }
         return saved;
     }
@@ -308,11 +471,17 @@ public class UserService {
             throw ApiException.conflict("At least one active admin is required");
         }
 
+        for (Department led : departmentRepository.findByManagerId(target.getId())) {
+            led.setManager(null);
+            departmentRepository.save(led);
+        }
         resetTokenRepository.deleteByUserId(target.getId());
         userRepository.delete(target);
         userSessionService.revokeAll(target.getEmail());
         auditService.log("user_deleted", actor.getEmail(),
-                "Deleted user " + target.getFullName() + " (" + target.getEmail() + ")");
+                "Deleted user " + target.getFullName() + " (" + target.getEmail() + ")",
+                new AuditService.Subject(target.getId(),
+                        target.getDepartment() != null ? target.getDepartment().getId() : null));
     }
 
     /** Changes the signed-in user's own email. Returns the new (normalized) email. */
@@ -328,7 +497,8 @@ public class UserService {
         String oldEmail = user.getEmail();
         user.setEmail(newEmail);
         userRepository.save(user);
-        auditService.log("email_changed", newEmail, oldEmail + " changed email to " + newEmail);
+        auditService.log("email_changed", newEmail, oldEmail + " changed email to " + newEmail,
+                AuditService.Subject.user(user.getId()));
         return newEmail;
     }
 
@@ -340,7 +510,8 @@ public class UserService {
             throw ApiException.badRequest("The new password must be different from the current one");
         }
         setPassword(user, newPassword);
-        auditService.log("password_changed", user.getEmail(), user.getEmail() + " changed their password");
+        auditService.log("password_changed", user.getEmail(), user.getEmail() + " changed their password",
+                AuditService.Subject.user(user.getId()));
     }
 
     /** Hashes and stores a new password (caller has validated it). */

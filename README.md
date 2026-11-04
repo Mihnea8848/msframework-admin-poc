@@ -50,8 +50,10 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Controller | Endpoints |
 |---|---|
 | `AuthController` | `POST /api/auth/login`, `GET /me`, `POST /register`, `POST /logout`, `POST /email`, `POST /password`, `POST /forgot-password`, `POST /reset-password` |
-| `UserController` | `GET`, `POST`, `PUT /{id}`, `DELETE /{id}` under `/api/users` |
-| `DepartmentController` | `GET`, `POST`, `PUT /{id}`, `DELETE /{id}` under `/api/departments` |
+| `UserController` | `GET`, `GET /search` (paged, filtered, sorted), `GET /{id}`, `GET /{id}/activity`, `POST`, `POST /bulk`, `POST /{id}/password-reset`, `PUT /{id}`, `DELETE /{id}` under `/api/users` |
+| `DepartmentController` | `GET`, `GET /{id}` (with members), `GET /{id}/activity`, `POST`, `PUT /{id}`, `PUT /{id}/manager`, `POST` and `DELETE /{id}/members/{userId}`, `DELETE /{id}` under `/api/departments` |
+| `AccessRequestController` | `GET /api/access-requests?status=`, `POST /{id}/approve`, `POST /{id}/reject` |
+| `RoleController` | `GET /api/roles` (permissions and member counts) |
 | `AuditController` | `GET /api/audit?limit=`, `POST /api/audit/event` (export events only) |
 | `ConnectionsController` | `GET /api/connections`, `POST /{id}/connect`, `POST /{id}/disconnect`, `PATCH /{id}/toggle` |
 | `WebhookController` | `GET /api/webhooks`, `POST`, `DELETE /{id}`, `PATCH /{id}/toggle` |
@@ -60,10 +62,20 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | `AuthSupportController` | `GET /api/auth/csrf` (sets the CSRF cookie), `GET /api/auth/registration` (is sign-up open) |
 | `SessionController` | `GET /api/sessions/me`, `DELETE /me/{id}`, `DELETE /me/others`; admins: `GET /api/sessions?userId=`, `DELETE /user/{userId}` |
 | `OrgSettingsController` | `GET /api/org/settings`, `PUT /api/org/settings` (company name, registration, password policy, default timezone) |
-| `ImportController` | `POST /api/import/users`, `POST /api/import/departments` |
+| `ImportController` | `POST /api/import/users`, `/departments`, `/expenses`, `/budgets`, `/checkins` |
 | `DatabaseController` | `GET /api/database/tables` |
+| `BudgetController` | `GET /api/budgets?year=&quarter=&departmentId=` (with spent, committed, remaining), `GET`/`PUT`/`DELETE /{id}`, `POST`; expense categories under `/api/finance/categories` |
+| `ExpenseController` | `GET /api/expenses` (filters, paged), `POST`, `GET`/`PUT`/`DELETE /{id}`, `POST /{id}/submit`, `/approve`, `/reject`, `/pay` |
+| `PaymentController` | `GET /api/payments?from=&to=` (paid expenses with monthly totals) |
+| `GoalController` | `GET`, `POST`, `GET`/`PUT`/`DELETE /{id}` under `/api/goals`, `GET`/`POST /{id}/checkins`, `DELETE /{id}/checkins/{checkinId}`, `GET /api/performance?year=&quarter=` |
+| `ReportController` | `GET /api/reports/overview?from=&to=`, `GET /api/reports/export.csv?type=expenses\|budgets\|performance` |
+| `IngestController` | `POST /api/ingest/checkins` with `Authorization: Bearer <API key>` (scope `ingest:checkins`, no session) |
+
+- **Budgets, expenses and goals:** each department has a budget per quarter and category. Expenses go DRAFT, SUBMITTED, APPROVED (or REJECTED), PAID: the department's manager or finance approves, nobody approves their own, finance marks them paid, and going over the remaining budget is allowed but flagged. Paid expenses are the payments ledger (no payment provider is connected). Goals are department KPIs with a baseline and a target per quarter; check-ins come from the UI, a CSV import or an integration's API key; a department's score is the weighted average attainment of its goals. Money is in one organisation currency (`FINANCE_CURRENCY`, EUR by default), never converted.
 
 - **Role-based access control:** ADMIN, MANAGER, MEMBER and VIEWER roles, permission-checked on every endpoint. Managers can only edit their own department and its members. The system always keeps one active admin.
+- **People management:** paged user search, user profiles with an activity feed, bulk activate, deactivate, role and department changes (every rule checked per user), department managers, and admin-made password reset links (shown once, until email exists).
+- **Access requests:** registering no longer creates an account. It sends a request that an admin approves (choosing the role and department) or rejects; until then, signing in says the request is still waiting.
 - **Audit logging** on every mutating action, including failed and blocked sign-ins.
 - **Security:** BCrypt passwords (cost 12, older hashes upgraded at sign-in) checked against a list of the 1000 most common passwords, session cookies (`HttpOnly`, `SameSite=Lax`), session-id rotation on login, password hashes never leave the server, API keys and reset tokens stored only as SHA-256 hashes.
 - **Sessions:** stored in PostgreSQL (Spring Session JDBC), so they survive restarts and work across instances. A session ends after 30 minutes without activity (`SESSION_TIMEOUT`); background polls do not count as activity. Users can see and sign out their sessions; admins can sign a user out everywhere. Deactivating or deleting a user, or resetting their password, ends their sessions at once.
@@ -112,6 +124,8 @@ Open **http://localhost:5173** and sign in with the seeded admin account:
 |---|---|
 | Email | `admin@test.com` |
 | Password | `password123` |
+
+The first start also adds **demo people** for MEH Studios (about 45 users in the seven departments, five department managers, access requests and 60 days of audit history). Every demo user, for example `radu.constantinescu@mehstudios.net` (MANAGER of Development) or `andreea.popescu@mehstudios.net` (ADMIN), signs in with the password **`MehDemo!2026`**. Set `SEED_DEMO_DATA=false` to start without them.
 
 Manual start, configuration, tests and troubleshooting: [`AGENTS.md`](AGENTS.md).
 
@@ -171,11 +185,16 @@ The schema is created and changed by **Flyway** migrations in `backend/src/main/
 - A new, empty database gets the whole schema from `V1__baseline.sql`.
 - A database created by an older version of the app (before Flyway) is detected and upgraded in place: it is baselined at version 1 and `V2__converge_legacy_schema.sql` adds what is missing and moves old roles from the legacy `users.role` column into the role tables. **Back it up first** with `pg_dump`.
 - A non-empty database that is not an MSFramework database is refused, and the app does not start.
+- `V3__people.sql` adds department managers, job titles, last sign-in times, access requests and the indexes for user search. It stops with a clear message if two users have the same email in different capitals; merge or rename them first.
 
 After the migrations, `DatabaseSeeder`:
 
 - **syncs the permissions** of the four built-in roles with `SystemRoles.java`
 - seeds **7 departments** (each with its own seal), the **admin user** and **12 service connections** when those tables are empty
+
+Then, unless `SEED_DEMO_DATA=false`, `DemoPeopleSeeder` adds the demo people once (password `MehDemo!2026`). It adds to existing data, matches departments by name and never changes the admin account.
+
+With `SEED_DEMO_DATA=true` (the default), `DemoBusinessSeeder` then adds demo business data once per database: budgets, about 350 expenses with realistic vendors and a mix of statuses, and 2 to 3 goals per department with weekly check-ins, for the current and the two previous quarters. It uses the users and departments that exist and changes nothing already there.
 
 ---
 
@@ -201,6 +220,8 @@ After the migrations, `DatabaseSeeder`:
 - [x] Database-backed sessions, CSRF tokens, sign-in throttling and account lockout
 - [ ] Email delivery (reset links are printed to the backend log for now)
 - [ ] Real webhook delivery
-- [ ] API-key authentication for the REST API
+- [x] Budgets, expenses with approvals, goals and KPIs, reports (backend)
+- [x] API-key ingest of goal check-ins (`/api/ingest/checkins`)
+- [ ] API-key authentication for the rest of the REST API
 - [ ] MFA (two-factor authentication)
 - [x] Versioned schema migrations (Flyway) instead of `ddl-auto=update`

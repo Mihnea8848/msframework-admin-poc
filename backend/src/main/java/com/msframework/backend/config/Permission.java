@@ -48,6 +48,21 @@ public enum Permission {
     API_KEY_CREATE,
     API_KEY_DELETE,
 
+    // People: access requests (self-registration review) and the roles overview
+    ACCESS_REQUESTS_MANAGE,
+    ROLES_READ,
+
+    // Business: budgets, expenses with approvals, goals and KPIs, reports (BUSINESS-API).
+    // Department scoping (managers and members act on their own department) is enforced in
+    // BusinessAccess, not by the permission itself.
+    FINANCE_READ,
+    FINANCE_MANAGE,
+    EXPENSE_SUBMIT,
+    EXPENSE_APPROVE,
+    GOALS_READ,
+    GOALS_MANAGE,
+    REPORTS_READ,
+
     // Sessions and organisation settings (sessions-security)
     SESSIONS_MANAGE,
     ORG_SETTINGS_MANAGE
