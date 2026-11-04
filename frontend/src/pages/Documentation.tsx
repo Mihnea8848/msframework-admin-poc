@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import type { ReactNode } from "react";
 import { BookOpen, ChevronDown } from "lucide-react";
+import PageHeader from "../ui/PageHeader";
+import "../ui/list.css";
+import "../ui/surface.css";
+import "./documentation.css";
 
-const SECTIONS = [
+interface DocSection {
+    id: string;
+    title: string;
+    content: ReactNode;
+}
+
+const SECTIONS: DocSection[] = [
     {
         id: "getting-started",
         title: "Getting Started",
@@ -51,8 +62,8 @@ POST   /api/auth/register — self-service sign-up (MEMBER role)`}</pre>
         title: "Departments",
         content: (
             <>
-                <p>The <strong>Departments</strong> page lets admins create, rename, recolour and delete departments; managers can edit their own department.</p>
-                <p>Member counts are live. The performance and budget columns are illustrative sample data. Deleting a department keeps its members — they simply become unassigned.</p>
+                <p>The <strong>Departments</strong> page lets admins create, rename, re-seal and delete departments; managers can edit their own department.</p>
+                <p>Member counts are live. Each department shows its seal (emblem and colour). The performance and budget figures are illustrative sample data. Deleting a department keeps its members — they simply become unassigned.</p>
                 <pre>{`GET    /api/departments      — list departments
 POST   /api/departments      — create department
 PUT    /api/departments/{id} — update department
@@ -111,34 +122,30 @@ Esc           — Close any overlay or dialog`}</pre>
     },
 ];
 
-function AccordionItem({ section, open, onToggle }) {
+function AccordionItem({ section, open, onToggle }: { section: DocSection; open: boolean; onToggle: () => void }) {
+    const bodyId = useId();
     return (
-        <div className="accordion-item" id={section.id}>
-            <div
-                className="accordion-header"
-                onClick={onToggle}
-                role="button"
-                tabIndex={0}
-                aria-expanded={open}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-            >
-                <BookOpen size={16} style={{ color: "var(--accent)", flexShrink: 0 }} />
-                {section.title}
-                <ChevronDown size={16} className={`accordion-chevron${open ? " open" : ""}`} />
-            </div>
+        <section className="ms-panel ms-docs__item" id={section.id} aria-label={section.title}>
+            <h2 className="ms-docs__heading">
+                <button type="button" className="ms-docs__toggle" onClick={onToggle} aria-expanded={open} aria-controls={open ? bodyId : undefined}>
+                    <BookOpen className="ms-docs__icon" aria-hidden="true" />
+                    <span className="ms-docs__title">{section.title}</span>
+                    <ChevronDown className="ms-docs__chevron" aria-hidden="true" />
+                </button>
+            </h2>
             {open && (
-                <div className="accordion-body">
+                <div className="ms-docs__body" id={bodyId}>
                     {section.content}
                 </div>
             )}
-        </div>
+        </section>
     );
 }
 
 export default function Documentation() {
     const [openIds, setOpenIds] = useState(() => new Set(["getting-started"]));
 
-    function toggle(id) {
+    function toggle(id: string) {
         setOpenIds((prev) => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
@@ -147,38 +154,31 @@ export default function Documentation() {
         });
     }
 
-    function jumpTo(id) {
+    function jumpTo(id: string) {
         setOpenIds((prev) => new Set(prev).add(id));
+        const reduced = document.documentElement.dataset.motion === "reduced";
         requestAnimationFrame(() => {
-            document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
         });
     }
 
     return (
-        <section className="workspace">
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">General / Documentation</div>
-                    <div className="workspace-title-row">
-                        <h1>Documentation</h1>
-                    </div>
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        How to use MSFramework Admin.
-                    </p>
-                </div>
-            </div>
+        <section className="ms-docs">
+            <PageHeader eyebrow="General" title="Documentation" description="How to use MSFramework Admin." />
 
-            <div className="doc-jump-links">
+            <nav className="ms-docs__jump" aria-label="Sections">
                 {SECTIONS.map((s) => (
-                    <button key={s.id} type="button" className="doc-jump-link" onClick={() => jumpTo(s.id)}>
+                    <button key={s.id} type="button" className="ms-chip" onClick={() => jumpTo(s.id)}>
                         {s.title}
                     </button>
                 ))}
-            </div>
+            </nav>
 
-            {SECTIONS.map((s) => (
-                <AccordionItem key={s.id} section={s} open={openIds.has(s.id)} onToggle={() => toggle(s.id)} />
-            ))}
+            <div className="ms-docs__list">
+                {SECTIONS.map((s) => (
+                    <AccordionItem key={s.id} section={s} open={openIds.has(s.id)} onToggle={() => toggle(s.id)} />
+                ))}
+            </div>
         </section>
     );
 }
