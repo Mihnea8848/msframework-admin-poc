@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Apple, Chrome, Github } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Apple, Check, Chrome, Circle, Github, LogOut, MonitorSmartphone } from "lucide-react";
 import { post } from "../../api/client";
-import { passwordProblem, validatePassword } from "../../utils/validators";
+import { fetchMySessions, fetchRegistrationStatus, revokeMyOtherSessions } from "../../api/security";
+import type { SessionDto } from "../../api/security";
+import { DEFAULT_PASSWORD_MIN_LENGTH, passwordLabels, passwordProblem, validatePassword } from "../../utils/validators";
+import type { PasswordRule } from "../../utils/validators";
+import { parseUserAgent } from "../../utils/userAgent";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
 import Toggle from "../../ui/Toggle";
@@ -18,7 +23,80 @@ const ACCOUNTS = [
     { name: "Apple", Icon: Apple },
 ];
 
-/** Settings > Security: change the password; two-factor and single sign-on are coming soon. */
+/** The rules listed under the new password (the byte limit only matters for very long ones). */
+const LISTED_RULES: readonly PasswordRule[] = ["minLen", "hasNumber", "hasSymbol", "notCommon"];
+
+/** Your sessions at a glance, with "Sign out other sessions" and a link to the Sessions page. */
+function SessionsSummary() {
+    const [sessions, setSessions] = useState<SessionDto[] | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    const load = useCallback(() => fetchMySessions()
+        .then((list) => { setSessions(Array.isArray(list) ? list : []); setError(null); })
+        .catch((err: unknown) => setError(messageOf(err))), []);
+
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    const current = sessions?.find((s) => s.current);
+    const others = (sessions ?? []).filter((s) => !s.current).length;
+
+    async function signOutOthers() {
+        setBusy(true);
+        setNotice(null);
+        try {
+            await revokeMyOtherSessions();
+            setNotice(`Signed out ${others} other ${others === 1 ? "session" : "sessions"}.`);
+            await load();
+        } catch (err) {
+            setError(messageOf(err));
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    return (
+        <section className="ms-panel ms-account__section" aria-labelledby="account-sessions">
+            <div className="ms-panel__head">
+                <h2 className="ms-panel__title" id="account-sessions">Sessions</h2>
+                <Link className="ms-link ms-account__head-link" to="/sessions">Manage sessions</Link>
+            </div>
+            <div className="ms-account__body">
+                {error && <Alert tone="danger" role="alert">{error}</Alert>}
+                {!error && sessions === null && <p className="ms-account__sub" role="status">Loading…</p>}
+                {sessions && (
+                    <div className="ms-account__sessions">
+                        <span className="ms-account__account-icon" aria-hidden="true"><MonitorSmartphone /></span>
+                        <div className="ms-account__row-text">
+                            <p className="ms-account__count">
+                                Signed in on {sessions.length} {sessions.length === 1 ? "device" : "devices"}
+                            </p>
+                            <p className="ms-account__sub">
+                                {current ? `This device: ${parseUserAgent(current.userAgent).label}. ` : ""}
+                                {others === 0 ? "No other sessions." : `${others} other ${others === 1 ? "session" : "sessions"}.`}
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {notice && <Alert tone="ok" role="status">{notice}</Alert>}
+                <div className="ms-account__actions">
+                    <Button size="sm" variant="ghost-danger" icon={<LogOut aria-hidden="true" />}
+                        disabled={busy || others === 0} onClick={signOutOthers}>
+                        {busy ? "Signing out…" : "Sign out other sessions"}
+                    </Button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/**
+ * Settings > Security: change the password (checked against the organisation's minimum
+ * length), your sessions at a glance; two-factor and single sign-on are coming soon.
+ */
 export default function SecurityTab() {
     const [currentPw, setCurrentPw] = useState("");
     const [newPw, setNewPw] = useState("");
@@ -26,8 +104,18 @@ export default function SecurityTab() {
     const [pwMsg, setPwMsg] = useState<string | null>(null);
     const [pwError, setPwError] = useState<string | null>(null);
     const [pwBusy, setPwBusy] = useState(false);
+    const [minLength, setMinLength] = useState(DEFAULT_PASSWORD_MIN_LENGTH);
 
-    const pwResult = newPw ? validatePassword(newPw) : null;
+    useEffect(() => {
+        let alive = true;
+        fetchRegistrationStatus()
+            .then((status) => { if (alive && status?.passwordMinLength) setMinLength(status.passwordMinLength); })
+            .catch(() => {});
+        return () => { alive = false; };
+    }, []);
+
+    const labels = passwordLabels(minLength);
+    const pwResult = newPw ? validatePassword(newPw, minLength) : null;
     const pwStrength = pwResult ? Object.values(pwResult.checks).filter(Boolean).length : 0;
     const pwTotal = pwResult ? Object.keys(pwResult.checks).length : 1;
 
@@ -36,7 +124,7 @@ export default function SecurityTab() {
         setPwMsg(null);
         setPwError(null);
         if (!currentPw) { setPwError("Enter your current password."); return; }
-        const problem = passwordProblem(newPw);
+        const problem = passwordProblem(newPw, minLength);
         if (problem) { setPwError(`New password: ${problem.toLowerCase()}.`); return; }
         if (newPw !== confirmPw) { setPwError("The new passwords do not match."); return; }
 
@@ -64,7 +152,19 @@ export default function SecurityTab() {
                         <h2 className="ms-panel__title" id="account-password">Password</h2>
                     </div>
                     <div className="ms-account__body">
-                        <p className="ms-account__sub">At least 8 characters, with a number and a symbol.</p>
+                        <ul className="ms-account__rules" aria-label="Password rules">
+                            {LISTED_RULES.map((rule) => {
+                                const met = Boolean(pwResult?.checks[rule]);
+                                return (
+                                    <li key={rule} className={met ? "ms-account__rule ms-account__rule--met" : "ms-account__rule"}>
+                                        {met ? <Check aria-hidden="true" /> : <Circle aria-hidden="true" />}
+                                        <span>{labels[rule]}</span>
+                                        {newPw && <span className="ms-visually-hidden">{met ? " (met)" : " (not met yet)"}</span>}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                        <p className="ms-account__sub">Common passwords such as “Password123!” are refused, even when they meet the other rules.</p>
                         <div className="ms-field">
                             <label className="ms-field__label" htmlFor="current-pw">Current password</label>
                             <input id="current-pw" className="ms-input" type="password" autoComplete="current-password" placeholder="••••••••"
@@ -81,7 +181,7 @@ export default function SecurityTab() {
                                             <span key={i} className={i < pwStrength ? "ms-account__seg ms-account__seg--on" : "ms-account__seg"} />
                                         ))}
                                     </span>
-                                    <span className="ms-account__strength-text">{passwordProblem(newPw) || "Meets all requirements"}</span>
+                                    <span className="ms-account__strength-text">{passwordProblem(newPw, minLength) || "Meets all requirements"}</span>
                                 </div>
                             )}
                         </div>
@@ -101,6 +201,8 @@ export default function SecurityTab() {
                 </form>
 
                 <div className="ms-account__stack">
+                    <SessionsSummary />
+
                     <section className="ms-panel ms-account__section" aria-labelledby="account-2fa">
                         <div className="ms-account__row">
                             <div className="ms-account__row-text">
