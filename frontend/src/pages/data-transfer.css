@@ -1,0 +1,281 @@
+/*
+ * Import and Export (pages/ImportData.tsx, pages/ExportData.tsx): the dataset picker, the drop
+ * zone, column mapping and preview, the column checklist and the download summary.
+ */
+@layer pages {
+  .ms-transfer {
+    display: grid;
+
+    /* minmax(0, 1fr): the one-line phone header description must not widen the column */
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-transfer) :where(h2, p, ul, pre) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-transfer .ms-page-header__stripe {
+    margin-bottom: var(--space-2);
+  }
+
+  .ms-transfer__entity {
+    max-width: 360px;
+  }
+
+  .ms-transfer__h {
+    font-size: var(--font-size-md);
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-transfer__note {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-transfer__danger {
+    color: var(--status-danger-fg);
+    font-size: var(--font-size-xs);
+  }
+
+  /* Import: drop zone */
+  .ms-transfer__drop {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-1);
+    padding: var(--space-8) var(--space-4);
+    border: 1.5px dashed var(--border-control);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .ms-transfer__drop:hover,
+  .ms-transfer__drop--over {
+    border-color: var(--accent-line);
+    background: var(--accent-tint);
+  }
+
+  .ms-transfer__drop:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ms-transfer__drop-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: var(--space-2);
+    border-radius: var(--radius-2);
+    background: var(--accent-tint);
+    color: var(--accent-text);
+  }
+
+  .ms-transfer__drop-icon > svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .ms-transfer__drop-title {
+    font-weight: var(--weight-bold);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-transfer__drop-sub {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-transfer__guide {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .ms-transfer__guide-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 6px;
+    min-height: var(--touch-target);
+    padding: 0 var(--space-1);
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+  }
+
+  .ms-transfer__guide-toggle:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  .ms-transfer__chevron {
+    width: 14px;
+    height: 14px;
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-transfer__guide-toggle[aria-expanded="true"] .ms-transfer__chevron {
+    transform: rotate(180deg);
+  }
+
+  .ms-transfer__guide-body {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .ms-transfer__example {
+    overflow-x: auto;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-transfer__preview,
+  .ms-transfer__result {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .ms-transfer__mapping {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .ms-transfer__cols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ms-transfer__errors {
+    list-style: none;
+  }
+
+  .ms-transfer__error {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--border-faint);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-transfer__error:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-transfer__error strong {
+    flex: none;
+    min-width: 60px;
+    color: var(--text-primary);
+  }
+
+  /* Export: column checklist and summary */
+  .ms-transfer__columns {
+    min-width: 0;
+    margin: 0;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .ms-transfer__legend {
+    padding: 0 var(--space-1);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-transfer__checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+    gap: var(--space-1) var(--space-4);
+  }
+
+  .ms-transfer__check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--touch-target);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+  }
+
+  .ms-transfer__check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-solid);
+  }
+
+  .ms-transfer__key {
+    margin-left: auto;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+  }
+
+  .ms-transfer__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .ms-transfer__summary-title {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-transfer__summary-sub {
+    margin-top: 2px;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-transfer__file {
+    color: var(--accent-text);
+    font-family: var(--font-mono);
+  }
+
+  @media (width <= 767px) {
+    .ms-transfer {
+      gap: var(--space-3);
+    }
+
+    .ms-transfer__entity {
+      max-width: none;
+    }
+
+    .ms-transfer__drop {
+      padding: var(--space-6) var(--space-3);
+    }
+
+    .ms-transfer__summary {
+      padding: var(--space-3);
+    }
+
+    .ms-transfer__summary .ms-btn {
+      flex: 1 1 100%;
+    }
+  }
+}

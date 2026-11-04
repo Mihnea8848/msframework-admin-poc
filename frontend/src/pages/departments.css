@@ -1,0 +1,321 @@
+/*
+ * Departments (pages/Departments.tsx): seal cards in a grid, as in the concept. Below 768px the
+ * cards become rows (badge, name and actions, member line) and the sample figures are hidden.
+ */
+@layer pages {
+  .ms-departments {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :where(.ms-departments) :where(h2, p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-departments__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: var(--space-3);
+    list-style: none;
+  }
+
+  .ms-departments__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 18px 16px;
+    text-align: center;
+  }
+
+  .ms-departments__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .ms-departments__name {
+    margin-top: var(--space-3);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-sm);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    line-height: 1.35;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-departments__meta {
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-departments__meta b {
+    color: var(--text-primary);
+  }
+
+  .ms-departments__seal-name {
+    color: var(--text-tertiary);
+  }
+
+  .ms-departments__sample {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    width: 100%;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-subtle);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-departments__perf,
+  .ms-departments__budget {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ms-departments__stat-label {
+    color: var(--text-tertiary);
+  }
+
+  .ms-departments__stat-value {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-departments__perf > svg:not(.ms-departments__spark) {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-departments__perf--up {
+    color: var(--status-ok-fg);
+  }
+
+  .ms-departments__perf--down {
+    color: var(--status-danger-fg);
+  }
+
+  .ms-departments__spark polyline {
+    stroke: currentcolor;
+  }
+
+  .ms-departments__bar {
+    width: 64px;
+    height: 4px;
+  }
+
+  .ms-departments__bar-track {
+    fill: var(--border-faint);
+  }
+
+  .ms-departments__bar--ok .ms-departments__bar-fill {
+    fill: var(--status-ok-fg);
+  }
+
+  .ms-departments__bar--warn .ms-departments__bar-fill {
+    fill: var(--status-warn-fg);
+  }
+
+  .ms-departments__bar--danger .ms-departments__bar-fill {
+    fill: var(--status-danger-fg);
+  }
+
+  .ms-departments__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    width: 100%;
+    margin-top: var(--space-4);
+    padding-top: 14px;
+    border-top: 1px solid var(--border-faint);
+  }
+
+  .ms-departments__locked {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  /* The seal picker in the dialog */
+  .ms-departments__seals {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .ms-departments__seals legend {
+    margin-bottom: var(--space-2);
+    padding: 0;
+  }
+
+  .ms-departments__seal-opts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .ms-departments__seal-opt {
+    position: relative;
+  }
+
+  .ms-departments__seal-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+  }
+
+  .ms-departments__seal-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    cursor: pointer;
+  }
+
+  .ms-departments__seal-label:hover {
+    background: var(--row-hover);
+  }
+
+  .ms-departments__seal-radio:checked + .ms-departments__seal-label {
+    padding: 5px 9px;
+    border: 2px solid var(--seal-border);
+    background: color-mix(in srgb, var(--seal) 9%, transparent);
+  }
+
+  .ms-departments__seal-radio:focus-visible + .ms-departments__seal-label {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (width <= 767px) {
+    /* One clipped frame around the rows */
+    .ms-departments__grid {
+      position: relative;
+      display: block;
+      isolation: isolate;
+      background: var(--border-subtle);
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+
+    .ms-departments__grid::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      z-index: -1;
+      background: var(--surface-1);
+      clip-path: polygon(0 0, calc(100% - 9.41px) 0, 100% 9.41px, 100% 100%, 9.41px 100%, 0 calc(100% - 9.41px));
+    }
+
+    .ms-departments__card {
+      display: grid;
+      grid-template-areas:
+        "badge name act"
+        "badge meta act";
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1px 0;
+      min-height: 64px;
+      padding: 8px 6px 9px 12px;
+      background: none;
+      text-align: left;
+      clip-path: none;
+      isolation: auto;
+    }
+
+    .ms-departments__card::before {
+      display: none;
+    }
+
+    .ms-departments__card + .ms-departments__card {
+      border-top: 1px solid var(--border-faint);
+    }
+
+    .ms-departments__card .ms-seal-badge {
+      grid-area: badge;
+      width: 40px;
+      height: 40px;
+    }
+
+    .ms-departments__card .ms-seal-badge__icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .ms-departments__info {
+      display: contents;
+    }
+
+    .ms-departments__name {
+      grid-area: name;
+      min-width: 0;
+      margin-top: 0;
+      overflow: hidden;
+      line-height: var(--leading-tight);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ms-departments__meta {
+      grid-area: meta;
+      min-width: 0;
+      margin-top: 0;
+      overflow: hidden;
+      font-size: var(--font-size-xs);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ms-departments__sample {
+      display: none;
+    }
+
+    .ms-departments__actions {
+      grid-area: act;
+      width: auto;
+      margin: -4px 0 -4px var(--space-2);
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .ms-departments__btn .ms-btn__face {
+      width: 40px;
+      padding: 0;
+    }
+
+    .ms-departments__btn-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .ms-departments__seal-label {
+      min-height: 44px;
+      padding: 4px 8px;
+      font-size: var(--font-size-xs);
+    }
+
+    .ms-departments__seal-radio:checked + .ms-departments__seal-label {
+      padding: 3px 7px;
+    }
+  }
+}

@@ -8,7 +8,7 @@ How to get MSFramework Admin running, how it is put together, and the rules for 
 |---|---|---|---|
 | Database | PostgreSQL 16 in Docker (`docker-compose.yml`, with a healthcheck) | host **5433** → container 5432 | `docker compose up -d --wait` |
 | Backend | Spring Boot 4.0.3 (Spring 7, Security 7, Hibernate 7), Maven wrapper (`backend/`) | **8080** | `./mvnw spring-boot:run` |
-| Frontend | React 19 + Vite 7, TypeScript 5 (migrating from JS) (`frontend/`) | **5173** | `npm run dev` |
+| Frontend | React 19 + Vite 7, TypeScript 5 (`frontend/`) | **5173** | `npm run dev` |
 
 The browser only talks to Vite. Vite proxies `/api/*` to `http://localhost:8080` (`frontend/vite.config.js`), so the session cookie stays same-origin and no CORS setup is needed. Always open `http://localhost:5173`, never `:8080` directly.
 
@@ -110,11 +110,11 @@ Frontend scripts (in `frontend/`):
 | `npm test` | Vitest unit tests, once (`npm run test:watch` re-runs on save) |
 | `npm run typecheck` | `tsc -b` on its own |
 | `npm run build` | `tsc -b` type check, `vite build`, then the bundle budget (`scripts/check-bundle.mjs`) |
-| `npm run check:bundle` | The bundle budget on its own, against an existing `dist/`: gzip sizes of the entry JS (<= 130 kB), all CSS (<= 25 kB), each lazy chunk (<= 40 kB) and the latin `.woff2` fonts (<= 70 kB). Prints a table and fails when one is over |
+| `npm run check:bundle` | The bundle budget on its own, against an existing `dist/`: gzip sizes of the entry JS (<= 130 kB), all CSS together, including each page's own stylesheet (<= 30 kB), each lazy chunk (<= 40 kB) and the latin `.woff2` fonts (<= 70 kB). Prints a table and fails when one is over |
 
 - Frontend unit tests are `*.test.ts` (or `.test.tsx` for components) files next to the module they test (`src/utils/csv.test.ts`, `src/shell/MoreSheet.test.tsx`). Router tests build a `createMemoryRouter(routes)` from `src/app/routes.tsx` inside `AuthProvider` and assert on `router.state.location`. jsdom has no `HTMLDialogElement.showModal`, so dialogs must work with the `open` attribute too (see `shell/MoreSheet.tsx`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
-- `eslint-plugin-jsx-a11y` reports its recommended rules as **warnings** for now, because the existing pages have legacy issues. Don't add new ones; a later cleanup PR turns them into errors.
-- Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) lints every CSS file except the legacy stylesheet in `src/styles/legacy/`. It rejects colour literals (hex, `rgb()`, `hsl()`, named colours) everywhere except `src/styles/tokens/primitives.css`, and requires the `ms-` prefix on class names (see "Frontend styles and design tokens").
+- `eslint-plugin-jsx-a11y` runs its recommended rules as **errors**. If a rule is wrong for one element (an `option` in a combobox listbox, for example), disable it on that line with a comment that says why.
+- Stylelint (`stylelint.config.mjs`, `stylelint-config-standard`) lints every CSS file under `src/`. It rejects colour literals (hex, `rgb()`, `hsl()`, named colours) everywhere except `src/styles/tokens/primitives.css`, and requires the `ms-` prefix on class names (see "Frontend styles and design tokens").
 - `src/styles/tokens/contrast.test.ts` resolves the colour tokens for every theme x accent and theme x seal and fails when a pair drops below WCAG AA (4.5:1 for text, 3:1 for the focus ring, control borders and seal outlines). If you change a colour token and it fails, pick a different primitive; don't lower the threshold.
 
 - Backend tests (`backend/src/test`) are MockMvc integration tests that go through the real security filter chain, on **real PostgreSQL 16**.
@@ -177,18 +177,17 @@ frontend/src/styles/
   tokens/scale.css         spacing (4px grid), radii and clip shapes, fonts, type scale, control heights, z-index
   tokens/density.css       [data-density="compact"] overrides
   tokens/motion.css        durations and easings; all 0 under [data-motion="reduced"]
-  tokens/legacy-aliases.css the old variables (--bg, --panel, --accent, ...) mapped to the new tokens
-  base/                reset.css, fonts.css (self-hosted @font-face), typography.css
-  legacy/              the pre-Chevron stylesheet, kept working through the aliases until pages are rebuilt
+  base/                reset.css (box sizing, link and button resets, form fonts, reduced motion), fonts.css
+                       (self-hosted @font-face), typography.css
   utilities.css        single-purpose helpers (ms-visually-hidden)
 ```
 
-Component and shell styles live next to their component (`src/ui/brand/logo.css`, `src/shell/sidebar.css`), imported by it.
+Component, shell and page styles live next to their component (`src/ui/brand/logo.css`, `src/shell/sidebar.css`, `src/pages/payments.css`), imported by it. There is no global legacy stylesheet any more: every page uses `ms-` classes and tokens.
 
-- **Cascade layers**, lowest priority first: `legacy, reset, tokens, base, components, shell, pages, utilities`. A later layer always wins, whatever the specificity, so `legacy/` can never override new styles. Because `reset` and `base` sit above `legacy`, keep them minimal and never set there something the legacy CSS relies on.
+- **Cascade layers**, lowest priority first: `reset, tokens, base, components, shell, pages, utilities`. A later layer always wins, whatever the specificity. Keep `reset` and `base` small: components should not have to undo them.
 - **Hex only in primitives.** `primitives.css` names colours by what they are (`--brand-cyan`, `--charcoal-850`). Everything else uses **semantic tokens** by role: `--canvas`, `--surface-1` to `--surface-3`, `--field`, `--text-primary/secondary/tertiary/disabled`, `--border-faint/subtle/strong/control`, `--focus-ring`, `--primary`, `--primary-hover`, `--on-primary`, `--danger-solid`, `--on-danger`, and `--status-ok|warn|danger|info-fg/bg/border`. To add a colour, add a primitive, point a semantic token at it in both theme files, and add the pair to `contrast.test.ts` if it carries text or a boundary.
 - **Accents** (`data-accent`): `cyan` (default), `cobalt`, `violet`, `jade`, `gold`, `silver`. The selected one fills `--accent-solid`, `--on-accent`, `--accent-text`, `--accent-line` and `--accent-tint`. Maple red (`--danger-solid`) is only for destructive actions and is never an accent.
-- **Seals** (department colours): put `data-seal="administration|development|quality-control|external-affairs|human-resources|ethics-regulations|engineering-innovation|director"` on an element and use `--seal` (ring, glyph and fill), `--seal-fg` (content on a solid seal fill), `--seal-text` (seal-coloured text) and `--seal-border` inside it. The per-theme values live on `:root` as `--seal-<name>-*`. The current departments still store the older `avatar-*` keys (flat colours in `primitives.css`) until they move to seals.
+- **Seals** (department colours): put `data-seal="administration|development|quality-control|external-affairs|human-resources|ethics-regulations|engineering-innovation|director"` on an element and use `--seal` (ring, glyph and fill), `--seal-fg` (content on a solid seal fill), `--seal-text` (seal-coloured text) and `--seal-border` inside it. The per-theme values live on `:root` as `--seal-<name>-*`. Departments store a colour key (`avatar-*`, the backend accepts `avatar-[a-z]+`); `ui/seal/seals.ts` maps every key to a seal (`sealForColor`), and each seal has the key a new department saves. The seeder gives the seven default departments their own seal's key.
 - **Shape and type:** corners are 0 to 2px (`--radius-2`); the Chevron clipped corner is `clip-path: var(--clip-8)` (controls) or `var(--clip-12)` (panels). A clipped element also clips its focus outline, so drop the clip on `:focus-visible` or put the ring on a wrapper. Manrope (`--font-ui`) is the running text; Montserrat 600/700 uppercase (`--font-cap`) is for labels, buttons and eyebrows.
 - **Class names:** new component classes are global BEM classes with the `ms-` prefix (`ms-logo`, `ms-logo__upper`), one CSS file per component next to it, wrapped in `@layer components { ... }` (`@layer shell { ... }` for `src/shell/` and `src/app/`).
 - **`<html>` attributes**, set before the first paint by `public/theme-init.js` (a blocking `<script src>` in `index.html`, not inline, so a strict CSP works) and changed live by `src/theme/appearance.ts`:
@@ -198,7 +197,9 @@ Component and shell styles live next to their component (`src/ui/brand/logo.css`
 - **Fonts** are self-hosted from `@fontsource-variable/manrope` and `@fontsource/montserrat` (SIL Open Font License 1.1), latin and latin-ext subsets only, declared in `base/fonts.css`. Don't add Google Fonts or other third-party font URLs.
 - **Logo:** `src/ui/brand/Logo.tsx` is the two-path SVG mark, coloured by `--logo-upper` and `--logo-lower`; pass `title` when it is the only name on screen. The favicon is `public/favicon.svg`.
 - **Login art:** `src/ui/brand/LogoArt.tsx` is the large decorative mark behind the sign-in pages: the `Logo.tsx` paths with brand gradients, an alpha mask that fades it toward the form, and an `feTurbulence` grain clipped to the mark. Its ids come from `useId`, it is `aria-hidden`, and the grain follows `--grain-blend`, `--grain-strength` and `--grain-wash` (per theme, in the semantic token files).
-- **Shared controls:** `ui/Button.tsx` (`variant` primary, secondary, ghost or danger; the `<button>` shows the focus ring, the inner face is clipped), `ui/Alert.tsx` (ok, info, warn, danger), and CSS-only blocks you import from the component that uses them: `ui/field.css` (`ms-field`, `ms-field__label`, `ms-field__row`, `ms-input`, `ms-select`, `ms-field__error`, `ms-link`) and `ui/surface.css` (`ms-cut` clipped card, `ms-panel`, `ms-tag`).
+- **Shared controls:** `ui/Button.tsx` (`variant` primary, secondary, ghost, ghost-danger (an outlined Delete on a row or card) or danger (the solid confirm button); the `<button>` shows the focus ring, the inner face is clipped), `ui/Alert.tsx` (ok, info, warn, danger), `ui/Toggle.tsx` (a `role="switch"` button), `ui/Dialog.tsx` (a native modal `<dialog>`, a bottom sheet below 768px; put `DialogBody` and `DialogFooter` inside, `size="sm"` and `tone="danger"` for confirmations; Escape, the backdrop and the close button call `onClose` unless `busy`, and focus returns to the trigger), `ui/seal/Seal.tsx` (`SealBadge`, `SealMini`), and CSS-only blocks you import from the component that uses them: `ui/field.css` (`ms-field`, `ms-field__label`, `ms-field__row`, `ms-input`, `ms-select`, `ms-field__error`, `ms-link`), `ui/surface.css` (`ms-cut` clipped card, `ms-panel` with `ms-panel__head`/`__title`, `ms-tag`) and `ui/list.css` (`ms-toolbar`, `ms-search`, `ms-chip`, `ms-table-wrap` + `ms-table`, `ms-status` pills with an icon, `ms-role`, `ms-empty`, `ms-notice`).
+- **Quick Actions:** `ui/QuickActions.tsx` is a native `<dialog>` near the top of the screen, mounted only while open, with a combobox (`aria-activedescendant`) over a grouped listbox of the pages the user may open. Arrow keys move, Enter opens, Escape or the backdrop closes, and focus returns to where it was. `QuickActions.test.tsx` covers it.
+- **Pages:** each page is one `.tsx` file in `src/pages/` with its own stylesheet next to it (`ms-<page>` block, `@layer pages`), built from the shared controls above. A page whose root is a grid uses `grid-template-columns: minmax(0, 1fr)`, or the one-line phone header description widens the column past 360px. Sample data (Payments, department performance and budget) carries an `ms-tag` saying "Sample data" or "Demo".
 - **Page header:** `ui/PageHeader.tsx` takes `eyebrow`, `title`, `count`, `description` and `actions`, and draws the three-segment stripe (`stripe={false}` hides it; the colours are `--stripe-1` to `--stripe-3`). The older `breadcrumb` ("Group / Page", whose first part becomes the eyebrow) and `subtitle` still work. On phones the eyebrow and stripe are hidden.
 - **Auth pages** live in `src/pages/auth/`. Each page renders `<AuthLayout>` (pass `trace` on Login) with its title, lead and form inside, using the `ms-auth__title`, `ms-auth__lead`, `ms-auth__form` and `ms-auth__alt` classes. The layout keeps the art in one DOM node that moves from page to page, so it is never remounted even though the router renders each auth page separately; only the panel content fades in (`--duration-base`, 6px rise). The logo trace plays once per tab, on the first Login, and is skipped under `[data-motion="reduced"]`. Don't wrap the auth routes in `AuthLayout` in the router as well.
 - **Dashboard** lives in `src/pages/dashboard/`. `status.ts` holds the pure functions that turn the API results into the status cards, the summary line and the figures (tested in `status.test.ts`); the security score comes from `utils/securityChecks.ts`, shared with the Security page. Never show a number the API did not give: a card the role may not read says "Not checked".
@@ -251,12 +252,15 @@ frontend/src/
   auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
   routes/navigation.ts every page with its path, icon, group, required permission and mobilePriority (router, sidebar,
                        bottom bar, More sheet and palette use it)
-  styles/              index.css (the only CSS entry), tokens/, base/, legacy/ (see "Frontend styles and design tokens")
+  styles/              index.css (the only CSS entry), tokens/, base/ (see "Frontend styles and design tokens")
   theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
   pages/auth/          AuthLayout (split layout, shared art, motion) + Login, Register, ForgotPassword, ResetPassword
   pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures)
-  ui/                  Button, Alert, PageHeader, Modal, Toggle, QuickActions, field.css, surface.css,
-                       brand/Logo.tsx, brand/LogoArt.tsx
+  pages/               the other 14 pages (HomePage, UserManagement, Departments, Notifications, Appearance,
+                       DatabasePage, Connections, Timezones, Documentation, AuthSettings, Security, Payments,
+                       ImportData, ExportData), each .tsx with its own .css
+  ui/                  Button, Alert, PageHeader, Dialog, Toggle, QuickActions, seal/ (Seal.tsx, seals.ts),
+                       brand/Logo.tsx, brand/LogoArt.tsx, and the CSS blocks field.css, surface.css, list.css
   utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts,
                        securityChecks.ts (Security page and Dashboard)
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
@@ -264,9 +268,8 @@ frontend/src/
 frontend/scripts/check-bundle.mjs  the bundle size budget, run by npm run build
 ```
 
-TypeScript migration:
-- `tsconfig.json` is `strict` with `noUncheckedIndexedAccess`, and `allowJs` so `.ts` and `.jsx` files import each other. `checkJs` is off, so `.jsx` files are not type checked yet.
-- **Write new code in TypeScript** (`.ts`, or `.tsx` for components). Shared modules are already converted; each page and component converts to `.tsx` when it is restyled. `allowJs` is dropped once the last one is converted.
+TypeScript:
+- All of `src/` is TypeScript. `tsconfig.json` is `strict` with `noUncheckedIndexedAccess`, and has no `allowJs`: write `.ts`, or `.tsx` for components.
 - Import without a file extension (`"../api/client"`). Use `import type` for types (`verbatimModuleSyntax` is on).
 - Response types come from `api/types.ts`, for example `get<UserDto[]>("/api/users")`. The type parameter is not checked at run time, so update `types.ts` in the same PR as a DTO change.
 

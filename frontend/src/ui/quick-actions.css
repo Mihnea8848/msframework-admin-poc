@@ -1,0 +1,251 @@
+/*
+ * Quick Actions palette (ui/QuickActions.tsx), from the concept's .dlg-palette and .pal-* rules:
+ * a native <dialog> near the top of the screen, a search row, grouped options and a key hint
+ * footer. The selected option gets the navigation highlight and the chevron notch.
+ */
+@layer components {
+  .ms-palette {
+    width: min(580px, calc(100% - 32px));
+    max-width: none;
+    max-height: calc(100% - 24vh);
+    margin: 12vh auto auto;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  .ms-palette[open] {
+    display: flex;
+    animation: ms-palette-in var(--duration-base) var(--ease-standard) both;
+  }
+
+  /* The open-attribute fallback (no showModal) still sits above the page */
+  .ms-palette:not(:modal) {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-palette);
+  }
+
+  .ms-palette::backdrop {
+    background: var(--scrim);
+  }
+
+  @keyframes ms-palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  .ms-palette__panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .ms-palette__search {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .ms-palette:focus-within .ms-palette__search {
+    box-shadow: inset 0 -2px 0 var(--focus-ring);
+  }
+
+  .ms-palette__search-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+  }
+
+  .ms-palette__input {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 15px;
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-palette__input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .ms-palette__clear {
+    flex: none;
+    min-height: 28px;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .ms-palette__clear:hover {
+    color: var(--text-primary);
+  }
+
+  .ms-palette__clear:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ms-palette__results {
+    flex: 1;
+    min-height: 0;
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+  }
+
+  .ms-palette__list,
+  .ms-palette__group {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-palette__group-label {
+    padding: var(--space-2) 12px var(--space-1);
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ms-palette__option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: var(--radius-2);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+  }
+
+  .ms-palette__option[aria-selected="true"] {
+    background: var(--nav-active);
+  }
+
+  .ms-palette__option[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    width: 6px;
+    height: 11px;
+    background: var(--notch);
+    clip-path: polygon(0 0, 45% 0, 100% 50%, 45% 100%, 0 100%, 55% 50%);
+    transform: translateY(-50%);
+  }
+
+  .ms-palette__option-icon {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    color: var(--text-tertiary);
+  }
+
+  .ms-palette__option-icon > svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .ms-palette__option[aria-selected="true"] .ms-palette__option-icon {
+    color: var(--accent-text);
+  }
+
+  .ms-palette__option-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-palette__option-path {
+    flex: none;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-regular);
+  }
+
+  .ms-palette__empty {
+    margin: 0;
+    padding: 18px 12px;
+    color: var(--text-secondary);
+  }
+
+  .ms-palette__foot {
+    display: flex;
+    flex: none;
+    gap: var(--space-4);
+    padding: 10px var(--space-4);
+    border-top: 1px solid var(--border-subtle);
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  .ms-palette__foot > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ms-palette__kbd {
+    padding: 1px 5px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: 10.5px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  @media (width <= 767px) {
+    .ms-palette {
+      width: calc(100% - 16px);
+      max-height: calc(100% - 16px);
+      margin-top: var(--space-2);
+    }
+
+    .ms-palette__option {
+      min-height: var(--touch-target);
+    }
+
+    .ms-palette__option-path,
+    .ms-palette__foot {
+      display: none;
+    }
+  }
+}

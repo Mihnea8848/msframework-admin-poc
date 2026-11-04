@@ -1,9 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchUsers } from "../auth/auth";
-import { get } from "../api/client";
-import { useAuth } from "../auth/AuthProvider";
-import { hasPermission, hasRole } from "../auth/permissions";
 import {
     ArrowRight,
     Bell,
@@ -15,13 +10,37 @@ import {
     Upload,
     UsersRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { fetchUsers } from "../auth/auth";
+import { get } from "../api/client";
+import type { DepartmentResponse, UserDto } from "../api/types";
+import { useAuth } from "../auth/AuthProvider";
+import { hasPermission, hasRole } from "../auth/permissions";
+import { pageByKey } from "../routes/navigation";
+import type { PageKey } from "../routes/navigation";
+import PageLink from "../shell/PageLink";
+import PageHeader from "../ui/PageHeader";
+import "../ui/surface.css";
+import "./home.css";
+
+interface Tile {
+    key: PageKey;
+    icon: LucideIcon;
+    title: string;
+    desc: string;
+    metric: string;
+    allowed: boolean;
+}
+
+const NOT_LOADED = "Could not load";
 
 export default function HomePage() {
-    const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
 
-    const [users, setUsers] = useState([]);
-    const [departments, setDepartments] = useState([]);
+    const [users, setUsers] = useState<UserDto[]>([]);
+    const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
+    const [usersFailed, setUsersFailed] = useState(false);
+    const [departmentsFailed, setDepartmentsFailed] = useState(false);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
 
@@ -44,25 +63,21 @@ export default function HomePage() {
                 setUsers([]);
                 return;
             }
-
             setLoadingUsers(true);
-
             try {
                 const data = await fetchUsers();
-
                 if (alive) {
                     setUsers(Array.isArray(data) ? data : []);
+                    setUsersFailed(false);
                 }
             } catch (err) {
                 console.error("Fetch users error:", err);
-
                 if (alive) {
                     setUsers([]);
+                    setUsersFailed(true);
                 }
             } finally {
-                if (alive) {
-                    setLoadingUsers(false);
-                }
+                if (alive) setLoadingUsers(false);
             }
         }
 
@@ -71,30 +86,26 @@ export default function HomePage() {
                 setDepartments([]);
                 return;
             }
-
             setLoadingDepartments(true);
-
             try {
-                const data = await get("/api/departments");
-
+                const data = await get<DepartmentResponse[]>("/api/departments");
                 if (alive) {
                     setDepartments(Array.isArray(data) ? data : []);
+                    setDepartmentsFailed(false);
                 }
             } catch (err) {
                 console.error("Fetch departments error:", err);
-
                 if (alive) {
                     setDepartments([]);
+                    setDepartmentsFailed(true);
                 }
             } finally {
-                if (alive) {
-                    setLoadingDepartments(false);
-                }
+                if (alive) setLoadingDepartments(false);
             }
         }
 
-        loadUsers();
-        loadDepartments();
+        void loadUsers();
+        void loadDepartments();
 
         return () => {
             alive = false;
@@ -109,81 +120,75 @@ export default function HomePage() {
         ? users.filter((u) => hasRole(u, "ADMIN")).length
         : 0;
 
-    const tiles = [
+    const tiles: Tile[] = [
         {
+            key: "users",
             icon: UsersRound,
             title: "User Management",
             desc: hasPermission(user, "USER_UPDATE")
                 ? "View and manage the members of your organisation."
                 : "Browse everyone in your organisation and their roles.",
-            metric: `${users.length} total · ${activeUsers} active`,
-            path: "/users",
-            permission: "USER_READ",
+            metric: usersFailed ? NOT_LOADED : `${users.length} total · ${activeUsers} active`,
             allowed: canReadUsers,
         },
         {
+            key: "departments",
             icon: Building2,
             title: "Departments",
             desc: "Create and organise departments and see who belongs to each.",
-            metric: `${departments.length} department${departments.length !== 1 ? "s" : ""}`,
-            path: "/departments",
-            permission: "DEPARTMENT_READ",
+            metric: departmentsFailed
+                ? NOT_LOADED
+                : `${departments.length} department${departments.length !== 1 ? "s" : ""}`,
             allowed: canReadDepartments,
         },
         {
+            key: "notifications",
             icon: Bell,
             title: "Notifications",
             desc: "Full audit log of every action taken across the platform.",
             metric: "Audit events",
-            path: "/notifications",
-            permission: "AUDIT_READ",
             allowed: canReadAudit,
         },
         {
+            key: "database",
             icon: Database,
             title: "Database",
             desc: "Browse the live schema and row counts of every application table.",
             metric: "Live schema",
-            path: "/database",
-            permission: "DATABASE_READ",
             allowed: canReadDatabase,
         },
         {
+            key: "security",
             icon: Shield,
             title: "Security",
             desc: "Monitor your security score, open vulnerabilities, and alerts.",
-            metric: canReadUsers
+            metric: canReadUsers && !usersFailed
                 ? `${admins} admin account${admins !== 1 ? "s" : ""}`
                 : "Security center",
-            path: "/security",
-            permission: "SECURITY_READ",
             allowed: canReadSecurity,
         },
         {
+            key: "payments",
             icon: CreditCard,
             title: "Payments",
             desc: "Proof-of-concept payments view with sample transactions.",
             metric: "Demo data",
-            path: "/payments",
-            permission: "PAYMENTS_READ",
             allowed: canReadPayments,
         },
         {
+            key: "import",
             icon: Upload,
             title: "Import Data",
             desc: "Upload CSV files to create users and departments in bulk.",
             metric: "CSV supported",
-            path: "/import",
-            permission: "IMPORT_DATA",
             allowed: canImportData,
         },
         {
+            key: "export",
             icon: Download,
             title: "Export Data",
             desc: "Download real CSV exports of any dataset in the system.",
             metric: "Live data",
-            path: "/export",
-            permission: "EXPORT_DATA",
             allowed: canExportData,
         },
     ];
@@ -191,80 +196,41 @@ export default function HomePage() {
     const visibleTiles = tiles.filter((tile) => tile.allowed);
     const loading = authLoading || loadingUsers || loadingDepartments;
 
-    if (loading) {
-        return (
-            <section className="workspace">
-                <div style={{ padding: 24, color: "var(--muted)", fontSize: 13 }}>
-                    Loading overview…
-                </div>
-            </section>
-        );
-    }
-
     return (
-        <section className="workspace">
-            <div className="workspace-hero">
-                <div>
-                    <div className="workspace-breadcrumb">General / Home</div>
+        <section className="ms-home">
+            <PageHeader
+                eyebrow="General"
+                title="Multimedia Entertainment Hub"
+                description="Everything at a glance. Open the sections your role can use."
+            />
 
-                    <div className="workspace-title-row">
-                        <h1>Multimedia Entertainment Hub</h1>
-                    </div>
-
-                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                        Everything at a glance. Open the sections your role can use.
-                    </p>
-                </div>
-            </div>
-
-            {visibleTiles.length === 0 ? (
-                <div
-                    className="workspace-panel"
-                    style={{
-                        padding: 24,
-                        color: "var(--muted)",
-                        fontSize: 14,
-                    }}
-                >
-                    Your account does not have access to any workspace sections yet.
-                </div>
+            {loading ? (
+                <p className="ms-home__empty" role="status">Loading overview…</p>
+            ) : visibleTiles.length === 0 ? (
+                <p className="ms-home__empty">Your account does not have access to any workspace sections yet.</p>
             ) : (
-                <div className="home-grid">
+                <ul className="ms-home__grid">
                     {visibleTiles.map((tile) => {
+                        const page = pageByKey(tile.key);
+                        if (!page) return null;
                         const Icon = tile.icon;
-
                         return (
-                            <div
-                                key={tile.path}
-                                className="nav-tile"
-                                onClick={() => navigate(tile.path)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        navigate(tile.path);
-                                    }
-                                }}
-                            >
-                                <div className="nav-tile-icon">
-                                    <Icon size={20} />
-                                </div>
-
-                                <div className="nav-tile-title">{tile.title}</div>
-
-                                <div className="nav-tile-desc">{tile.desc}</div>
-
-                                <div className="nav-tile-footer">
-                                    <span className="nav-tile-metric">{tile.metric}</span>
-
-                                    <span className="nav-tile-link">
-                                        Go <ArrowRight size={12} />
+                            <li key={tile.key}>
+                                <PageLink page={page} current={false} className="ms-cut ms-home__tile">
+                                    <span className="ms-home__icon" aria-hidden="true"><Icon /></span>
+                                    <span className="ms-home__title">{tile.title}</span>
+                                    <span className="ms-home__desc">{tile.desc}</span>
+                                    <span className="ms-home__foot">
+                                        <span className="ms-home__metric">{tile.metric}</span>
+                                        <span className="ms-home__go" aria-hidden="true">
+                                            Go <ArrowRight />
+                                        </span>
                                     </span>
-                                </div>
-                            </div>
+                                </PageLink>
+                            </li>
                         );
                     })}
-                </div>
+                </ul>
             )}
         </section>
     );

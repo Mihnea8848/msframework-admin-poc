@@ -66,6 +66,13 @@
     color: var(--text-secondary);
   }
 
+  /* A quiet destructive action in a list (Delete on a row or card): outlined, danger text */
+  .ms-btn--ghost-danger .ms-btn__face {
+    padding: 0 10px;
+    border: 1px solid var(--status-danger-border);
+    color: var(--status-danger-fg);
+  }
+
   .ms-btn--sm .ms-btn__face {
     gap: 6px;
     height: var(--control-sm);
@@ -94,6 +101,10 @@
   .ms-btn--ghost:hover .ms-btn__face {
     background: var(--row-hover);
     color: var(--text-primary);
+  }
+
+  .ms-btn--ghost-danger:hover .ms-btn__face {
+    background: var(--status-danger-bg);
   }
 
   .ms-btn--full {

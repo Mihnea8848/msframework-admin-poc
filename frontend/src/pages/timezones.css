@@ -1,0 +1,162 @@
+/*
+ * Timezones (pages/Timezones.tsx): world clocks as clipped cards, then the add form and the
+ * organisation default in panels.
+ */
+@layer pages {
+  .ms-timezones {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-timezones) :where(h2, h3, p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-timezones__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+    gap: var(--space-3);
+    list-style: none;
+  }
+
+  .ms-timezones__card {
+    display: grid;
+    justify-items: start;
+    gap: 2px;
+    padding: var(--space-4);
+  }
+
+  .ms-timezones__card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    margin-bottom: var(--space-1);
+  }
+
+  .ms-timezones__city {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--weight-bold);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-timezones__biz {
+    display: inline-flex;
+  }
+
+  .ms-timezones__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-round);
+    background: var(--text-tertiary);
+  }
+
+  .ms-timezones__biz--open .ms-timezones__dot {
+    background: var(--status-ok-fg);
+  }
+
+  .ms-timezones__biz--edge .ms-timezones__dot {
+    background: var(--status-warn-fg);
+  }
+
+  .ms-timezones__remove {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin: -4px -6px -4px 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-2);
+    background: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+  }
+
+  .ms-timezones__remove:hover {
+    background: var(--row-hover);
+    color: var(--text-primary);
+  }
+
+  .ms-timezones__remove:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  .ms-timezones__remove > svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-timezones__time {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--leading-tight);
+  }
+
+  .ms-timezones__date {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-timezones__offset {
+    margin-top: var(--space-2);
+  }
+
+  .ms-timezones__panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    align-items: start;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+  }
+
+  .ms-timezones__form {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4) 18px 18px;
+  }
+
+  .ms-timezones__sub {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-timezones__sub strong {
+    color: var(--text-primary);
+  }
+
+  .ms-timezones__actions,
+  .ms-timezones__inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .ms-timezones__inline .ms-select {
+    flex: 1 1 200px;
+  }
+
+  @media (width <= 767px) {
+    .ms-timezones__card {
+      padding: var(--space-3);
+    }
+
+    .ms-timezones__panels {
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+
+    .ms-timezones__form {
+      padding: var(--space-3);
+    }
+  }
+}

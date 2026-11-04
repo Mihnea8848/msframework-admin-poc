@@ -1,8 +1,7 @@
 /**
  * Stylelint configuration. A JS file rather than .stylelintrc.json so it can carry comments.
  *
- * Everything under src/ is linted except the legacy stylesheet (src/styles/legacy/), which is
- * deleted or rewritten by the cleanup PR (F10). On top of stylelint-config-standard:
+ * Every CSS file under src/ is linted. On top of stylelint-config-standard:
  *   - colours come from tokens: no hex, no rgb()/hsl() and no named colours, except in
  *     src/styles/tokens/primitives.css, the one file that defines the raw palette;
  *   - selector-class-pattern: component classes are "ms-" prefixed, BEM style
@@ -12,7 +11,6 @@
  */
 export default {
   extends: ["stylelint-config-standard"],
-  ignoreFiles: ["src/styles/legacy/**"],
   rules: {
     "color-no-hex": [true, { message: "Use a colour token; hex values belong in src/styles/tokens/primitives.css" }],
     "color-named": ["never", { message: "Use a colour token instead of a named colour" }],

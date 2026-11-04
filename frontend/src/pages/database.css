@@ -1,0 +1,136 @@
+/* Database (pages/DatabasePage.tsx): one collapsible panel per table, columns in a table. */
+@layer pages {
+  .ms-database {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  .ms-database__list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-database__table {
+    overflow: hidden;
+  }
+
+  .ms-database__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3) 18px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ms-database__head:hover {
+    background: var(--row-hover);
+  }
+
+  .ms-database__head:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  .ms-database__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+
+  .ms-database__icon > svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .ms-database__name-wrap {
+    display: grid;
+    min-width: 0;
+  }
+
+  .ms-database__name,
+  .ms-database__col {
+    font-family: var(--font-mono);
+    font-weight: var(--weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-database__desc {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-database__stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-1) var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ms-database__chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--text-tertiary);
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+
+  .ms-database__head[aria-expanded="true"] .ms-database__chevron {
+    transform: rotate(180deg);
+  }
+
+  .ms-database__columns {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  @media (width <= 767px) {
+    .ms-database__head {
+      grid-template-areas:
+        "icon name chev"
+        "icon stats chev";
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: var(--space-1) var(--space-3);
+      padding: var(--space-3);
+    }
+
+    .ms-database__icon {
+      grid-area: icon;
+    }
+
+    .ms-database__name-wrap {
+      grid-area: name;
+    }
+
+    .ms-database__stats {
+      grid-area: stats;
+      justify-content: flex-start;
+    }
+
+    .ms-database__chevron {
+      grid-area: chev;
+    }
+
+    .ms-database__columns th,
+    .ms-database__columns td {
+      padding-inline: var(--space-3);
+    }
+  }
+}

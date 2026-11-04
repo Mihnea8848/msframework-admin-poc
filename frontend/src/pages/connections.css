@@ -1,0 +1,262 @@
+/*
+ * Connections (pages/Connections.tsx): integration cards in a grid, then the webhooks and API
+ * keys as rows in panels.
+ */
+@layer pages {
+  .ms-connections {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-connections) :where(h2, h3, p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  :where(.ms-connections) :where(ul) {
+    list-style: none;
+  }
+
+  .ms-connections__section {
+    margin-bottom: var(--space-6);
+  }
+
+  .ms-connections__head {
+    margin-bottom: var(--space-2);
+  }
+
+  .ms-connections__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-connections__note {
+    margin-bottom: var(--space-3);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-connections__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: var(--space-3);
+  }
+
+  .ms-connections__card {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .ms-connections__service {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .ms-connections__icon {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-2);
+    background: var(--accent-tint);
+    color: var(--accent-text);
+  }
+
+  .ms-connections__icon > svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .ms-connections__service-text {
+    min-width: 0;
+  }
+
+  .ms-connections__name {
+    font-size: var(--font-size-md);
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-connections__cat {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-connections__state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .ms-connections__foot {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-faint);
+  }
+
+  .ms-connections__form {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-connections__inline {
+    display: flex;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .ms-connections__inline .ms-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ms-connections__keys-head {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ms-connections__keyform .ms-input {
+    width: 220px;
+    height: var(--control-sm);
+  }
+
+  .ms-connections__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-connections__row:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-connections__row-main {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .ms-connections__row-side {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .ms-connections__url,
+  .ms-connections__masked {
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-connections__url {
+    margin-bottom: var(--space-1);
+    color: var(--text-secondary);
+  }
+
+  .ms-connections__masked {
+    color: var(--accent-text);
+    letter-spacing: 0.04em;
+  }
+
+  .ms-connections__key-name {
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-connections__events {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .ms-connections__meta,
+  .ms-connections__key-meta {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-connections__key-meta {
+    text-align: right;
+  }
+
+  .ms-connections__remove .ms-btn__face {
+    color: var(--status-danger-fg);
+  }
+
+  .ms-connections__empty {
+    padding: var(--space-4) 18px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-connections__secret {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-3) 18px;
+    padding: var(--space-3);
+    border: 1px solid var(--status-warn-border);
+    border-radius: var(--radius-2);
+    background: var(--status-warn-bg);
+  }
+
+  .ms-connections__secret-title {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-connections__code {
+    padding: var(--space-2);
+    border-radius: var(--radius-2);
+    background: var(--field);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-connections__secret-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  @media (width <= 767px) {
+    .ms-connections__section {
+      margin-bottom: var(--space-4);
+    }
+
+    .ms-connections__form,
+    .ms-connections__row,
+    .ms-connections__empty {
+      padding: var(--space-3);
+    }
+
+    .ms-connections__keyform {
+      flex: 1 1 100%;
+    }
+
+    .ms-connections__keyform .ms-input {
+      width: auto;
+      height: 40px;
+    }
+
+    .ms-connections__key-meta {
+      text-align: left;
+    }
+
+    .ms-connections__secret {
+      margin: var(--space-3);
+    }
+  }
+}

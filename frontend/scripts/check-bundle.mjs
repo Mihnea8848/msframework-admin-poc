@@ -17,7 +17,9 @@ import { gzipSync } from "node:zlib";
 const KB = 1024;
 const BUDGETS = {
     entry: 130 * KB,
-    css: 25 * KB,
+    // Every stylesheet together, including each page's own lazy CSS, so a single page view
+    // loads less than this. Raised from 25 kB when every page got its own Chevron stylesheet.
+    css: 30 * KB,
     page: 40 * KB,
     fonts: 70 * KB,
 };

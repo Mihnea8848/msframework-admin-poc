@@ -1,0 +1,141 @@
+/*
+ * Notifications (pages/Notifications.tsx): the audit feed in a panel, with category chips.
+ * Each event has a tinted icon tile, its type label, the actor, the text and the time; events
+ * that arrived since the last visit get an accent edge and a "New" tag.
+ */
+@layer pages {
+  .ms-notifications {
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-notifications) :where(p, ol) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-feed {
+    list-style: none;
+  }
+
+  .ms-feed__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-feed__item:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-feed__item--new {
+    box-shadow: inset 3px 0 0 var(--accent-solid);
+  }
+
+  .ms-feed__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+
+  .ms-feed__icon > svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .ms-feed__icon--ok {
+    background: var(--status-ok-bg);
+    color: var(--status-ok-fg);
+  }
+
+  .ms-feed__icon--warn {
+    background: var(--status-warn-bg);
+    color: var(--status-warn-fg);
+  }
+
+  .ms-feed__icon--danger {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-fg);
+  }
+
+  .ms-feed__icon--info {
+    background: var(--status-info-bg);
+    color: var(--status-info-fg);
+  }
+
+  .ms-feed__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px var(--space-2);
+    min-width: 0;
+  }
+
+  .ms-feed__type {
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ms-feed__new {
+    color: var(--accent-text);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ms-feed__actor {
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-feed__text {
+    margin-top: 2px;
+    font-weight: var(--weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-feed__time {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  @media (width <= 767px) {
+    .ms-feed__item {
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: var(--space-1) 10px;
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .ms-feed__icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .ms-feed__text {
+      font-size: var(--font-size-sm);
+    }
+
+    .ms-feed__time {
+      font-size: var(--font-size-xs);
+    }
+  }
+}
