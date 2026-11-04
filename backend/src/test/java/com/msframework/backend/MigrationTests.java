@@ -80,7 +80,8 @@ class MigrationTests {
         DataSource db = createDatabase("empty");
         FlywayConfig.migrate(flyway(db));
 
-        assertThat(history(db)).containsExactly("1 SQL baseline", "2 SQL converge legacy schema");
+        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema")
+                .contains("5 SQL business");
         assertThat(tables(db)).containsAll(Set.of("users", "role", "user_roles", "departments", "audit_events",
                 "password_reset_tokens", "flyway_schema_history"));
         assertThat(new JdbcTemplate(db).queryForObject("SELECT COUNT(*) FROM role", Integer.class))
@@ -94,7 +95,8 @@ class MigrationTests {
         Flyway.configure().configuration(flyway.getConfiguration()).target("1").load().migrate();
         Map<String, List<String>> afterV1 = schema(db);
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(Flyway.configure().configuration(flyway.getConfiguration()).target("2").load()
+                .migrate().migrationsExecuted).isEqualTo(1);
         assertThat(schema(db)).isEqualTo(afterV1);
     }
 
@@ -140,7 +142,8 @@ class MigrationTests {
 
         // (a) same schema as a database migrated from empty
         assertThat(schema(db)).isEqualTo(freshSchema);
-        assertThat(history(db)).containsExactly("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema");
+        assertThat(history(db)).startsWith("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema")
+                .contains("5 SQL business");
 
         // (b) the data survived, and every user has exactly the expected role and a status
         assertThat(rows(db, legacyColumns)).isEqualTo(legacyRows);
@@ -157,9 +160,10 @@ class MigrationTests {
                 .isZero();
 
         // (c) running the migrations again changes nothing
+        List<String> migrated = history(db);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         FlywayConfig.migrate(flyway);
-        assertThat(history(db)).hasSize(2);
+        assertThat(history(db)).isEqualTo(migrated);
         assertThat(schema(db)).isEqualTo(freshSchema);
     }
 

@@ -42,7 +42,14 @@ export type Permission =
     | "WORKSPACE_UPDATE"
     | "API_KEY_READ"
     | "API_KEY_CREATE"
-    | "API_KEY_DELETE";
+    | "API_KEY_DELETE"
+    | "FINANCE_READ"
+    | "FINANCE_MANAGE"
+    | "EXPENSE_SUBMIT"
+    | "EXPENSE_APPROVE"
+    | "GOALS_READ"
+    | "GOALS_MANAGE"
+    | "REPORTS_READ";
 
 /** The built-in roles in config/SystemRoles.java. */
 export type RoleName = "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";
