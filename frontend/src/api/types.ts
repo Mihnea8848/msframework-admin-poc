@@ -55,7 +55,9 @@ export type Permission =
     | "REPORTS_READ"
     // Sessions and organisation settings (sessions-security)
     | "SESSIONS_MANAGE"
-    | "ORG_SETTINGS_MANAGE";
+    | "ORG_SETTINGS_MANAGE"
+    // Directory sync from Authentik (ADMIN)
+    | "DIRECTORY_SYNC";
 
 /** The built-in roles in config/SystemRoles.java. */
 export type RoleName = "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";

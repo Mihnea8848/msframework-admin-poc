@@ -6,6 +6,7 @@ import { get } from "../../api/client";
 import type { OrgSetting } from "../../api/types";
 import { formatDateTime } from "../../utils/format";
 import Alert from "../../ui/Alert";
+import DirectorySync from "./DirectorySync";
 import "../../ui/field.css";
 import "../../ui/surface.css";
 import "./account.css";
@@ -108,6 +109,7 @@ export default function OrganisationTab() {
                     </div>
                 </section>
             </div>
+            <DirectorySync />
         </div>
     );
 }

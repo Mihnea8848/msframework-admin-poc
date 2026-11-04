@@ -1,6 +1,6 @@
 import {
     Building2, Cable, Clock3, Download, Key, Lock, LogIn, LogOut, RefreshCw, Settings, Shield, ShieldAlert,
-    UserCheck, UserMinus, UserPlus, UserCog, Webhook,
+    UserCheck, UserMinus, UserPlus, UserCog, Users, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -53,6 +53,7 @@ export const AUDIT_TYPES = {
     session_revoked: { label: "Session ended", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
+    directory_synced: { label: "Directory sync", pill: "changed", Icon: Users, color: "var(--status-info-fg)", category: "Users" },
 } as const satisfies Record<string, AuditTypeMeta>;
 
 /** Every event type the backend emits that has display metadata. */
