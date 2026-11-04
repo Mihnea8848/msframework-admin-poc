@@ -25,6 +25,26 @@ section into a version (see `AGENTS.md`, Git workflow).
 - BCrypt cost raised to 12; older hashes are upgraded at the next sign-in.
   New passwords may not be one of the 1000 most common passwords.
 
+### Added (people screens)
+- Users page on the paged search API: debounced search, role, status and
+  department filters and sortable columns kept in the URL, 25 per page, job
+  title and last sign-in columns, and bulk Activate, Deactivate, Change
+  role and Move to department with each failure listed.
+- User profile (`/users/:id`): header with role, status and department
+  seal; contact, department and manager, access by area, account dates and
+  the activity feed with Load more; edit, activate or deactivate, and a
+  one-time password reset link to copy.
+- Department detail (`/departments/:id`): official seal, manager picker for
+  admins (eligible members only), members with add and remove, performance
+  and budget panels where permitted, and the activity feed.
+- Roles page (`/roles`, `ROLES_READ`) with member counts and a permission
+  matrix by area (a list per role on phones), and Access requests
+  (`/access-requests`, `ACCESS_REQUESTS_MANAGE`) with Pending, Approved and
+  Rejected tabs, approve and reject dialogs, and a pending count badge in
+  the sidebar.
+- Labels and icons for the people audit events (access requested,
+  approved and rejected, sign-in awaiting approval, department manager
+  changed, reset link created).
 ### Added (business screens)
 - Goals page (`/goals`): each department's KPIs per quarter with its score
   ring; per goal the baseline, current against target, an attainment bar
@@ -174,8 +194,15 @@ section into a version (see `AGENTS.md`, Git workflow).
   across restarts; errors reported with the right HTTP status.
 
 ### Changed
+- The department cards show real figures: this quarter's performance score
+  with a six-month trend, and budget used (spent of budget), only for roles
+  that may read them. The "Sample data" tags are gone, and the cards show
+  the manager and open the department's detail.
+- The CSS budget measures what a page view loads: the shared CSS (at most
+  15 kB) and each page's own stylesheet (at most 8 kB), instead of every
+  stylesheet added together.
 - Payments shows the real ledger of paid expenses instead of sample data and
-  needs `FINANCE_READ` (was `PAYMENTS_READ`). The total CSS budget is 40 kB
+  needs `FINANCE_READ` (was `PAYMENTS_READ`). The CSS budget changed (see above)
   for the business pages and charts.
 - Registering creates an access request instead of an account
   (`POST /api/auth/register` answers 202 with a message). An admin approves

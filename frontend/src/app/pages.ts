@@ -1,11 +1,11 @@
 import type { ComponentType } from "react";
-import type { PageKey } from "../routes/navigation";
+import type { ChildPageKey, PageKey } from "../routes/navigation";
 
 type PageModule = { default: ComponentType };
 type PageLoader = () => Promise<PageModule>;
 
-/** A page with its own chunk: every sidebar page, plus Settings (one chunk for all its tabs). */
-export type LoaderKey = PageKey | "settings";
+/** A page with its own chunk: every sidebar page, its child pages, plus Settings (one chunk for all its tabs). */
+export type LoaderKey = PageKey | ChildPageKey | "settings";
 
 /**
  * The code of every page inside the shell. Each `import()` is its own chunk, loaded by the
@@ -24,6 +24,10 @@ export const PAGE_LOADERS: Record<LoaderKey, PageLoader> = {
     reports: () => import("../pages/Reports"),
     budgets: () => import("../pages/Budgets"),
     expenses: () => import("../pages/Expenses"),
+    roles: () => import("../pages/Roles"),
+    accessRequests: () => import("../pages/AccessRequests"),
+    userProfile: () => import("../pages/users/UserProfile"),
+    departmentDetail: () => import("../pages/departments/DepartmentDetail"),
     payments: () => import("../pages/Payments"),
     import: () => import("../pages/ImportData"),
     export: () => import("../pages/ExportData"),

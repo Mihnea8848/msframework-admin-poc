@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatBytes, formatDateTime, initialsOf, relTime } from "./format";
+import { formatBytes, formatDateTime, formatMoney, initialsOf, relTime, timeAgo } from "./format";
 
 const NOW = new Date("2026-06-15T12:00:00Z");
 const MINUTE = 60_000;
@@ -87,6 +87,41 @@ describe("formatDateTime", () => {
     it("formats a valid date in the local format", () => {
         const iso = "2026-01-02T03:04:05Z";
         expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString());
+    });
+});
+
+describe("timeAgo", () => {
+    const now = NOW.getTime();
+
+    it("is empty for missing or invalid dates", () => {
+        expect(timeAgo(null, now)).toBe("");
+        expect(timeAgo("nope", now)).toBe("");
+    });
+
+    it("says just now under a minute, and for future times", () => {
+        expect(timeAgo(ago(59_000), now)).toBe("just now");
+        expect(timeAgo(ago(-DAY), now)).toBe("just now");
+    });
+
+    it("spells out the unit, singular or plural", () => {
+        expect(timeAgo(ago(MINUTE), now)).toBe("1 minute ago");
+        expect(timeAgo(ago(5 * MINUTE), now)).toBe("5 minutes ago");
+        expect(timeAgo(ago(HOUR), now)).toBe("1 hour ago");
+        expect(timeAgo(ago(2 * DAY), now)).toBe("2 days ago");
+        expect(timeAgo(ago(15 * DAY), now)).toBe("2 weeks ago");
+        expect(timeAgo(ago(65 * DAY), now)).toBe("2 months ago");
+        expect(timeAgo(ago(800 * DAY), now)).toBe("2 years ago");
+    });
+});
+
+describe("formatMoney", () => {
+    it("shows a dash when there is no amount", () => {
+        expect(formatMoney(null, "EUR")).toBe("—");
+    });
+
+    it("formats whole amounts in the currency", () => {
+        const expected = new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(12400);
+        expect(formatMoney(12400.4, "EUR")).toBe(expected);
     });
 });
 

@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
-import { LEGACY_PATHS, PAGES, SETTINGS_PATH } from "../routes/navigation";
+import { CHILD_PAGES, LEGACY_PATHS, PAGES, SETTINGS_PATH } from "../routes/navigation";
 import { PAGE_LOADERS } from "./pages";
 import { RedirectIfAuthed, RequireAuth, RequirePermission } from "./guards";
 import RootLayout from "./RootLayout";
@@ -14,6 +14,7 @@ import AppShell from "../shell/AppShell";
  *     /forgot-password, /reset-password   outside the shell, open to everyone
  *     (layout)              RequireAuth + AppShell, mounted once for every page below
  *       one route per PAGES entry, lazy-loaded, behind RequirePermission
+ *       one route per CHILD_PAGES entry (/users/:id, /departments/:id), behind all its permissions
  *       /settings/:tab      Settings, with a tab per path; /settings opens the first tab
  *       /notifications, /auth, /appearance   old paths, redirected (LEGACY_PATHS)
  *     *                     back to /
@@ -61,6 +62,15 @@ export const routes: RouteObject[] = [
                         lazy: async () => {
                             const { default: Page } = await PAGE_LOADERS[page.key]();
                             return { element: <RequirePermission permission={page.permission}><Page /></RequirePermission> };
+                        },
+                    })),
+                    ...CHILD_PAGES.map((page): RouteObject => ({
+                        id: page.key,
+                        path: page.path,
+                        handle: { pageKey: page.key },
+                        lazy: async () => {
+                            const { default: Page } = await PAGE_LOADERS[page.key]();
+                            return { element: <RequirePermission allOf={page.permissions}><Page /></RequirePermission> };
                         },
                     })),
                     {

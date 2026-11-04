@@ -20,7 +20,7 @@ function Harness({ onLogout = () => {} }: { onLogout?: () => void }) {
                 onClose={() => setOpen(false)}
                 pages={morePages(admin)}
                 pathname="/database"
-                badge="4"
+                badges={{ activity: "4" }}
                 onLogout={onLogout}
                 returnFocusRef={trigger}
             />

@@ -1,7 +1,7 @@
 import {
-    Banknote, Building2, Cable, ChartColumn, CircleCheck, CircleX, Clock3, Download, FilePen, Key, ListPlus, Lock, LogIn,
-    LogOut, PiggyBank, Receipt, RefreshCw, Send, Settings, Shield, ShieldAlert, Tags, Target, Trash2, UserCheck, UserMinus,
-    UserPlus, UserCog, Webhook,
+    Banknote, Building2, Cable, ChartColumn, CircleCheck, CircleX, Clock3, Crown, Download, FilePen, Hourglass, Key,
+    Link2, ListPlus, Lock, LogIn, LogOut, PiggyBank, Receipt, RefreshCw, Send, Settings, Shield, ShieldAlert, Tags,
+    Target, Trash2, UserCheck, UserCog, UserMinus, UserPlus, UserX, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,6 +55,14 @@ export const AUDIT_TYPES = {
     session_revoked: { label: "Session ended", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
+    // People: access requests, department managers and reset links (PEOPLE-UI).
+    // export_generated and password_reset_completed are listed above.
+    access_requested: { label: "Access requested", pill: "created", Icon: UserPlus, color: "var(--status-info-fg)", category: "Users" },
+    access_approved: { label: "Access approved", pill: "created", Icon: UserCheck, color: "var(--status-ok-fg)", category: "Users" },
+    access_rejected: { label: "Access rejected", pill: "security", Icon: UserX, color: "var(--status-danger-fg)", category: "Users" },
+    login_pending: { label: "Awaiting approval", pill: "login", Icon: Hourglass, color: "var(--status-warn-fg)", category: "Login", alert: "info" },
+    dept_manager_changed: { label: "Dept Manager", pill: "changed", Icon: Crown, color: "var(--status-warn-fg)", category: "Departments" },
+    password_reset_link_created: { label: "Reset link", pill: "security", Icon: Link2, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     // Business: budgets, categories, expenses, goals, check-ins and reports
     budget_created: { label: "Budget set", pill: "created", Icon: PiggyBank, color: "var(--status-ok-fg)", category: "Finance" },
     budget_updated: { label: "Budget changed", pill: "changed", Icon: PiggyBank, color: "var(--status-warn-fg)", category: "Finance" },

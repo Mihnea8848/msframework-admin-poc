@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef } from "react";
 import type { RefObject } from "react";
 import { LogOut, Settings, X } from "lucide-react";
-import { SETTINGS_PATH, groupPages } from "../routes/navigation";
+import { SETTINGS_PATH, groupPages, isCurrentPage } from "../routes/navigation";
 import type { PageEntry } from "../routes/navigation";
 import PageLink from "./PageLink";
+import { badgeLabel } from "./badges";
+import type { PageBadges } from "./badges";
 import "./more-sheet.css";
 
 type MoreSheetProps = {
@@ -12,7 +14,8 @@ type MoreSheetProps = {
     /** The pages that are not bottom bar tabs, from morePages(). */
     pages: readonly PageEntry[];
     pathname: string;
-    badge: string | null;
+    /** Count badges by page (see Sidebar). */
+    badges: PageBadges;
     onLogout: () => void;
     /** The current path is a Settings tab. */
     inSettings?: boolean;
@@ -29,7 +32,7 @@ const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled]), [tabi
  * the button that opened it. Where showModal() is missing (jsdom) it falls back to the open
  * attribute with its own focus trap.
  */
-export default function MoreSheet({ open, onClose, pages, pathname, badge, onLogout, inSettings = false, returnFocusRef }: MoreSheetProps) {
+export default function MoreSheet({ open, onClose, pages, pathname, badges, onLogout, inSettings = false, returnFocusRef }: MoreSheetProps) {
     const ref = useRef<HTMLDialogElement>(null);
     const onCloseRef = useRef(onClose);
     const titleId = useId();
@@ -117,12 +120,12 @@ export default function MoreSheet({ open, onClose, pages, pathname, badge, onLog
                             <ul className="ms-more-sheet__list">
                                 {items.map((page) => {
                                     const Icon = page.icon;
-                                    const itemBadge = page.key === "activity" ? badge : null;
+                                    const itemBadge = badges[page.key] ?? null;
                                     return (
                                         <li key={page.key}>
                                             <PageLink
                                                 page={page}
-                                                current={pathname === page.path}
+                                                current={isCurrentPage(page, pathname)}
                                                 className="ms-more-sheet__item"
                                                 onNavigate={onClose}
                                             >
@@ -131,7 +134,7 @@ export default function MoreSheet({ open, onClose, pages, pathname, badge, onLog
                                                 {itemBadge ? (
                                                     <>
                                                         <span className="ms-more-sheet__badge" aria-hidden="true">{itemBadge}</span>
-                                                        <span className="ms-visually-hidden">{`, ${itemBadge} unread`}</span>
+                                                        <span className="ms-visually-hidden">{badgeLabel(page.key, itemBadge)}</span>
                                                     </>
                                                 ) : null}
                                             </PageLink>

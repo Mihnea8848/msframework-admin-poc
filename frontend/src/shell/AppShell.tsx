@@ -11,6 +11,8 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { isQuickActionsShortcut } from "./shortcuts";
 import { useUnreadAudit } from "./useUnreadAudit";
+import { usePendingAccessRequests } from "./usePendingAccessRequests";
+import type { PageBadges } from "./badges";
 import "./app-shell.css";
 import "./view-transitions.css";
 
@@ -26,7 +28,9 @@ export default function AppShell() {
     const { user, logout } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
-    const badge = useUnreadAudit(user);
+    const unread = useUnreadAudit(user);
+    const pending = usePendingAccessRequests(user);
+    const badges = useMemo<PageBadges>(() => ({ activity: unread, accessRequests: pending }), [unread, pending]);
     const [quickActionsOpen, setQuickActionsOpen] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
     const mainRef = useRef<HTMLElement>(null);
@@ -82,7 +86,7 @@ export default function AppShell() {
             <Sidebar
                 pages={pages}
                 pathname={location.pathname}
-                badge={badge}
+                badges={badges}
                 onOpenQuickActions={() => setQuickActionsOpen(true)}
             />
 
@@ -105,7 +109,7 @@ export default function AppShell() {
                     tabs={tabs}
                     more={more}
                     pathname={location.pathname}
-                    badge={badge}
+                    badges={badges}
                     moreOpen={moreOpen}
                     onOpenMore={() => setMoreOpen(true)}
                     moreButtonRef={moreButtonRef}
@@ -117,7 +121,7 @@ export default function AppShell() {
                 onClose={closeMore}
                 pages={more}
                 pathname={location.pathname}
-                badge={badge}
+                badges={badges}
                 onLogout={handleLogout}
                 inSettings={inSettings}
                 returnFocusRef={moreButtonRef}
