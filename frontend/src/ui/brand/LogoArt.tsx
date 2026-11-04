@@ -29,6 +29,7 @@ function vertices(d: string): Point[] {
 const DEPTH: Point = [74, -43];
 
 const fmt = (n: number) => String(Math.round(n * 10) / 10);
+const rad = (deg: number) => (deg * Math.PI) / 180;
 const quad = (a: Point, b: Point) =>
     `M${fmt(a[0])} ${fmt(a[1])}L${fmt(b[0])} ${fmt(b[1])}L${fmt(b[0] + DEPTH[0])} ${fmt(b[1] + DEPTH[1])}L${fmt(a[0] + DEPTH[0])} ${fmt(a[1] + DEPTH[1])}Z`;
 
@@ -68,25 +69,48 @@ function extrusion(): { top: string; side: string } {
 const WALLS = extrusion();
 
 /** The cluster's view box. The mark is 694 x 1000 units; tiles are scaled down into it. */
-const VIEW_W = 1600;
-const VIEW_H = 1500;
-const TILE_SCALE = 0.34;
-const CORE_SCALE = 0.44;
+const VIEW_W = 2600;
+const VIEW_H = 2200;
+const TILE_SCALE = 0.4;
+const CORE_SCALE = 0.48;
+/** The core sits in the middle of the view box; the whole lattice turns around it. */
+const CORE = { x: VIEW_W / 2, y: VIEW_H / 2 };
+const ANGLE = 24;
 
-/** Tile centres on a staggered honeycomb lattice around the core (820, 760), drawn back to front. */
-const TILES: readonly { x: number; y: number; dim: number }[] = [
-    { x: 1082, y: 202, dim: 0.7 },
-    { x: 1344, y: 388, dim: 0.8 },
-    { x: 820, y: 388, dim: 0.9 },
-    { x: 1082, y: 574, dim: 1 },
-    { x: 1344, y: 760, dim: 0.9 },
-    { x: 558, y: 574, dim: 0.85 },
-    { x: 1082, y: 946, dim: 1 },
-    { x: 1344, y: 1132, dim: 0.75 },
-    { x: 558, y: 946, dim: 0.9 },
-    { x: 820, y: 1132, dim: 1 },
-];
-const CORE = { x: 820, y: 760 };
+/*
+ * Lattice cells, in the lattice's own (unrotated) units around the core. A tile's silhouette with
+ * its walls is 768 x 1043 mark units, and its rim glow reaches about 60 units further, so at these
+ * scales a 430 x 560 cell leaves a clear gap between every pair of neighbours, the larger core
+ * included. Odd columns are shifted by half a cell (a staggered honeycomb). Columns are 430 apart
+ * and every tile is narrower than that, so tiles never overlap, whatever their rows.
+ */
+const CELL_W = 430;
+const CELL_H = 560;
+
+/** Tile centres in lattice units, with a dimmer tone further from the core. Cells outside the view are skipped. */
+const TILES: readonly { x: number; y: number; dim: number }[] = (() => {
+    const cos = Math.cos(rad(ANGLE));
+    const sin = Math.sin(rad(ANGLE));
+    const cells: { x: number; y: number; dim: number }[] = [];
+    for (let c = -4; c <= 4; c++) {
+        for (let r = -3; r <= 3; r++) {
+            if (c === 0 && r === 0) continue;
+            const x = c * CELL_W;
+            const y = r * CELL_H + (Math.abs(c) % 2 ? CELL_H / 2 : 0);
+            const distance = Math.hypot(x / CELL_W, y / CELL_H);
+            if (distance > 3.2) continue;
+            // Where the cell lands once the lattice is turned: keep it only if it can be seen.
+            const vx = CORE.x + x * cos - y * sin;
+            const vy = CORE.y + x * sin + y * cos;
+            if (vx < -150 || vx > VIEW_W + 150 || vy < -250 || vy > VIEW_H + 250) continue;
+            cells.push({ x, y, dim: Math.max(0.55, 1 - distance * 0.13) });
+        }
+    }
+    return cells;
+})();
+
+/** The lattice and every mark on it are turned by ANGLE around the core, like a rotated isometric field. */
+const TURN = `rotate(${ANGLE} ${CORE.x} ${CORE.y})`;
 
 const place = (x: number, y: number, s: number) => `translate(${fmt(x - 347 * s)} ${fmt(y - 500 * s)}) scale(${s})`;
 
@@ -114,23 +138,24 @@ const STARS = (() => {
     }));
 })();
 
-/** The few stars that twinkle, as percentages of the art area, with their own timing. */
+/** The few stars that twinkle, as percentages of the art area (right of the veil), with their own timing. */
 const TWINKLES: readonly [number, number, number, number][] = [
-    [14, 16, 4.8, 0.2],
-    [31, 74, 6.2, 1.6],
-    [46, 9, 5.4, 3.1],
-    [58, 90, 7, 0.9],
-    [67, 27, 5.8, 2.4],
+    [34, 16, 4.8, 0.2],
+    [42, 74, 6.2, 1.6],
+    [52, 9, 5.4, 3.1],
+    [61, 90, 7, 0.9],
+    [68, 27, 5.8, 2.4],
     [79, 61, 4.4, 4],
     [90, 12, 6.6, 1.2],
     [95, 84, 5.2, 2.9],
-    [38, 46, 7.4, 3.6],
+    [47, 46, 7.4, 3.6],
 ];
 
 /**
- * The art behind the sign-in pages: a night sky with a slowly drifting star field, and a cluster
- * of the mark as extruded tiles on a honeycomb lattice, with a white core whose glow pulses. A
- * veil in the page colour fades all of it out toward the form.
+ * The art behind the sign-in pages: a night sky with a slowly drifting star field, and a field
+ * of the mark as extruded tiles on a staggered lattice turned by ANGLE, none touching another,
+ * around a larger white core whose glow pulses. A veil in the page colour hides all of it up to
+ * 40% of the viewport and fades it in by about 72%.
  *
  * Purely decorative (aria-hidden). Colours come from the --art-* tokens, per theme. Motion uses
  * transforms and opacity only, and none of it runs under reduced motion (logo-art.css).
@@ -183,7 +208,7 @@ export default function LogoArt({ className }: { className?: string }) {
                             <feGaussianBlur stdDeviation="22" />
                         </filter>
                         <filter id={ids.coreGlow} x="-40%" y="-40%" width="180%" height="180%">
-                            <feGaussianBlur stdDeviation="34" />
+                            <feGaussianBlur stdDeviation="26" />
                         </filter>
                         <g id={ids.tile}>
                             <g className="ms-logo-art__rim" filter={url(ids.glow)}>
@@ -202,16 +227,25 @@ export default function LogoArt({ className }: { className?: string }) {
                             <path className="ms-logo-art__core-face" d={LOGO_LOWER_PATH} />
                         </g>
                     </defs>
-                    {TILES.map((t) => (
-                        <use key={`${t.x}-${t.y}`} href={href(ids.tile)} transform={place(t.x, t.y, TILE_SCALE)} opacity={t.dim} />
-                    ))}
-                    <use href={href(ids.core)} transform={place(CORE.x, CORE.y, CORE_SCALE)} />
+                    <g transform={TURN}>
+                        {TILES.map((t) => (
+                            <use
+                                key={`${t.x}-${t.y}`}
+                                href={href(ids.tile)}
+                                transform={place(CORE.x + t.x, CORE.y + t.y, TILE_SCALE)}
+                                opacity={t.dim}
+                            />
+                        ))}
+                        <use href={href(ids.core)} transform={place(CORE.x, CORE.y, CORE_SCALE)} />
+                    </g>
                 </svg>
                 {/* The core's glow, behind the tiles in its own layer, so its pulse is an opacity change only. */}
                 <svg className="ms-logo-art__pulse" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="xMidYMid meet" focusable="false">
-                    <g className="ms-logo-art__core-glow" filter={url(ids.coreGlow)} transform={place(CORE.x, CORE.y, CORE_SCALE)}>
-                        <path d={LOGO_UPPER_PATH} />
-                        <path d={LOGO_LOWER_PATH} />
+                    <g transform={TURN}>
+                        <g className="ms-logo-art__core-glow" filter={url(ids.coreGlow)} transform={place(CORE.x, CORE.y, CORE_SCALE)}>
+                            <path d={LOGO_UPPER_PATH} />
+                            <path d={LOGO_LOWER_PATH} />
+                        </g>
                     </g>
                 </svg>
             </div>

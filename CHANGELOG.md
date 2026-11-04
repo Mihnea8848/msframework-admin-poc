@@ -183,8 +183,9 @@ section into a version (see `AGENTS.md`, Git workflow).
   `allowJs` are gone; the jsx-a11y lint rules are errors again. The CSS
   budget is 30 kB, since it counts every page's own stylesheet.
 - The sign-in art is a night sky with a slowly drifting star field and a
-  cluster of the mark as extruded tiles around a white core, filling the
-  right of the screen and fading in from the form (a pale version in light
+  rotated field of the mark as extruded tiles, spaced so none overlap,
+  around a white core. It starts under the form and stays hidden up to 40%
+  of the screen, then fades in by about 72% (a pale version in light
   mode). Its motion is stepped so it stays light on the CPU, and stops
   with reduced motion. The audit notice under the form is centred.
 - Cobalt is the default accent (cyan stays available). Old saved accents

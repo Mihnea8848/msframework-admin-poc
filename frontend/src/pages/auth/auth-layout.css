@@ -235,8 +235,8 @@
     height: 15px;
   }
 
-  /* The art: fixed to the viewport so it stays put while a long form scrolls. It covers the
-     right of the screen from just inside the form column; its veil fades it in from there. */
+  /* The art: fixed to the viewport so it stays put while a long form scrolls. It starts at 25vw,
+     under the form panel, and its veil keeps it hidden up to 40% of the viewport (LogoArt). */
   .ms-auth__art-slot {
     grid-column: 2;
     grid-row: 1;
@@ -245,7 +245,7 @@
 
   .ms-auth__art {
     position: fixed;
-    inset: 0 0 0 clamp(360px, 30vw, 600px);
+    inset: 0 0 0 25vw;
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
