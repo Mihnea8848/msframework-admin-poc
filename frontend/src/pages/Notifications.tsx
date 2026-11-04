@@ -10,6 +10,7 @@ import { getLastSeenAuditId, markAuditSeen } from "../utils/auditSeen";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import PageHeader from "../ui/PageHeader";
+import { useReveal } from "../ui/useReveal";
 import "../ui/list.css";
 import "../ui/surface.css";
 import "./notifications.css";
@@ -50,6 +51,7 @@ function AuditFeed({ variant }: { variant: FeedVariant }) {
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<(typeof AUDIT_FILTERS)[number]>("All");
     const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+    const reveal = useReveal(!loading);
     // Snapshot of what was already seen when the page opened, so new rows can be highlighted.
     const [seenBefore] = useState(() => getLastSeenAuditId(user));
 
@@ -113,11 +115,11 @@ function AuditFeed({ variant }: { variant: FeedVariant }) {
                 <div className="ms-empty"><p>No events in this category yet.</p></div>
             ) : (
                 <ol className="ms-panel ms-feed">
-                    {visible.map((ev) => {
+                    {visible.map((ev, i) => {
                         const meta = auditMeta(ev.eventType);
                         const isNew = ev.id > seenBefore;
                         return (
-                            <li key={ev.id} className={`ms-feed__item${isNew ? " ms-feed__item--new" : ""}`}>
+                            <li key={ev.id} {...reveal(i, `ms-feed__item${isNew ? " ms-feed__item--new" : ""}`)}>
                                 <span className={`ms-feed__icon ms-feed__icon--${toneOf(meta)}`} aria-hidden="true"><meta.Icon /></span>
                                 <div className="ms-feed__body">
                                     <p className="ms-feed__top">

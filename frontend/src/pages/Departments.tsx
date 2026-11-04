@@ -9,6 +9,7 @@ import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import Dialog, { DialogBody, DialogFooter } from "../ui/Dialog";
 import PageHeader from "../ui/PageHeader";
+import { useReveal } from "../ui/useReveal";
 import OfficialSeal from "../ui/seal/OfficialSeal";
 import { SealMini } from "../ui/seal/Seal";
 import { DEFAULT_COLOR, SEALS, sealForColor, sealRingTitle } from "../ui/seal/seals";
@@ -87,6 +88,7 @@ export default function Departments() {
     const [formError, setFormError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
+    const reveal = useReveal(!loading && !authLoading);
 
     const fetchDepartments = useCallback(async () => {
         try {
@@ -213,14 +215,14 @@ export default function Departments() {
                 </div>
             ) : (
                 <ul className="ms-departments__grid">
-                    {departments.map((dept) => {
+                    {departments.map((dept, i) => {
                         const seal = sealForColor(dept.color);
                         const members = dept.memberCount ?? 0;
                         const isOwnDepartment = String(dept.id) === String(currentUserDepartmentId);
                         const canEditThisDepartment = canEditDepartments && (currentUserIsAdmin || isOwnDepartment);
                         const canDeleteThisDepartment = canDeleteDepartments;
                         return (
-                            <li key={dept.id} className="ms-cut ms-departments__card">
+                            <li key={dept.id} {...reveal(i, "ms-cut ms-departments__card")}>
                                 <OfficialSeal className="ms-departments__seal" seal={seal.key} title={sealRingTitle(dept.name, seal)} />
                                 <span className="ms-departments__mini"><SealMini seal={seal.key} /></span>
                                 <div className="ms-departments__info">

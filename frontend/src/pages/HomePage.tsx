@@ -19,6 +19,7 @@ import { hasPermission, hasRole } from "../auth/permissions";
 import { pageByKey } from "../routes/navigation";
 import type { PageKey } from "../routes/navigation";
 import PageLink from "../shell/PageLink";
+import { useReveal } from "../ui/useReveal";
 import PageHeader from "../ui/PageHeader";
 import "../ui/surface.css";
 import "./home.css";
@@ -195,6 +196,7 @@ export default function HomePage() {
 
     const visibleTiles = tiles.filter((tile) => tile.allowed);
     const loading = authLoading || loadingUsers || loadingDepartments;
+    const reveal = useReveal(!loading);
 
     return (
         <section className="ms-home">
@@ -210,13 +212,13 @@ export default function HomePage() {
                 <p className="ms-home__empty">Your account does not have access to any workspace sections yet.</p>
             ) : (
                 <ul className="ms-home__grid">
-                    {visibleTiles.map((tile) => {
+                    {visibleTiles.map((tile, i) => {
                         const page = pageByKey(tile.key);
                         if (!page) return null;
                         const Icon = tile.icon;
                         return (
-                            <li key={tile.key}>
-                                <PageLink page={page} current={false} className="ms-cut ms-home__tile">
+                            <li key={tile.key} {...reveal(i)}>
+                                <PageLink page={page} current={false} className="ms-cut ms-home__tile ms-lift">
                                     <span className="ms-home__icon" aria-hidden="true"><Icon /></span>
                                     <span className="ms-home__title">{tile.title}</span>
                                     <span className="ms-home__desc">{tile.desc}</span>
