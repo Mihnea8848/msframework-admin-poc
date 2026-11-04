@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,12 @@ import java.util.Set;
  * Every step is idempotent. Legacy data repairs live in the migrations (V2).
  */
 @Component
+@Order(DatabaseSeeder.ORDER)
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
+
+    /** Runs first; the demo seeders (DemoPeopleSeeder, ...) use larger orders so they run after it. */
+    public static final int ORDER = 0;
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseSeeder.class);
 

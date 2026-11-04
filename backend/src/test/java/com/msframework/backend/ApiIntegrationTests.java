@@ -129,7 +129,7 @@ class ApiIntegrationTests {
     }
 
     @Test
-    void registrationValidatesInputAndCreatesMember() throws Exception {
+    void registrationValidatesInputAndCreatesAnAccessRequest() throws Exception {
         String email = unique("reg") + "@example.com";
 
         mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Jane Doe\",\"phone\":\"0712345678\","
@@ -143,12 +143,17 @@ class ApiIntegrationTests {
 
         mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Jane Doe\",\"phone\":\"0712345678\","
                         + "\"email\":\"" + email + "\",\"departmentId\":1,\"password\":\"" + PASSWORD + "\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.roles[0]").value("MEMBER"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.message").value("Your request was sent. An administrator will review it."))
                 .andExpect(jsonPath("$.password").doesNotExist());
 
+        // No account yet; a second request for the same address is refused while the first waits.
         mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Jane Doe\",\"phone\":\"0712345678\","
                         + "\"email\":\"" + email.toUpperCase() + "\",\"departmentId\":1,\"password\":\"" + PASSWORD + "\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A request for this email is already waiting for approval."));
+        mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Admin Again\",\"phone\":\"0712345678\","
+                        + "\"email\":\"" + ADMIN_EMAIL + "\",\"departmentId\":1,\"password\":\"" + PASSWORD + "\"}"))
                 .andExpect(status().isConflict());
     }
 

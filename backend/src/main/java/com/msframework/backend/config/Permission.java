@@ -46,5 +46,9 @@ public enum Permission {
 
     API_KEY_READ,
     API_KEY_CREATE,
-    API_KEY_DELETE
+    API_KEY_DELETE,
+
+    // People: access requests (self-registration review) and the roles overview
+    ACCESS_REQUESTS_MANAGE,
+    ROLES_READ
 }
