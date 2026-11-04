@@ -278,6 +278,75 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* Department performance and Spending this quarter (BusinessPanels.tsx) */
+  .ms-dashboard__biz {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 28px;
+  }
+
+  .ms-dashboard__biz.ms-dashboard__cols--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ms-dash-perf {
+    padding: 6px 0;
+    list-style: none;
+  }
+
+  .ms-dash-perf__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 64px;
+    gap: var(--space-3);
+    align-items: center;
+    padding: 6px 18px;
+  }
+
+  .ms-dash-perf__name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-dash-perf__score {
+    font-weight: var(--weight-bold);
+    text-align: right;
+  }
+
+  .ms-dash-spend {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .ms-dash-spend__figures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .ms-dash-spend__figures dt {
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-dash-spend__figures dd {
+    margin: 2px 0 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-dash-spend__over {
+    color: var(--status-danger-fg);
+  }
+
   .ms-dashboard__more {
     text-decoration: none;
   }

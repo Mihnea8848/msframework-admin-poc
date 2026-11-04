@@ -43,10 +43,6 @@
     min-width: 0;
   }
 
-  .ms-table .ms-num {
-    text-align: right;
-  }
-
   .ms-filters__end {
     margin-left: auto;
   }
@@ -165,7 +161,8 @@
     color: var(--status-danger-fg);
   }
 
-  .ms-num {
+  .ms-num,
+  .ms-table .ms-num {
     font-variant-numeric: tabular-nums;
     text-align: right;
     white-space: nowrap;
