@@ -4,7 +4,8 @@
  *   --chart-2      the second series (committed): a lighter step of the same hue
  *   --chart-over   spending past the budget: the danger colour, always with a text label
  *   --chart-track  the empty part of a bar or ring
- * A mark inside [data-seal] takes the seal colour instead (department charts).
+ * A mark inside [data-seal] takes --seal-border instead (department charts): the seal colour that
+ * keeps 3:1 against the surface, so the white and silver seals stay visible in light mode.
  */
 @layer components {
   :root {
@@ -168,7 +169,7 @@
 
   .ms-spark__line {
     fill: none;
-    stroke: var(--seal, var(--chart-1));
+    stroke: var(--seal-border, var(--chart-1));
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -180,7 +181,7 @@
   }
 
   .ms-spark__dot {
-    fill: var(--seal, var(--chart-1));
+    fill: var(--seal-border, var(--chart-1));
     stroke: var(--surface-1);
     stroke-width: 2;
   }
@@ -244,7 +245,7 @@
   }
 
   .ms-barlist__fill--seal {
-    background: var(--seal);
+    background: var(--seal-border);
   }
 
   /* Budget bar */
@@ -299,7 +300,7 @@
 
   .ms-ring__arc {
     fill: none;
-    stroke: var(--seal, var(--chart-1));
+    stroke: var(--seal-border, var(--chart-1));
     stroke-linecap: round;
   }
 

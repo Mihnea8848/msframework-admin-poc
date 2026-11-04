@@ -114,7 +114,7 @@
     display: block;
     height: 100%;
     border-radius: var(--radius-2);
-    background: var(--seal, var(--chart-1));
+    background: var(--seal-border, var(--chart-1));
   }
 
   .ms-goals__att {
