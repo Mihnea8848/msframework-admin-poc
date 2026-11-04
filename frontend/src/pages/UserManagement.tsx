@@ -452,7 +452,7 @@ export default function UserManagement() {
                                         {showActions && (
                                             <td className="ms-table__actions ms-users__act">
                                                 {editable && (
-                                                    <Button size="sm" className="ms-users__btn" icon={<Pencil aria-hidden="true" />} onClick={() => setRowDialog({ mode: "edit", member })}>
+                                                    <Button size="sm" className="ms-users__btn" title={`Edit ${name}`} icon={<Pencil aria-hidden="true" />} onClick={() => setRowDialog({ mode: "edit", member })}>
                                                         <span className="ms-users__btn-label">Edit</span>
                                                         <span className="ms-visually-hidden"> {member.fullName}</span>
                                                     </Button>
@@ -462,6 +462,7 @@ export default function UserManagement() {
                                                         size="sm"
                                                         variant="ghost-danger"
                                                         className="ms-users__btn"
+                                                        title={`Delete ${name}`}
                                                         icon={<Trash2 aria-hidden="true" />}
                                                         onClick={() => { setDeleteError(null); setRowDialog({ mode: "delete", member }); }}
                                                     >

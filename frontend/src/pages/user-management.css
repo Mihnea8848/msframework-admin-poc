@@ -29,6 +29,12 @@
     font-size: var(--font-size-md);
   }
 
+  /* Slightly tighter cells than the shared table, so all eight columns fit at 1440px */
+  .ms-users__table :is(th, td) {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
   .ms-users__sort {
     display: inline-flex;
     align-items: center;
@@ -141,7 +147,7 @@
   }
 
   .ms-users__title {
-    max-width: 200px;
+    max-width: 180px;
     overflow: hidden;
     color: var(--text-secondary);
     text-overflow: ellipsis;
@@ -168,14 +174,34 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    max-width: 100%;
+    max-width: 190px;
     font-weight: var(--weight-semibold);
     white-space: nowrap;
+  }
+
+  .ms-users__dept-chip > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .ms-users__dept-chip--none {
     color: var(--text-tertiary);
     font-weight: var(--weight-medium);
+  }
+
+  /* Icon-only row actions (the label stays for screen readers, and is the tooltip) */
+  .ms-users__btn .ms-btn__face {
+    width: 36px;
+    padding: 0;
+  }
+
+  .ms-users__btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .ms-users__locked {
@@ -436,20 +462,6 @@
       margin-left: 0;
     }
 
-    /* Icon-only actions on phones: the label stays for screen readers */
-    .ms-users__btn .ms-btn__face {
-      width: 40px;
-      padding: 0;
-    }
-
-    .ms-users__btn-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
 
     .ms-users__pager {
       justify-content: space-between;
