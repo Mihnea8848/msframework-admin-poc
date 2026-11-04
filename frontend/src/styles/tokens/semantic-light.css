@@ -49,7 +49,23 @@
   --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 14%, transparent);
   --avatar-text: var(--cyan-900);
   --gear: var(--grey-250);
-  --grain-blend: soft-light;
-  --grain-strength: 0.7;
-  --grain-wash: 0.12;
+
+  /* The sign-in art: a pale sky, darker specks and lighter tiles */
+  --art-sky-top: var(--mist-100);
+  --art-sky-bottom: var(--mist-200);
+  --art-haze: var(--mist-300);
+  --art-star: var(--mist-700);
+  --art-star-glow: var(--brand-cobalt);
+  --art-tile-face-hi: var(--mist-50);
+  --art-tile-face-lo: var(--mist-200);
+  --art-tile-top: var(--mist-400);
+  --art-tile-side: var(--mist-500);
+  --art-tile-edge-upper: var(--brand-cyan);
+  --art-tile-edge-lower: var(--brand-cobalt);
+  --art-tile-glow: var(--brand-cyan);
+  --art-core-face: var(--white);
+  --art-core-top: var(--mist-300);
+  --art-core-side: var(--mist-400);
+  --art-core-edge: var(--brand-cobalt);
+  --art-core-glow: var(--brand-cyan);
 }
