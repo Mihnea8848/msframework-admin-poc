@@ -4,6 +4,9 @@ import type { PageKey } from "../routes/navigation";
 type PageModule = { default: ComponentType };
 type PageLoader = () => Promise<PageModule>;
 
+/** A page with its own chunk: every sidebar page, plus Settings (one chunk for all its tabs). */
+export type LoaderKey = PageKey | "settings";
+
 /**
  * The code of every page inside the shell. Each `import()` is its own chunk, loaded by the
  * router when the page is first opened (see routes.tsx) and prefetched before that: when its
@@ -11,28 +14,29 @@ type PageLoader = () => Promise<PageModule>;
  *
  * Calling a loader twice is free: the browser keeps the module after the first import.
  */
-export const PAGE_LOADERS: Record<PageKey, PageLoader> = {
+export const PAGE_LOADERS: Record<LoaderKey, PageLoader> = {
     home: () => import("../pages/HomePage"),
     dashboard: () => import("../pages/dashboard/Dashboard"),
-    notifications: () => import("../pages/Notifications"),
-    appearance: () => import("../pages/Appearance"),
-    database: () => import("../pages/DatabasePage"),
-    connections: () => import("../pages/Connections"),
-    timezones: () => import("../pages/Timezones"),
-    docs: () => import("../pages/Documentation"),
-    auth: () => import("../pages/AuthSettings"),
+    activity: () => import("../pages/Notifications"),
+    // The audit log is the same feed as Activity for now, under its own title (same chunk).
+    audit: () => import("../pages/Notifications").then((m) => ({ default: m.AuditLog })),
     users: () => import("../pages/UserManagement"),
     departments: () => import("../pages/Departments"),
-    security: () => import("../pages/Security"),
     payments: () => import("../pages/Payments"),
     import: () => import("../pages/ImportData"),
     export: () => import("../pages/ExportData"),
+    database: () => import("../pages/DatabasePage"),
+    connections: () => import("../pages/Connections"),
+    security: () => import("../pages/Security"),
+    timezones: () => import("../pages/Timezones"),
+    docs: () => import("../pages/Documentation"),
+    settings: () => import("../pages/settings/Settings"),
 };
 
-const requested = new Set<PageKey>();
+const requested = new Set<LoaderKey>();
 
 /** Starts loading a page's chunk, once. Failures are ignored: the router retries on navigation. */
-export function prefetchPage(key: PageKey): void {
+export function prefetchPage(key: LoaderKey): void {
     if (requested.has(key)) return;
     requested.add(key);
     PAGE_LOADERS[key]().catch(() => requested.delete(key));
@@ -58,7 +62,7 @@ export function whenIdle(cb: () => void): () => void {
  * Prefetches the given pages one at a time, each in its own idle period, so prefetching never
  * competes with the page the user is looking at. Returns a function that stops it.
  */
-export function prefetchWhenIdle(keys: readonly PageKey[]): () => void {
+export function prefetchWhenIdle(keys: readonly LoaderKey[]): () => void {
     const queue = keys.filter((k) => !requested.has(k));
     let cancel: () => void = () => {};
     const next = () => {

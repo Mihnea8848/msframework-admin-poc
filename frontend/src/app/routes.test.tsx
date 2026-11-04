@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import type { Mock } from "vitest";
 import AuthProvider from "../auth/AuthProvider";
@@ -18,6 +19,8 @@ const viewer: CurrentUserDto = {
     roles: ["VIEWER"],
     permissions: ["DASHBOARD_READ", "DOCUMENTATION_READ"],
 };
+
+const auditor: CurrentUserDto = { ...viewer, id: 8, email: "aude@mehstudios.net", permissions: ["DASHBOARD_READ", "AUDIT_READ"] };
 
 let fetchMock: Mock<typeof fetch>;
 
@@ -108,5 +111,43 @@ describe("router guards", () => {
         await settlesAt(router, "/docs");
         expect(document.querySelector(".ms-sidebar")).toBe(sidebar);
         expect(document.querySelector(".ms-sidebar [aria-current=page]")).toHaveAttribute("href", "/docs");
+    });
+
+    it("opens Settings on its first tab and keeps each tab at its own URL", async () => {
+        backend(viewer);
+        const router = start("/settings");
+        await settlesAt(router, "/settings/account");
+        await act(() => router.navigate("/settings/organisation"));
+        await settlesAt(router, "/settings/organisation");
+        await act(() => router.navigate("/settings/nope"));
+        await settlesAt(router, "/settings/account");
+    });
+
+    it("moves between Settings tabs with the arrow keys", async () => {
+        backend(viewer);
+        const router = start("/settings/account");
+        const account = await screen.findByRole("tab", { name: "Account" }, { timeout: 4000 });
+        expect(account).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByRole("tab", { name: "Security" })).toHaveAttribute("tabindex", "-1");
+        account.focus();
+        await userEvent.keyboard("{ArrowRight}");
+        await settlesAt(router, "/settings/security");
+        expect(screen.getByRole("tab", { name: "Security" })).toHaveFocus();
+        await userEvent.keyboard("{End}");
+        await settlesAt(router, "/settings/organisation");
+        await userEvent.keyboard("{ArrowRight}");
+        await settlesAt(router, "/settings/account");
+        expect(screen.getByRole("tabpanel")).toHaveAccessibleName("Account");
+    });
+
+    it("redirects the old paths to where their pages live now", async () => {
+        backend(auditor);
+        const router = start("/auth");
+        await settlesAt(router, "/settings/account");
+        await act(() => router.navigate("/appearance"));
+        await settlesAt(router, "/settings/appearance");
+        await act(() => router.navigate("/notifications"));
+        await settlesAt(router, "/activity");
+        await waitFor(() => expect(document.querySelector(".ms-sidebar [aria-current=page]")).toHaveAttribute("href", "/activity"));
     });
 });

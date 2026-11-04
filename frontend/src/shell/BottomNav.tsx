@@ -24,13 +24,13 @@ type BottomNavProps = {
  */
 export default function BottomNav({ tabs, more, pathname, badge, moreOpen, onOpenMore, moreButtonRef }: BottomNavProps) {
     const moreHasCurrent = more.some((p) => p.path === pathname);
-    const moreHasBadge = Boolean(badge) && more.some((p) => p.key === "notifications");
+    const moreHasBadge = Boolean(badge) && more.some((p) => p.key === "activity");
 
     return (
         <nav className="ms-bottom-nav" aria-label="Main">
             {tabs.map((page) => {
                 const Icon = page.icon;
-                const tabBadge = page.key === "notifications" ? badge : null;
+                const tabBadge = page.key === "activity" ? badge : null;
                 return (
                     <PageLink key={page.key} page={page} current={pathname === page.path} className="ms-bottom-nav__tab">
                         <span className="ms-bottom-nav__icon-wrap">
@@ -57,7 +57,7 @@ export default function BottomNav({ tabs, more, pathname, badge, moreOpen, onOpe
                         {moreHasBadge ? <span className="ms-bottom-nav__dot" aria-hidden="true" /> : null}
                     </span>
                     <span className="ms-bottom-nav__label">More</span>
-                    {moreHasBadge ? <span className="ms-visually-hidden">, unread notifications</span> : null}
+                    {moreHasBadge ? <span className="ms-visually-hidden">, unread activity</span> : null}
                 </button>
             ) : null}
         </nav>

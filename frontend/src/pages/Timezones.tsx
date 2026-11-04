@@ -239,7 +239,7 @@ export default function Timezones() {
     return (
         <section className="ms-timezones">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Resources"
                 title="Timezones"
                 description="Monitor local times across your organization's locations."
             />

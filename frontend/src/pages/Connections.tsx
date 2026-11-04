@@ -185,7 +185,7 @@ export default function Connections() {
     return (
         <section className="ms-connections">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Operations"
                 title="Connections"
                 description={canManage
                     ? "Manage external service integrations, webhooks, and API keys."

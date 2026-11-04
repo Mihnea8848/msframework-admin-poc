@@ -226,7 +226,7 @@ export default function UserManagement() {
     return (
         <section className="ms-users">
             <PageHeader
-                eyebrow="Ventures"
+                eyebrow="People"
                 title="User management"
                 count={members.length}
                 description="Manage who can sign in, their role and their department."

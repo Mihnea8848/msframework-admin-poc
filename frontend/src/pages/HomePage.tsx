@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+    Activity,
     ArrowRight,
-    Bell,
     Building2,
     CreditCard,
     Database,
@@ -142,10 +142,10 @@ export default function HomePage() {
             allowed: canReadDepartments,
         },
         {
-            key: "notifications",
-            icon: Bell,
-            title: "Notifications",
-            desc: "Full audit log of every action taken across the platform.",
+            key: "activity",
+            icon: Activity,
+            title: "Activity",
+            desc: "Every sign-in and change across the platform, newest first.",
             metric: "Audit events",
             allowed: canReadAudit,
         },
@@ -199,7 +199,7 @@ export default function HomePage() {
     return (
         <section className="ms-home">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Overview"
                 title="Multimedia Entertainment Hub"
                 description="Everything at a glance. Open the sections your role can use."
             />

@@ -37,7 +37,7 @@ MANAGER  — dashboard, users and departments (read), edit their own
            department and its members, notifications, timezones
 MEMBER   — dashboard, users and departments (read), timezones, docs
 VIEWER   — dashboard and documentation only`}</pre>
-                <p>Everyone can change their own email and password under <strong>Account &amp; security</strong> and their look and feel under <strong>Appearance</strong>.</p>
+                <p>Everyone can change their own email and password under <strong>Settings</strong> (Account and Security) and their look and feel under <strong>Settings Everyone can change their own email and password under <strong>Account &amp; security</strong> and their look and feel under <strong>Appearance</strong>.gt; Appearance</strong>.</p>
             </>
         ),
     },
@@ -72,12 +72,12 @@ DELETE /api/departments/{id} — delete department`}</pre>
         ),
     },
     {
-        id: "notifications",
-        title: "Notifications & Audit Log",
+        id: "activity",
+        title: "Activity & Audit Log",
         content: (
             <>
                 <p>Every important action — sign-ins (including failed ones), user and department changes, integration changes, API keys, settings, imports and exports — is written to the audit log.</p>
-                <p>The <strong>Notifications</strong> page refreshes every 15 seconds and highlights events you haven&apos;t seen; the sidebar badge counts unseen events.</p>
+                <p>The <strong>Activity</strong> page (and <strong>Audit log</strong> under Security) refreshes every 15 seconds and highlights events you haven&apos;t seen; the sidebar badge counts unseen events.</p>
             </>
         ),
     },
@@ -101,7 +101,7 @@ name,color`}</pre>
         title: "Navigation & Shortcuts",
         content: (
             <>
-                <p>The sidebar shows only the pages your role can open, in two groups: <strong>General</strong> and <strong>Ventures</strong>.</p>
+                <p>The sidebar shows only the pages your role can open, grouped as <strong>Overview</strong>, <strong>People</strong>, <strong>Finance</strong>, <strong>Operations</strong>, <strong>Security</strong> and <strong>Resources</strong>. <strong>Settings</strong> opens from the cog or your name in the top bar.</p>
                 <pre>{`⌘K / Ctrl+K   — Open Quick Actions palette
 /             — Open Quick Actions palette (when not typing)
 ↑ ↓           — Navigate results in palette
@@ -115,7 +115,7 @@ Esc           — Close any overlay or dialog`}</pre>
         title: "Appearance & Theming",
         content: (
             <>
-                <p>Visit <strong>Appearance</strong> to switch between <strong>Dark</strong> and <strong>Light</strong> mode, pick one of six accent colours and choose <strong>Comfortable</strong> or <strong>Compact</strong> density.</p>
+                <p>Open <strong>Settings &gt; Appearance</strong> to switch between <strong>Dark</strong> and <strong>Light</strong> mode, pick one of six accent colours and choose <strong>Comfortable</strong> or <strong>Compact</strong> density.</p>
                 <p>Preferences are stored in this browser and restored before the first render, so there is no flash of the wrong theme.</p>
             </>
         ),
@@ -164,7 +164,7 @@ export default function Documentation() {
 
     return (
         <section className="ms-docs">
-            <PageHeader eyebrow="General" title="Documentation" description="How to use MSFramework Admin." />
+            <PageHeader eyebrow="Resources" title="Documentation" description="How to use MSFramework Admin." />
 
             <nav className="ms-docs__jump" aria-label="Sections">
                 {SECTIONS.map((s) => (

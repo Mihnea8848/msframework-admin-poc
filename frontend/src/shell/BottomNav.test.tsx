@@ -40,11 +40,11 @@ describe("BottomNav", () => {
         expect(within(nav).getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
     });
 
-    it("marks More when the current page is in the sheet, and announces unread notifications", () => {
-        const { nav } = renderNav("/notifications", "3");
+    it("marks More when the current page is in the sheet, and announces unread activity", () => {
+        const { nav } = renderNav("/activity", "3");
         const more = within(nav).getByRole("button", { name: /More/ });
         expect(more).toHaveAttribute("data-current", "true");
-        expect(more).toHaveAccessibleName("More, unread notifications");
+        expect(more).toHaveAccessibleName("More, unread activity");
     });
 
     it("opens the More sheet", async () => {

@@ -122,14 +122,14 @@ export default function ExportData() {
     if (available.length === 0) {
         return (
             <section className="ms-transfer">
-                <PageHeader eyebrow="Ventures" title="Export Data" description="You don't have access to any dataset that can be exported." />
+                <PageHeader eyebrow="Operations" title="Export Data" description="You don't have access to any dataset that can be exported." />
             </section>
         );
     }
 
     return (
         <section className="ms-transfer">
-            <PageHeader eyebrow="Ventures" title="Export Data" description="Download a CSV file generated from live system data." />
+            <PageHeader eyebrow="Operations" title="Export Data" description="Download a CSV file generated from live system data." />
 
             <div className="ms-field ms-transfer__entity">
                 <label className="ms-field__label" htmlFor="export-entity">What would you like to export?</label>

@@ -180,7 +180,7 @@ export default function Departments() {
     return (
         <section className="ms-departments">
             <PageHeader
-                eyebrow="Ventures"
+                eyebrow="People"
                 title="Departments"
                 count={loading || authLoading ? null : departments.length}
                 description="The studio departments, their seals and members. Performance and budget figures are illustrative sample data; member counts are live."

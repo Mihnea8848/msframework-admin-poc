@@ -25,7 +25,25 @@ function toneOf(meta: AuditTypeMeta): Tone {
     return (match?.[1] as Tone | undefined) ?? "neutral";
 }
 
-export default function Notifications() {
+type FeedVariant = "activity" | "audit";
+
+const HEADERS: Record<FeedVariant, { eyebrow: string; title: string; lead: string }> = {
+    activity: { eyebrow: "Overview", title: "Activity", lead: "What is happening across the platform" },
+    audit: { eyebrow: "Security", title: "Audit log", lead: "The audit trail of every sign-in and change, with who made it" },
+};
+
+/** Activity (Overview): the latest events, with new ones highlighted. */
+export default function Activity() {
+    return <AuditFeed variant="activity" />;
+}
+
+/** Audit log (Security): the same feed for now, under its own title, until it gets its own page. */
+export function AuditLog() {
+    return <AuditFeed variant="audit" />;
+}
+
+function AuditFeed({ variant }: { variant: FeedVariant }) {
+    const header = HEADERS[variant];
     const { user } = useAuth();
     const [events, setEvents] = useState<AuditEventDto[]>([]);
     const [loading, setLoading] = useState(true);
@@ -61,10 +79,10 @@ export default function Notifications() {
     return (
         <section className="ms-notifications">
             <PageHeader
-                eyebrow="General"
-                title="Notifications"
+                eyebrow={header.eyebrow}
+                title={header.title}
                 count={events.length > 0 ? events.length : undefined}
-                description={`Audit trail of all activity across the platform (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
+                description={`${header.lead} (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
                 actions={
                     <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={load}>Refresh</Button>
                 }

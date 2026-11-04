@@ -1,6 +1,7 @@
 /*
- * Account & security (pages/AuthSettings.tsx): the email and password forms side by side, then
- * the two-factor row and the connected accounts, both marked "Coming soon".
+ * The Account and Security tabs of Settings (AccountTab.tsx, SecurityTab.tsx): the profile and
+ * email forms, the password form, and the two-factor and connected-account panels, both marked
+ * "Coming soon".
  */
 @layer pages {
   .ms-account {
@@ -19,8 +20,8 @@
   .ms-account__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    align-items: start;
     gap: var(--space-4);
-    margin-bottom: var(--space-4);
   }
 
   .ms-account__body {
@@ -77,8 +78,29 @@
     background: currentcolor;
   }
 
-  .ms-account__section {
-    margin-bottom: var(--space-4);
+  .ms-account__stack {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  /* The profile summary: label and value pairs */
+  .ms-account__facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-account__facts dt {
+    color: var(--text-tertiary);
+  }
+
+  .ms-account__facts dd {
+    margin: 0;
+    overflow-wrap: anywhere;
   }
 
   .ms-account__row {
@@ -149,9 +171,9 @@
   }
 
   @media (width <= 767px) {
-    .ms-account__grid {
+    .ms-account__grid,
+    .ms-account__stack {
       gap: var(--space-3);
-      margin-bottom: var(--space-3);
     }
 
     .ms-account__body {

@@ -1,5 +1,5 @@
 /*
- * Appearance (pages/Appearance.tsx): one panel per preference with pressable option tiles, the
+ * Settings > Appearance (AppearanceTab.tsx): one panel per preference with pressable option tiles, the
  * accent swatches and a live preview of the palette tokens.
  */
 @layer pages {
@@ -13,6 +13,12 @@
 
   :where(.ms-appearance) :where(h2, p) {
     margin: 0;
+  }
+
+  .ms-appearance__intro {
+    margin-bottom: var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
   }
 
   .ms-appearance__grid {

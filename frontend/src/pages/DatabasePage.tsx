@@ -99,7 +99,7 @@ export default function DatabasePage() {
     return (
         <section className="ms-database">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Operations"
                 title="Database"
                 count={tables.length || undefined}
                 description={tables.length ? `Live schema of the application database · ${totalRows.toLocaleString()} rows in total.` : "Live schema of the application database."}
