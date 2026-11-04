@@ -85,7 +85,7 @@ The roles are defined in `backend/.../config/SystemRoles.java`, which is the sin
 | MEMBER | Dashboard; read users and departments; timezones; docs |
 | VIEWER | Dashboard; docs |
 
-Everyone can open **Settings** (`/settings/:tab`): their own profile, email and password, their appearance, and a read-only view of the organisation settings.
+Everyone can open **Settings** (`/settings/:tab`): their own profile, email and password, their appearance, and a read-only view of the organisation settings. Everyone also has **Activity** (their own events, `GET /api/audit/me`) and **Sessions** (their own sessions). Because of Sessions, every role sees the Security group in the sidebar; for members and viewers it holds only Sessions, which Settings > Security also links to.
 
 Additional rules, enforced in `UserService`:
 - At least one active admin must always exist.
@@ -271,6 +271,7 @@ Component, shell and page styles live next to their component (`src/ui/brand/log
 - **Quick Actions:** `ui/QuickActions.tsx` is a native `<dialog>` near the top of the screen, mounted only while open, with a combobox (`aria-activedescendant`) over a grouped listbox of the pages the user may open. Arrow keys move, Enter opens, Escape or the backdrop closes, and focus returns to where it was. `QuickActions.test.tsx` covers it.
 - **Pages:** each page is one `.tsx` file in `src/pages/` with its own stylesheet next to it (`ms-<page>` block, `@layer pages`), built from the shared controls above. A page whose root is a grid uses `grid-template-columns: minmax(0, 1fr)`, or the one-line phone header description widens the column past 360px. Sample data (Payments, department performance and budget) carries an `ms-tag` saying "Sample data" or "Demo".
 - **Page header:** `ui/PageHeader.tsx` takes `eyebrow`, `title`, `count`, `description` and `actions`, and draws the three-segment stripe (`stripe={false}` hides it; the colours are `--stripe-1` to `--stripe-3`). The older `breadcrumb` ("Group / Page", whose first part becomes the eyebrow) and `subtitle` still work. On phones the eyebrow and stripe are hidden.
+- **Throttling and registration on the auth pages:** a 429 carries `Retry-After`, which `ApiError.retryAfterSeconds` exposes; show it with `throttleNotice`/`signInProblem` from `utils/retryAfter.ts` ("Try again in N minutes"), never by parsing the message. Pages that ask for a new password read the minimum length from `GET /api/auth/registration` (public) and pass it to `validatePassword`/`passwordLabels`; Login and Register also use its `open` flag.
 - **Auth pages** live in `src/pages/auth/`. Each page renders `<AuthLayout>` (pass `trace` on Login) with its title, lead and form inside, using the `ms-auth__title`, `ms-auth__lead`, `ms-auth__form` and `ms-auth__alt` classes. The layout keeps the art in one DOM node that moves from page to page, so it is never remounted even though the router renders each auth page separately; only the panel content fades in (`--duration-base`, 6px rise). The logo trace plays once per tab, on the first Login, and is skipped under `[data-motion="reduced"]`. Don't wrap the auth routes in `AuthLayout` in the router as well.
 - **Dashboard** lives in `src/pages/dashboard/`. `status.ts` holds the pure functions that turn the API results into the status cards, the summary line and the figures (tested in `status.test.ts`); the security score comes from `utils/securityChecks.ts`, shared with the Security page. Never show a number the API did not give: a card the role may not read says "Not checked".
 - **Brand names:** the product is MSFramework; in UI text the company is "Multimedia Entertainment Hub" ("MEH Studios Inc" in the narrow sidebar label). Example addresses use the `mehstudios.net` domain.
@@ -338,14 +339,18 @@ frontend/src/
   pages/auth/          AuthLayout (split layout, shared art, motion) + Login, Register, ForgotPassword, ResetPassword
   pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures)
   pages/settings/      Settings.tsx (the tab row and panel) + AccountTab, SecurityTab, AppearanceTab, OrganisationTab
-  pages/               the other pages (HomePage, UserManagement, Departments, Notifications (Activity and Audit
-                       log), DatabasePage, Connections, Timezones, Documentation, Security, Payments, ImportData,
-                       ExportData), each .tsx with its own .css
+  pages/activity/      Activity.tsx (your own feed) + AuditLog.tsx (every event, AUDIT_READ), FeedList.tsx (the
+                       shared rows), feed.ts (who reads which feed, the Audit log filters), activity.css
+  pages/               the other pages (HomePage, UserManagement, Departments, Sessions, DatabasePage, Connections,
+                       Timezones, Documentation, Security, Payments, ImportData, ExportData), each .tsx with its
+                       own .css
   ui/                  Button, Alert, PageHeader, Dialog, Toggle, QuickActions, CountUp, useReveal (+ motion.css),
                        seal/ (Seal.tsx, OfficialSeal.tsx, seals.ts), brand/Logo.tsx, brand/LogoArt.tsx, and the CSS
                        blocks field.css, surface.css, list.css
   utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts,
-                       securityChecks.ts (Security page and Dashboard)
+                       securityChecks.ts (Security page and Dashboard), activityBadge.ts (the unread rule, kept out
+                       of auditTypes so the shell stays small), userAgent.ts (browser and device for Sessions),
+                       retryAfter.ts (429 and pending-approval wording for the auth pages)
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
   **/*.test.ts(x)      unit tests, next to the module they cover
 frontend/scripts/check-bundle.mjs  the bundle size budget, run by npm run build
