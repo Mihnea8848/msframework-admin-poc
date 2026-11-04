@@ -32,6 +32,9 @@ import java.io.IOException;
  * <p>CSRF tokens are disabled because the session cookie is {@code SameSite=Lax} (see
  * application.properties) and every state-changing endpoint only accepts JSON, which a
  * cross-site form cannot send.</p>
+ *
+ * <p>{@code /api/ingest/**} is not handled here: {@link IngestSecurityConfig} gives it its own
+ * stateless chain (API key, no session, CSRF-exempt), ordered before this one.</p>
  */
 @Configuration
 @EnableWebSecurity
