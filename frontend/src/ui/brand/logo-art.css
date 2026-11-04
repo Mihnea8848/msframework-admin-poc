@@ -26,7 +26,7 @@
   }
 
   /* Fine speckle: thresholded noise used as a mask over the star colour. The tile is 256px and
-     the layer drifts by exactly one tile, so the loop is seamless. */
+     it stays still (moving it too halved the frame rate); the star layer drifts instead. */
   .ms-logo-art__dust {
     inset: -256px 0 0 -256px;
     opacity: 0.55;
@@ -167,11 +167,6 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    :root[data-motion="full"] .ms-logo-art__dust {
-      will-change: transform;
-      animation: ms-logo-art-dust 90s linear infinite;
-    }
-
     :root[data-motion="full"] .ms-logo-art__stars {
       will-change: transform;
       animation: ms-logo-art-stars 90s linear infinite;
@@ -187,17 +182,8 @@
       animation: ms-logo-art-pulse 7s ease-in-out infinite;
     }
 
-    :root[data-motion="full"] .ms-logo-art__cluster {
-      will-change: transform;
-      animation: ms-logo-art-float 11s ease-in-out infinite alternate;
-    }
   }
 
-  @keyframes ms-logo-art-dust {
-    to {
-      transform: translate(256px, 256px);
-    }
-  }
 
   @keyframes ms-logo-art-stars {
     to {
@@ -227,9 +213,4 @@
     }
   }
 
-  @keyframes ms-logo-art-float {
-    to {
-      transform: translateY(-4px);
-    }
-  }
 }

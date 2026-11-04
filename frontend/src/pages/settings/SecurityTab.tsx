@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Apple, Check, Chrome, Circle, Github, LogOut, MonitorSmartphone } from "lucide-react";
+import { Check, Chrome, Circle, Github, LogOut, MonitorSmartphone } from "lucide-react";
+import Logo from "../../ui/brand/Logo";
 import { post } from "../../api/client";
 import { fetchMySessions, fetchRegistrationStatus, revokeMyOtherSessions } from "../../api/security";
 import type { SessionDto } from "../../api/security";
@@ -18,9 +19,9 @@ import "./account.css";
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 const ACCOUNTS = [
-    { name: "GitHub", Icon: Github },
+    { name: "MS:AUTH", Icon: Logo },
     { name: "Google", Icon: Chrome },
-    { name: "Apple", Icon: Apple },
+    { name: "GitHub", Icon: Github },
 ];
 
 /** The rules listed under the new password (the byte limit only matters for very long ones). */

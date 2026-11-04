@@ -25,7 +25,12 @@ section into a version (see `AGENTS.md`, Git workflow).
 - BCrypt cost raised to 12; older hashes are upgraded at the next sign-in.
   New passwords may not be one of the 1000 most common passwords.
 
-### Added (people screens)
+### Added - `StaffSeeder` adds the studio's real leadership (the director and five
+  heads of department, with their consent) once per database, as heads of
+  their departments (`SEED_STAFF`, on by default).
+- The first single sign-on button is MS:AUTH (still coming soon); it
+  replaces Apple.
+(people screens)
 - Users page on the paged search API: debounced search, role, status and
   department filters and sortable columns kept in the URL, 25 per page, job
   title and last sign-in columns, and bulk Activate, Deactivate, Change
@@ -205,8 +210,9 @@ section into a version (see `AGENTS.md`, Git workflow).
   figures that count up once. All of it is off with reduced motion.
 
 ### Fixed
-- The sign-in art animates smoothly again instead of at about 4 frames per
-  second.
+- The sign-in art animates smoothly: the tile cluster no longer floats and
+  the star dust no longer drifts, which forced a redraw of their filters on
+  every frame (about 4 frames per second). Only the star layer drifts.
 - Departments created by older versions had no colour, so all of them showed
   the Quality Control seal. `V8` gives the seven standard departments their
   own seal's colour when theirs is missing.

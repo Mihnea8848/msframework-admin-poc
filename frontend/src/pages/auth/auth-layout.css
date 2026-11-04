@@ -219,6 +219,11 @@
     letter-spacing: 0.04em;
   }
 
+  .ms-auth__sso-logo {
+    width: auto;
+    height: 18px;
+  }
+
   .ms-auth__sso-note {
     display: flex;
     align-items: center;
