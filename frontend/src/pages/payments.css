@@ -5,6 +5,9 @@
 @layer pages {
   .ms-payments {
     display: grid;
+
+    /* minmax(0, 1fr): the one-line phone header description must not widen the column */
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
     min-width: 0;
     color: var(--text-primary);
