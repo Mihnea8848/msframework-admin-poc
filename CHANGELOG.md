@@ -65,6 +65,18 @@ section into a version (see `AGENTS.md`, Git workflow).
 - `Dialog` (native modal `<dialog>`, a bottom sheet on phones), department
   seal components, shared list blocks (toolbar, table, status pills) and a
   `ghost-danger` Button variant for Delete on a row or card.
+- A Settings page (`/settings/account`, `/security`, `/appearance`,
+  `/organisation`), opened from the top bar cog or your name, with a tab
+  per link. Account and Security take over Account & security, Appearance
+  takes over the Appearance page, and Organisation shows the organisation
+  timezone and world clocks. Quick Actions lists the tabs.
+- Official department seals on the Departments cards, redrawn as SVG from
+  the brand artwork (title ring, gear, stars and an emblem per seal).
+- An Audit log entry under Security (the activity feed under its own
+  title for now).
+- Page motion: a short staggered reveal of cards and rows the first time a
+  page shows its data, a 2px lift on clickable cards, and Dashboard
+  figures that count up once. All of it is off with reduced motion.
 
 ### Fixed
 - Changing your own email no longer logs you out.
@@ -142,3 +154,16 @@ section into a version (see `AGENTS.md`, Git workflow).
 - The legacy stylesheet, the old colour variable bridge, `Modal.jsx` and
   `allowJs` are gone; the jsx-a11y lint rules are errors again. The CSS
   budget is 30 kB, since it counts every page's own stylesheet.
+- The sign-in art is a night sky with a slowly drifting star field and a
+  cluster of the mark as extruded tiles around a white core, filling the
+  right of the screen and fading in from the form (a pale version in light
+  mode). Its motion is stepped so it stays light on the CPU, and stops
+  with reduced motion. The audit notice under the form is centred.
+- Cobalt is the default accent (cyan stays available). Old saved accents
+  that match no key now become cobalt.
+- The sidebar is grouped as Overview, People, Finance, Operations,
+  Security and Resources. Notifications is now Activity (`/notifications`
+  redirects there), and Account & security and Appearance left the
+  sidebar for Settings (`/auth` and `/appearance` redirect to their tabs).
+- The total CSS budget is 34 kB, for the Settings page, the sign-in art
+  and the official seals.
