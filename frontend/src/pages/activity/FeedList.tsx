@@ -20,20 +20,20 @@ interface FeedListProps {
     events: readonly AuditEventDto[];
     /** Rows get the reveal animation once this is true (after the first load). */
     ready: boolean;
-    /** Events with a higher id get the "New" edge and tag. */
-    seenBefore?: number;
+    /** Events that get the "New" edge and tag (Activity: notable events since the last visit). */
+    isNew?: (event: AuditEventDto) => boolean;
     /** Who did it, as shown on the row (for example "You" on Activity). Defaults to the actor's email. */
     actorLabel?: (event: AuditEventDto) => ReactNode;
 }
 
 /** The event rows shared by Activity and the Audit log: icon tile, type, actor, text and time. */
-export default function FeedList({ events, ready, seenBefore = Number.POSITIVE_INFINITY, actorLabel }: FeedListProps) {
+export default function FeedList({ events, ready, isNew: isNewEvent, actorLabel }: FeedListProps) {
     const reveal = useReveal(ready);
     return (
         <ol className="ms-panel ms-feed">
             {events.map((ev, i) => {
                 const meta = auditMeta(ev.eventType);
-                const isNew = ev.id > seenBefore;
+                const isNew = isNewEvent ? isNewEvent(ev) : false;
                 return (
                     <li key={ev.id} {...reveal(i, `ms-feed__item${isNew ? " ms-feed__item--new" : ""}`)}>
                         <span className={`ms-feed__icon ms-feed__icon--${toneOf(meta)}`} aria-hidden="true"><meta.Icon /></span>

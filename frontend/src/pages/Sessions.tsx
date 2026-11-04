@@ -317,20 +317,7 @@ export default function Sessions() {
                 title="Sessions"
                 count={sessions ? sessions.length : undefined}
                 description="Where you are signed in. Sign out of any device you do not recognise."
-                actions={
-                    <>
-                        <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={() => load()}>Refresh</Button>
-                        <Button
-                            size="sm"
-                            variant="ghost-danger"
-                            icon={<LogOut aria-hidden="true" />}
-                            disabled={others.length === 0}
-                            onClick={() => { setConfirmError(null); setConfirm({ kind: "others", count: others.length }); }}
-                        >
-                            Sign out all other sessions
-                        </Button>
-                    </>
-                }
+                actions={<Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={() => load()}>Refresh</Button>}
             />
 
             {notice && <Alert tone="ok" role="status" className="ms-notice">{notice}</Alert>}
@@ -353,6 +340,22 @@ export default function Sessions() {
                     ) : sessions ? (
                         <p className="ms-sessions__hint ms-sessions__body">No sessions found.</p>
                     ) : null}
+                    {sessions && (
+                        <div className="ms-sessions__foot">
+                            <p className="ms-sessions__hint">
+                                {others.length === 0 ? "You are not signed in anywhere else." : "Lost a device, or signed in somewhere you should not have?"}
+                            </p>
+                            <Button
+                                size="sm"
+                                variant="ghost-danger"
+                                icon={<LogOut aria-hidden="true" />}
+                                disabled={others.length === 0}
+                                onClick={() => { setConfirmError(null); setConfirm({ kind: "others", count: others.length }); }}
+                            >
+                                Sign out all other sessions
+                            </Button>
+                        </div>
+                    )}
                 </section>
 
                 {canManage && <UserSessions onConfirm={(c) => { setConfirmError(null); setConfirm(c); }} refreshKey={userRefresh} />}

@@ -14,6 +14,8 @@ import FeedList from "./FeedList";
 const POLL_MS = 30000;
 /** The most the API returns in one call (AuditController.MAX_LIMIT); the filters work on these. */
 const LIMIT = 500;
+/** Rows shown at first and added by "Show more", so 500 events do not make one endless page. */
+const STEP = 50;
 
 /**
  * Audit log (Security, AUDIT_READ): every sign-in and change, with who made it. The filters
@@ -26,6 +28,7 @@ export default function AuditLog() {
     const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState<AuditFilters>(NO_FILTERS);
     const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+    const [shown, setShown] = useState(STEP);
 
     /** `background` marks the timed refresh, which must not keep an idle session alive. */
     const load = useCallback(async (background = false) => {
@@ -47,7 +50,14 @@ export default function AuditLog() {
         return () => window.clearInterval(id);
     }, [load]);
 
-    const set = <K extends keyof AuditFilters>(key: K, value: AuditFilters[K]) => setFilters((f) => ({ ...f, [key]: value }));
+    const set = <K extends keyof AuditFilters>(key: K, value: AuditFilters[K]) => {
+        setFilters((f) => ({ ...f, [key]: value }));
+        setShown(STEP);
+    };
+    const clear = () => {
+        setFilters(NO_FILTERS);
+        setShown(STEP);
+    };
     const inverted = isRangeInverted(filters);
     const visible = inverted ? [] : filterAuditEvents(events, filters);
     const filtered = hasActiveFilters(filters);
@@ -97,7 +107,7 @@ export default function AuditLog() {
                             onChange={(e) => set("to", e.target.value)} aria-invalid={inverted || undefined} />
                     </div>
                     {filtered && (
-                        <Button size="sm" variant="ghost" icon={<X aria-hidden="true" />} onClick={() => setFilters(NO_FILTERS)}>
+                        <Button size="sm" variant="ghost" icon={<X aria-hidden="true" />} onClick={clear}>
                             Clear filters
                         </Button>
                     )}
@@ -118,10 +128,19 @@ export default function AuditLog() {
             ) : visible.length === 0 ? (
                 <div className="ms-empty">
                     <p>No events match these filters.</p>
-                    <Button size="sm" onClick={() => setFilters(NO_FILTERS)}>Clear filters</Button>
+                    <Button size="sm" onClick={clear}>Clear filters</Button>
                 </div>
             ) : (
-                <FeedList events={visible} ready={!loading} />
+                <>
+                    <FeedList events={visible.slice(0, shown)} ready={!loading} />
+                    {visible.length > shown && (
+                        <div className="ms-feed__more">
+                            <Button size="sm" onClick={() => setShown((n) => n + STEP)}>
+                                Show {Math.min(STEP, visible.length - shown)} more
+                            </Button>
+                        </div>
+                    )}
+                </>
             )}
         </section>
     );

@@ -9,7 +9,7 @@ import { getLastSeenAuditId, markAuditSeen } from "../../utils/auditSeen";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
 import PageHeader from "../../ui/PageHeader";
-import { isOwnAction } from "../../utils/activityBadge";
+import { isNotable, isOwnAction } from "../../utils/activityBadge";
 import { canReadAuditLog, mergeNewer } from "./feed";
 import type { CategoryFilter } from "./feed";
 import FeedList from "./FeedList";
@@ -75,6 +75,8 @@ export default function Activity() {
 
     const visible = events.filter((ev) => filter === "All" || auditMeta(ev.eventType).category === filter);
     const actorLabel = (ev: AuditEventDto) => (isOwnAction(ev, user) ? "You" : ev.actorEmail);
+    // "New" follows the badge: notable events since the last visit, never your own actions.
+    const isNew = (ev: AuditEventDto) => ev.id > seenBefore && isNotable(ev, user);
 
     return (
         <section className="ms-notifications">
@@ -124,7 +126,7 @@ export default function Activity() {
                     {cursor && <Button size="sm" onClick={loadOlder} disabled={loadingMore}>Load older events</Button>}
                 </div>
             ) : (
-                <FeedList events={visible} ready={!loading} seenBefore={seenBefore} actorLabel={actorLabel} />
+                <FeedList events={visible} ready={!loading} isNew={isNew} actorLabel={actorLabel} />
             )}
 
             {!loading && visible.length > 0 && (

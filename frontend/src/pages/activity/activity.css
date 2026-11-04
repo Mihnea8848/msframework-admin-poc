@@ -133,6 +133,7 @@
   /* Audit log filters: chips on one line, then the actor search and the date range */
   .ms-audit-filters {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
     margin-bottom: 10px;
   }

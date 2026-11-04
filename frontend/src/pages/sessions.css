@@ -138,6 +138,17 @@
     align-self: center;
   }
 
+  /* Under your sessions: "Sign out all other sessions" */
+  .ms-sessions__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) 18px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
   /* Sessions by user: the search, the matches, then the chosen user's sessions */
   .ms-sessions__picker {
     display: grid;
@@ -251,6 +262,10 @@
 
     .ms-sessions__selected .ms-session-list {
       margin: 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-3));
+    }
+
+    .ms-sessions__foot {
+      padding: var(--space-3);
     }
   }
 }
