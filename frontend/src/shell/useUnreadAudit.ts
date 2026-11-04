@@ -20,7 +20,8 @@ export function useUnreadAudit(user: CurrentUserDto | null): string | null {
     useEffect(() => {
         if (!canReadAudit) return undefined;
         let alive = true;
-        const fetchEvents = () => get<AuditEventDto[]>(`/api/audit?limit=${BADGE_LIMIT}`)
+        // A background poll: it must not keep an idle session alive.
+        const fetchEvents = () => get<AuditEventDto[]>(`/api/audit?limit=${BADGE_LIMIT}`, { background: true })
             .then((data) => { if (alive) setEvents(Array.isArray(data) ? data : []); })
             .catch(() => { if (alive) setEvents([]); });
         fetchEvents();

@@ -10,6 +10,7 @@ import {
     validateFullName,
     validateEmail,
     validatePassword,
+    PASSWORD_LABELS,
     validatePhone,
 } from "../../utils/validators";
 import AuthLayout from "./AuthLayout";
@@ -128,7 +129,7 @@ export default function Register() {
         !phoneVal.ok ? "Please provide a valid phone number (min 7 digits)" :
             !emailVal.ok ? "Please provide a valid email address" :
                 !departmentId ? "Please select a department" :
-                    !passVal.ok ? "Password needs 8+ characters, a number and a symbol" :
+                    !passVal.ok ? (passVal.checks.notCommon ? "Password needs 8+ characters, a number and a symbol" : "That password is too common; choose another") :
                         !confirmOk ? "Passwords do not match" :
                             "Please fix the errors highlighted above";
 
@@ -238,7 +239,7 @@ export default function Register() {
                         id="reg-password-rules"
                         show={showPassword}
                         checks={passVal.checks}
-                        labels={{ minLen: "At least 8 characters", hasNumber: "Include a number", hasSymbol: "Include a symbol", maxLen: "At most 72 bytes" }}
+                        labels={PASSWORD_LABELS}
                     />
                 </div>
 

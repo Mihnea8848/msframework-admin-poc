@@ -42,7 +42,10 @@ export type Permission =
     | "WORKSPACE_UPDATE"
     | "API_KEY_READ"
     | "API_KEY_CREATE"
-    | "API_KEY_DELETE";
+    | "API_KEY_DELETE"
+    // Sessions and organisation settings (sessions-security)
+    | "SESSIONS_MANAGE"
+    | "ORG_SETTINGS_MANAGE";
 
 /** The built-in roles in config/SystemRoles.java. */
 export type RoleName = "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";

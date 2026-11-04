@@ -31,13 +31,28 @@ async function rejection(promise: Promise<unknown>): Promise<ApiError> {
     return err as ApiError;
 }
 
+function setCsrfCookie(value: string): void {
+    document.cookie = `XSRF-TOKEN=${value}; path=/`;
+}
+
+function clearCsrfCookie(): void {
+    document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+}
+
+/** The URL of the n-th fetch call. */
+function urlOf(call = 0): string {
+    return String(fetchMock.mock.calls[call]?.[0]);
+}
+
 beforeEach(() => {
     fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetchMock);
+    setCsrfCookie("tok-1");
 });
 
 afterEach(() => {
     setUnauthorizedHandler(null);
+    clearCsrfCookie();
 });
 
 describe("api", () => {
@@ -75,7 +90,7 @@ describe("api", () => {
         await call("/api/x", { name: "Ștefan" });
 
         expect(initOf().method).toBe(method);
-        expect(initOf().headers).toEqual({ "Content-Type": "application/json" });
+        expect(initOf().headers).toEqual({ "Content-Type": "application/json", "X-XSRF-TOKEN": "tok-1" });
         expect(initOf().body).toBe('{"name":"Ștefan"}');
     });
 
@@ -187,5 +202,93 @@ describe("401 handling", () => {
     it("does nothing when no handler is registered", async () => {
         fetchMock.mockResolvedValue(respond(null, 401));
         expect((await rejection(get("/api/users"))).status).toBe(401);
+    });
+});
+
+describe("CSRF token", () => {
+    const csrfError: ErrorResponse = {
+        status: 403,
+        error: "Forbidden",
+        message: "Your security token (CSRF) is missing or out of date. Reload the page and try again.",
+    };
+
+    it("is sent on unsafe methods only", async () => {
+        fetchMock.mockImplementation(() => Promise.resolve(respond(null, 204)));
+
+        await get("/api/x");
+        await del("/api/x/1");
+        await patch("/api/x/1");
+
+        expect(initOf(0).headers).toEqual({});
+        expect(initOf(1).headers).toEqual({ "X-XSRF-TOKEN": "tok-1" });
+        expect(initOf(2).headers).toEqual({ "X-XSRF-TOKEN": "tok-1" });
+    });
+
+    it("is fetched first when the cookie is missing", async () => {
+        clearCsrfCookie();
+        fetchMock.mockImplementation((input) => {
+            if (String(input) === "/api/auth/csrf") {
+                setCsrfCookie("fresh");
+                return Promise.resolve(respond(null, 204));
+            }
+            return Promise.resolve(json({ ok: true }));
+        });
+
+        await post("/api/auth/login", { email: "a@b.c" });
+
+        expect(urlOf(0)).toBe("/api/auth/csrf");
+        expect(initOf(0)).toMatchObject({ method: "GET", credentials: "include" });
+        expect(urlOf(1)).toBe("/api/auth/login");
+        expect(initOf(1).headers).toEqual({ "Content-Type": "application/json", "X-XSRF-TOKEN": "fresh" });
+    });
+
+    it("is refreshed and the request retried once after a CSRF rejection", async () => {
+        let calls = 0;
+        fetchMock.mockImplementation((input) => {
+            if (String(input) === "/api/auth/csrf") {
+                setCsrfCookie("tok-2");
+                return Promise.resolve(respond(null, 204));
+            }
+            calls += 1;
+            return Promise.resolve(calls === 1 ? json(csrfError, 403) : json({ id: 7 }));
+        });
+
+        await expect(put("/api/x/7", { name: "n" })).resolves.toEqual({ id: 7 });
+
+        expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual(["/api/x/7", "/api/auth/csrf", "/api/x/7"]);
+        expect(initOf(2).headers).toEqual({ "Content-Type": "application/json", "X-XSRF-TOKEN": "tok-2" });
+        expect(initOf(2).body).toBe('{"name":"n"}');
+    });
+
+    it("is retried only once", async () => {
+        fetchMock.mockImplementation((input) => Promise.resolve(
+            String(input) === "/api/auth/csrf" ? respond(null, 204) : json(csrfError, 403),
+        ));
+
+        const err = await rejection(post("/api/x"));
+
+        expect(err.status).toBe(403);
+        expect(err.message).toBe(csrfError.message);
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not retry other 403 answers", async () => {
+        fetchMock.mockResolvedValue(json({ status: 403, error: "Forbidden", message: "Access denied" }, 403));
+
+        await rejection(post("/api/x"));
+
+        expect(fetchMock).toHaveBeenCalledOnce();
+    });
+});
+
+describe("background requests", () => {
+    it("are marked so they do not keep the session alive", async () => {
+        fetchMock.mockImplementation(() => Promise.resolve(json([])));
+
+        await get("/api/audit?limit=50", { background: true });
+        await get("/api/audit?limit=50");
+
+        expect(initOf(0).headers).toEqual({ "X-Background-Request": "1" });
+        expect(initOf(1).headers).toEqual({});
     });
 });
