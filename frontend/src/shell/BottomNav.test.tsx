@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import { PAGES, mobileTabs, morePages } from "../routes/navigation";
 
-const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.map((p) => p.permission).filter((p) => p !== null))] };
+const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.flatMap((p) => (p.permission === null ? [] : typeof p.permission === "string" ? [p.permission] : [...p.permission])))] };
 
 function renderNav(pathname: string, badge: string | null = null, onOpenMore = vi.fn()) {
     render(
@@ -14,7 +14,7 @@ function renderNav(pathname: string, badge: string | null = null, onOpenMore = v
                 tabs={mobileTabs(admin)}
                 more={morePages(admin)}
                 pathname={pathname}
-                badge={badge}
+                badges={{ activity: badge }}
                 moreOpen={false}
                 onOpenMore={onOpenMore}
             />

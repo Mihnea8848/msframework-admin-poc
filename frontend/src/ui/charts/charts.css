@@ -1,0 +1,324 @@
+/*
+ * Charts (ui/charts/). Series colours are roles over existing tokens:
+ *   --chart-1      the main series (spent): the accent line colour
+ *   --chart-2      the second series (committed): a lighter step of the same hue
+ *   --chart-over   spending past the budget: the danger colour, always with a text label
+ *   --chart-track  the empty part of a bar or ring
+ * A mark inside [data-seal] takes --seal-border instead (department charts): the seal colour that
+ * keeps 3:1 against the surface, so the white and silver seals stay visible in light mode.
+ */
+@layer components {
+  :root {
+    --chart-1: var(--accent-line);
+    --chart-2: color-mix(in srgb, var(--accent-line) 50%, var(--white));
+    --chart-over: var(--status-danger-fg);
+    --chart-track: var(--surface-3);
+    --chart-grid: var(--border-faint);
+  }
+
+  :root[data-theme="light"] {
+    --chart-2: color-mix(in srgb, var(--accent-line) 45%, var(--white));
+    --chart-track: var(--grey-100);
+  }
+
+  .ms-chart {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .ms-chart__frame,
+  .ms-spark,
+  .ms-barlist,
+  .ms-budgetbar {
+    position: relative;
+    min-width: 0;
+  }
+
+  .ms-chart__plot,
+  .ms-spark__plot {
+    display: block;
+    border-radius: var(--radius-2);
+    outline: none;
+    touch-action: pan-y;
+  }
+
+  .ms-chart svg,
+  .ms-spark svg {
+    display: block;
+    overflow: visible;
+  }
+
+  .ms-chart__grid {
+    stroke: var(--chart-grid);
+    stroke-width: 1;
+    shape-rendering: crispedges;
+  }
+
+  .ms-chart__axis {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+    shape-rendering: crispedges;
+  }
+
+  .ms-chart__tick {
+    fill: var(--text-tertiary);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ms-chart__band {
+    fill: var(--row-hover);
+  }
+
+  .ms-chart-fill--1 {
+    fill: var(--chart-1);
+  }
+
+  .ms-chart-fill--2 {
+    fill: var(--chart-2);
+  }
+
+  /* Legend and tooltip keys */
+  .ms-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 0 0 10px;
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    list-style: none;
+  }
+
+  .ms-chart-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ms-chart-key {
+    display: inline-block;
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--chart-1);
+  }
+
+  .ms-chart-key--2 {
+    background: var(--chart-2);
+  }
+
+  .ms-chart-key--over {
+    background: var(--chart-over);
+  }
+
+  .ms-chart-key--track {
+    outline: 1px solid var(--border-control);
+    outline-offset: -1px;
+    background: var(--chart-track);
+  }
+
+  .ms-chart-key--line,
+  .ms-chart-tip .ms-chart-key {
+    width: 12px;
+    height: 2px;
+  }
+
+  .ms-chart-tip {
+    position: absolute;
+    z-index: var(--z-raised);
+    display: grid;
+    gap: 2px;
+    min-width: 120px;
+    max-width: 240px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    transform: translate(-50%, calc(-100% - 6px));
+    pointer-events: none;
+  }
+
+  .ms-chart-tip__title {
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-chart-tip__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ms-chart-tip__row strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Sparkline */
+  .ms-spark {
+    display: inline-block;
+  }
+
+  .ms-spark__line {
+    fill: none;
+    stroke: var(--seal-border, var(--chart-1));
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ms-spark__ref {
+    stroke: var(--border-control);
+    stroke-width: 1;
+  }
+
+  .ms-spark__dot {
+    fill: var(--seal-border, var(--chart-1));
+    stroke: var(--surface-1);
+    stroke-width: 2;
+  }
+
+  .ms-spark__dot--active {
+    fill: var(--text-primary);
+  }
+
+  /* Bar list */
+  .ms-barlist__list {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-barlist__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 6px 4px;
+    border-radius: var(--radius-2);
+    outline: none;
+  }
+
+  .ms-barlist__row:hover {
+    background: var(--row-hover);
+  }
+
+  .ms-barlist__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-barlist__value {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ms-barlist__track {
+    grid-column: 1 / -1;
+    height: 8px;
+  }
+
+  .ms-barlist__fill {
+    display: block;
+    width: var(--w);
+    min-width: 2px;
+    height: 100%;
+    border-radius: 0 4px 4px 0;
+    background: var(--chart-1);
+  }
+
+  .ms-barlist__fill--seal {
+    background: var(--seal-border);
+  }
+
+  /* Budget bar */
+  .ms-budgetbar__track {
+    display: flex;
+    gap: 2px;
+    position: relative;
+    height: 10px;
+    border-radius: var(--radius-2);
+    background: var(--chart-track);
+    outline: none;
+  }
+
+  .ms-budgetbar__spent,
+  .ms-budgetbar__committed {
+    height: 100%;
+  }
+
+  .ms-budgetbar__spent {
+    width: var(--spent);
+    border-radius: var(--radius-2) 0 0 var(--radius-2);
+    background: var(--chart-1);
+  }
+
+  .ms-budgetbar__committed {
+    width: var(--committed);
+    background: var(--chart-2);
+  }
+
+  .ms-budgetbar__track--over .ms-budgetbar__spent {
+    background: var(--chart-over);
+  }
+
+  .ms-budgetbar__mark {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: var(--mark);
+    width: 2px;
+    background: var(--text-primary);
+  }
+
+  /* Score ring */
+  .ms-ring {
+    flex: none;
+  }
+
+  .ms-ring__track {
+    fill: none;
+    stroke: var(--chart-track);
+  }
+
+  .ms-ring__arc {
+    fill: none;
+    stroke: var(--seal-border, var(--chart-1));
+    stroke-linecap: round;
+  }
+
+  .ms-ring__value {
+    fill: var(--text-primary);
+    font-size: 14px;
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-ring__value--sm {
+    font-size: 11px;
+  }
+
+  .ms-chart__plot:focus-visible,
+  .ms-spark__plot:focus-visible,
+  .ms-barlist__row:focus-visible,
+  .ms-budgetbar__track:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}

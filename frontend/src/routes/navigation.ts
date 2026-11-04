@@ -1,24 +1,24 @@
 import {
-    Activity, BookText, Box, Building2, Cable, Clock3, CreditCard, Database, Download, Home,
-    KeyRound, MonitorSmartphone, Palette, ScrollText, Shield, Upload, UserRound, UsersRound,
+    Activity, BookText, Box, Building2, Cable, ChartColumn, Clock3, CreditCard, Database, Download, Home,
+    Inbox, KeyRound, ListChecks, MonitorSmartphone, Palette, PiggyBank, Receipt, ScrollText, Shield, Target,
+    Upload, UserRound, UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { matchPath } from "react-router-dom";
 import type { Permission } from "../api/types";
 import { hasPermission } from "../auth/permissions";
 import type { UserLike } from "../auth/permissions";
 
 export type PageKey =
     | "home" | "dashboard" | "activity"
-    | "users" | "departments"
-    | "payments"
+    | "users" | "departments" | "roles" | "accessRequests"
+    | "goals" | "reports"
+    | "budgets" | "expenses" | "payments"
     | "import" | "export" | "database" | "connections"
     | "security" | "audit" | "sessions"
     | "timezones" | "docs";
 
-/**
- * The sidebar groups, in order. Performance (Goals, Reports) has no pages yet, so it is skipped
- * until it does; Roles, Access requests, Budgets, Expenses and Sessions arrive the same way.
- */
+/** The sidebar groups, in order. A group without pages the user may open is skipped. */
 export type PageGroup = "Overview" | "People" | "Performance" | "Finance" | "Operations" | "Security" | "Resources";
 
 export interface PageEntry {
@@ -27,8 +27,8 @@ export interface PageEntry {
     path: string;
     icon: LucideIcon;
     group: PageGroup;
-    /** `null` means any signed-in user. */
-    permission: Permission | null;
+    /** `null` means any signed-in user; a list means any one of those permissions. */
+    permission: Permission | readonly Permission[] | null;
     /**
      * Order in the phone bottom bar, lowest first. The first `MOBILE_TAB_COUNT` pages the user
      * may open become tabs; every other permitted page is listed in the More sheet. Pages
@@ -50,8 +50,16 @@ export const PAGES: readonly PageEntry[] = [
     { key: "activity", label: "Activity", path: "/activity", icon: Activity, group: "Overview", permission: null, mobilePriority: 5 },
     { key: "users", label: "Users", path: "/users", icon: UsersRound, group: "People", permission: "USER_READ", mobilePriority: 3 },
     { key: "departments", label: "Departments", path: "/departments", icon: Building2, group: "People", permission: "DEPARTMENT_READ", mobilePriority: 4 },
-    { key: "payments", label: "Payments", path: "/payments", icon: CreditCard, group: "Finance", permission: "PAYMENTS_READ" },
-    { key: "import", label: "Import data", path: "/import", icon: Upload, group: "Operations", permission: "IMPORT_DATA" },
+    { key: "roles", label: "Roles", path: "/roles", icon: ListChecks, group: "People", permission: "ROLES_READ" },
+    { key: "accessRequests", label: "Access requests", path: "/access-requests", icon: Inbox, group: "People", permission: "ACCESS_REQUESTS_MANAGE" },
+    // Business: goals, reports, budgets, expenses and payments
+    { key: "goals", label: "Goals", path: "/goals", icon: Target, group: "Performance", permission: "GOALS_READ" },
+    { key: "reports", label: "Reports", path: "/reports", icon: ChartColumn, group: "Performance", permission: "REPORTS_READ" },
+    { key: "budgets", label: "Budgets", path: "/budgets", icon: PiggyBank, group: "Finance", permission: "FINANCE_READ" },
+    { key: "expenses", label: "Expenses", path: "/expenses", icon: Receipt, group: "Finance", permission: ["EXPENSE_SUBMIT", "FINANCE_READ", "EXPENSE_APPROVE"] },
+    { key: "payments", label: "Payments", path: "/payments", icon: CreditCard, group: "Finance", permission: "FINANCE_READ" },
+    // Check-ins can be imported with GOALS_MANAGE alone, so managers may open Import for them.
+    { key: "import", label: "Import data", path: "/import", icon: Upload, group: "Operations", permission: ["IMPORT_DATA", "GOALS_MANAGE"] },
     { key: "export", label: "Export data", path: "/export", icon: Download, group: "Operations", permission: "EXPORT_DATA" },
     { key: "database", label: "Database", path: "/database", icon: Database, group: "Operations", permission: "DATABASE_READ" },
     { key: "connections", label: "Connections", path: "/connections", icon: Cable, group: "Operations", permission: "CONNECTIONS_READ" },
@@ -63,6 +71,35 @@ export const PAGES: readonly PageEntry[] = [
     { key: "timezones", label: "Timezones", path: "/timezones", icon: Clock3, group: "Resources", permission: "TIMEZONES_READ", mobilePriority: 7 },
     { key: "docs", label: "Documentation", path: "/docs", icon: BookText, group: "Resources", permission: "DOCUMENTATION_READ", mobilePriority: 6 },
 ];
+
+/** The child pages: opened from a page (a user from Users), not listed in the sidebar. */
+export type ChildPageKey = "userProfile" | "departmentDetail";
+
+export interface ChildPageEntry {
+    key: ChildPageKey;
+    label: string;
+    /** A route pattern, e.g. "/users/:id". */
+    path: string;
+    /** The sidebar page it belongs to: highlighted while the child is open, and its group is the breadcrumb's. */
+    parent: PageKey;
+    /** Every permission the page needs (its API calls need them all). */
+    permissions: readonly Permission[];
+}
+
+export const CHILD_PAGES: readonly ChildPageEntry[] = [
+    { key: "userProfile", label: "User profile", path: "/users/:id", parent: "users", permissions: ["USER_READ"] },
+    { key: "departmentDetail", label: "Department", path: "/departments/:id", parent: "departments", permissions: ["DEPARTMENT_READ", "USER_READ"] },
+];
+
+/** The child page whose pattern matches `pathname`, if any. */
+export function childPageByPath(pathname: string): ChildPageEntry | undefined {
+    return CHILD_PAGES.find((c) => matchPath(c.path, pathname) !== null);
+}
+
+/** Whether a sidebar page is the current one: its own path, or one of its child pages. */
+export function isCurrentPage(page: Pick<PageEntry, "key" | "path">, pathname: string): boolean {
+    return pathname === page.path || childPageByPath(pathname)?.parent === page.key;
+}
 
 /** Short labels for the phone bottom bar, where the full label does not fit. */
 export const SHORT_LABELS: Partial<Record<PageKey, string>> = {
@@ -125,6 +162,11 @@ export function pageByPath(pathname: string): PageEntry | undefined {
 export function crumbFor(pathname: string): { group: string; label: string } | null {
     const page = pageByPath(pathname);
     if (page) return { group: page.group, label: page.label };
+    const child = childPageByPath(pathname);
+    if (child) {
+        const parent = pageByKey(child.parent);
+        if (parent) return { group: parent.group, label: parent.label };
+    }
     if (pathname === SETTINGS_PATH || pathname.startsWith(`${SETTINGS_PATH}/`)) {
         const tab = settingsTabByKey(pathname.slice(SETTINGS_PATH.length + 1));
         return { group: "Settings", label: tab?.label ?? "Settings" };

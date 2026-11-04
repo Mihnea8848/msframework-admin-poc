@@ -1,12 +1,14 @@
 import {
-    Building2, Cable, Clock3, Download, Key, Lock, LogIn, LogOut, RefreshCw, Settings, Shield, ShieldAlert,
-    UserCheck, UserMinus, UserPlus, UserCog, Users, Webhook,
+    Banknote, Building2, Cable, ChartColumn, CircleCheck, CircleX, Clock3, Crown, Download, FilePen, Hourglass, Key,
+    Link2, ListPlus, Lock, LogIn, LogOut, PiggyBank, Receipt, RefreshCw, Send, Settings, Shield, ShieldAlert, Tags,
+    Target, Trash2, UserCheck, UserCog, UserMinus, UserPlus, Users, UserX, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /** Filter categories on the Notifications page ("All" is added by AUDIT_FILTERS). */
 export type AuditCategory =
-    | "Login" | "Users" | "Departments" | "Auth" | "Integrations" | "Data" | "Settings" | "Other";
+    | "Login" | "Users" | "Departments" | "Auth" | "Integrations" | "Data" | "Settings"
+    | "Finance" | "Performance" | "Other";
 
 /** CSS modifier for the event pill (`.event-pill.<pill>`). */
 export type AuditPill = "login" | "security" | "created" | "changed" | "export";
@@ -54,6 +56,35 @@ export const AUDIT_TYPES = {
     sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
     directory_synced: { label: "Directory sync", pill: "changed", Icon: Users, color: "var(--status-info-fg)", category: "Users" },
+    // People: access requests, department managers and reset links (PEOPLE-UI).
+    // export_generated and password_reset_completed are listed above.
+    access_requested: { label: "Access requested", pill: "created", Icon: UserPlus, color: "var(--status-info-fg)", category: "Users" },
+    access_approved: { label: "Access approved", pill: "created", Icon: UserCheck, color: "var(--status-ok-fg)", category: "Users" },
+    access_rejected: { label: "Access rejected", pill: "security", Icon: UserX, color: "var(--status-danger-fg)", category: "Users" },
+    login_pending: { label: "Awaiting approval", pill: "login", Icon: Hourglass, color: "var(--status-warn-fg)", category: "Login", alert: "info" },
+    dept_manager_changed: { label: "Dept Manager", pill: "changed", Icon: Crown, color: "var(--status-warn-fg)", category: "Departments" },
+    password_reset_link_created: { label: "Reset link", pill: "security", Icon: Link2, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
+    // Business: budgets, categories, expenses, goals, check-ins and reports
+    budget_created: { label: "Budget set", pill: "created", Icon: PiggyBank, color: "var(--status-ok-fg)", category: "Finance" },
+    budget_updated: { label: "Budget changed", pill: "changed", Icon: PiggyBank, color: "var(--status-warn-fg)", category: "Finance" },
+    budget_deleted: { label: "Budget removed", pill: "security", Icon: PiggyBank, color: "var(--status-danger-fg)", category: "Finance" },
+    category_created: { label: "Category added", pill: "created", Icon: Tags, color: "var(--status-ok-fg)", category: "Finance" },
+    category_updated: { label: "Category changed", pill: "changed", Icon: Tags, color: "var(--status-warn-fg)", category: "Finance" },
+    category_deleted: { label: "Category deleted", pill: "security", Icon: Tags, color: "var(--status-danger-fg)", category: "Finance" },
+    expense_created: { label: "Expense added", pill: "created", Icon: Receipt, color: "var(--status-ok-fg)", category: "Finance" },
+    expense_updated: { label: "Expense edited", pill: "changed", Icon: FilePen, color: "var(--status-warn-fg)", category: "Finance" },
+    expense_submitted: { label: "Expense submitted", pill: "changed", Icon: Send, color: "var(--status-info-fg)", category: "Finance" },
+    expense_approved: { label: "Expense approved", pill: "created", Icon: CircleCheck, color: "var(--status-ok-fg)", category: "Finance" },
+    expense_rejected: { label: "Expense rejected", pill: "security", Icon: CircleX, color: "var(--status-danger-fg)", category: "Finance" },
+    expense_paid: { label: "Expense paid", pill: "created", Icon: Banknote, color: "var(--status-ok-fg)", category: "Finance" },
+    expense_deleted: { label: "Draft deleted", pill: "security", Icon: Trash2, color: "var(--status-danger-fg)", category: "Finance" },
+    goal_created: { label: "Goal created", pill: "created", Icon: Target, color: "var(--status-ok-fg)", category: "Performance" },
+    goal_updated: { label: "Goal changed", pill: "changed", Icon: Target, color: "var(--status-warn-fg)", category: "Performance" },
+    goal_deleted: { label: "Goal deleted", pill: "security", Icon: Target, color: "var(--status-danger-fg)", category: "Performance" },
+    checkin_recorded: { label: "Check-in", pill: "created", Icon: ListPlus, color: "var(--status-ok-fg)", category: "Performance" },
+    checkin_deleted: { label: "Check-in deleted", pill: "security", Icon: ListPlus, color: "var(--status-danger-fg)", category: "Performance" },
+    checkins_ingested: { label: "Check-ins via API", pill: "export", Icon: Cable, color: "var(--text-secondary)", category: "Performance" },
+    report_exported: { label: "Report exported", pill: "export", Icon: ChartColumn, color: "var(--text-secondary)", category: "Data" },
 } as const satisfies Record<string, AuditTypeMeta>;
 
 /** Every event type the backend emits that has display metadata. */
@@ -70,5 +101,5 @@ export function auditMeta(eventType: string | null | undefined): AuditTypeMeta {
 }
 
 export const AUDIT_FILTERS: readonly ("All" | Exclude<AuditCategory, "Other">)[] = [
-    "All", "Login", "Users", "Departments", "Auth", "Integrations", "Data", "Settings",
+    "All", "Login", "Users", "Departments", "Auth", "Integrations", "Data", "Settings", "Finance", "Performance",
 ];

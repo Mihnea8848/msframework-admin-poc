@@ -8,9 +8,21 @@ export interface UserLike {
 
 type MaybeUser = UserLike | null | undefined;
 
-export function hasPermission(user: MaybeUser, permission: Permission | null | undefined): boolean {
+/**
+ * True when the user has the permission. A list means any one of them (a page several
+ * permissions may open, such as Expenses); null or undefined means no permission is needed.
+ */
+export function hasPermission(user: MaybeUser, permission: Permission | readonly Permission[] | null | undefined): boolean {
     if (!permission) return true;
+    if (typeof permission !== "string") return permission.some((p) => Boolean(user?.permissions?.includes(p)));
     return Boolean(user?.permissions?.includes(permission));
+}
+
+/** Whether the user has every one of the permissions (a single one, a list, or none). */
+export function hasAllPermissions(user: MaybeUser, permissions: Permission | readonly Permission[] | null | undefined): boolean {
+    if (!permissions) return true;
+    if (typeof permissions === "string") return hasPermission(user, permissions);
+    return permissions.every((p) => hasPermission(user, p));
 }
 
 export function hasRole(user: MaybeUser, roleName: RoleName): boolean {

@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import MoreSheet from "./MoreSheet";
 import { PAGES, morePages } from "../routes/navigation";
 
-const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.map((p) => p.permission).filter((p) => p !== null))] };
+const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.flatMap((p) => (p.permission === null ? [] : typeof p.permission === "string" ? [p.permission] : [...p.permission])))] };
 
 /** The sheet with its trigger, the way AppShell wires them. */
 function Harness({ onLogout = () => {} }: { onLogout?: () => void }) {
@@ -20,7 +20,7 @@ function Harness({ onLogout = () => {} }: { onLogout?: () => void }) {
                 onClose={() => setOpen(false)}
                 pages={morePages(admin)}
                 pathname="/database"
-                badge="4"
+                badges={{ activity: "4" }}
                 onLogout={onLogout}
                 returnFocusRef={trigger}
             />

@@ -1,0 +1,32 @@
+/* The "← Users" link at the top of a child page (ui/BackLink.tsx). */
+@layer components {
+  .ms-back {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 6px;
+    width: fit-content;
+    min-height: 28px;
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .ms-back:hover {
+    color: var(--accent-text);
+  }
+
+  .ms-back:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  .ms-back > svg {
+    width: 14px;
+    height: 14px;
+  }
+}

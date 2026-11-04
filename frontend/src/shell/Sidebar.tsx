@@ -1,16 +1,18 @@
 import { Search } from "lucide-react";
 import Logo from "../ui/brand/Logo";
-import { groupPages } from "../routes/navigation";
+import { groupPages, isCurrentPage } from "../routes/navigation";
 import type { PageEntry } from "../routes/navigation";
 import PageLink from "./PageLink";
+import { badgeLabel } from "./badges";
+import type { PageBadges } from "./badges";
 import { shortcutLabel } from "./shortcuts";
 import "./sidebar.css";
 
 type SidebarProps = {
     pages: readonly PageEntry[];
     pathname: string;
-    /** Unread activity ("3", "50+") or null. */
-    badge: string | null;
+    /** Count badges by page: unread activity ("3", "50+"), pending access requests. */
+    badges: PageBadges;
     onOpenQuickActions: () => void;
 };
 
@@ -18,7 +20,7 @@ type SidebarProps = {
  * The sidebar: full width from 1024 px, an icon rail from 768 to 1023 px (labels become
  * tooltips and stay the links' accessible names), hidden below 768 px where BottomNav takes over.
  */
-export default function Sidebar({ pages, pathname, badge, onOpenQuickActions }: SidebarProps) {
+export default function Sidebar({ pages, pathname, badges, onOpenQuickActions }: SidebarProps) {
     return (
         <aside className="ms-sidebar" aria-label="Sidebar">
             <div className="ms-sidebar__head">
@@ -50,12 +52,12 @@ export default function Sidebar({ pages, pathname, badge, onOpenQuickActions }: 
                         <ul className="ms-sidebar__list" aria-labelledby={`ms-nav-${group}`}>
                             {items.map((page) => {
                                 const Icon = page.icon;
-                                const itemBadge = page.key === "activity" ? badge : null;
+                                const itemBadge = badges[page.key] ?? null;
                                 return (
                                     <li key={page.key}>
                                         <PageLink
                                             page={page}
-                                            current={pathname === page.path}
+                                            current={isCurrentPage(page, pathname)}
                                             className="ms-sidebar__item"
                                             data-label={page.label}
                                         >
@@ -64,7 +66,7 @@ export default function Sidebar({ pages, pathname, badge, onOpenQuickActions }: 
                                             {itemBadge ? (
                                                 <>
                                                     <span className="ms-sidebar__badge" aria-hidden="true">{itemBadge}</span>
-                                                    <span className="ms-visually-hidden">{`, ${itemBadge} unread`}</span>
+                                                    <span className="ms-visually-hidden">{badgeLabel(page.key, itemBadge)}</span>
                                                 </>
                                             ) : null}
                                         </PageLink>

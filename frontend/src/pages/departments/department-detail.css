@@ -1,0 +1,380 @@
+/*
+ * Department detail (pages/departments/DepartmentDetail.tsx): the official seal header, the members
+ * list beside the manager, performance and budget panels, and the activity feed below. One column
+ * below 1024px.
+ */
+@layer pages {
+  .ms-dept {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :where(.ms-dept) :where(h1, h2, p, ul, dl, dd) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-dept .ms-notice {
+    margin-bottom: 0;
+  }
+
+  .ms-dept__hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .ms-dept__seal {
+    width: 120px;
+    height: 120px;
+  }
+
+  .ms-dept__eyebrow {
+    color: var(--seal-text);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps-wide);
+    text-transform: uppercase;
+  }
+
+  .ms-dept__name {
+    margin-top: 2px;
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-dept__meta {
+    margin-top: var(--space-2);
+    color: var(--text-secondary);
+  }
+
+  .ms-dept__meta b {
+    color: var(--text-primary);
+  }
+
+  .ms-dept__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3);
+  }
+
+  .ms-dept__side {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .ms-dept__activity {
+    grid-column: 1 / -1;
+  }
+
+  .ms-dept__body {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4) 18px;
+  }
+
+  .ms-dept__muted {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-dept__empty {
+    display: grid;
+    gap: 4px;
+    padding: var(--space-5) 18px;
+    color: var(--text-secondary);
+  }
+
+  .ms-dept__error {
+    margin: var(--space-3) 18px 0;
+  }
+
+  .ms-dept__list,
+  .ms-dept__candidates {
+    list-style: none;
+  }
+
+  .ms-dept__person,
+  .ms-dept__candidate {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 10px 18px;
+  }
+
+  .ms-dept__person + .ms-dept__person {
+    border-top: 1px solid var(--border-faint);
+  }
+
+  .ms-dept__candidate {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: var(--space-2) 0;
+  }
+
+  .ms-dept__candidate + .ms-dept__candidate {
+    border-top: 1px solid var(--border-faint);
+  }
+
+  .ms-dept__candidates {
+    min-height: 120px;
+  }
+
+  .ms-dept__who {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    min-width: 0;
+  }
+
+  .ms-dept__link,
+  .ms-dept__cand-name {
+    color: inherit;
+    font-weight: var(--weight-bold);
+    text-decoration: none;
+  }
+
+  .ms-dept__link:hover {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ms-dept__link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ms-dept__title {
+    flex-basis: 100%;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-dept__lead {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--seal-text);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-dept__lead > svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .ms-dept__manager {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .ms-dept__assign {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-subtle);
+  }
+
+  .ms-dept__assign .ms-field {
+    width: 100%;
+  }
+
+  .ms-dept__score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .ms-dept__big {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tight);
+    line-height: 1;
+  }
+
+  .ms-dept__bar {
+    width: 100%;
+  }
+
+  .ms-dept__goals {
+    display: grid;
+    gap: 6px;
+    list-style: none;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-dept__goals li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .ms-dept__goal-name {
+    min-width: 0;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+
+  .ms-dept__goal-value {
+    flex: none;
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-dept__money {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .ms-dept__money dt {
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-dept__money dd {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-dept__over {
+    color: var(--status-danger-fg);
+  }
+
+  .ms-dept__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-dept__more > svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ms-dept__search {
+    max-width: none;
+  }
+
+  @media (width <= 1023px) {
+    .ms-dept__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (width <= 767px) {
+    .ms-dept {
+      gap: var(--space-3);
+    }
+
+    .ms-dept__hero {
+      gap: var(--space-4);
+      padding: var(--space-4);
+    }
+
+    .ms-dept__seal {
+      width: 76px;
+      height: 76px;
+    }
+
+    .ms-dept__name {
+      font-size: var(--font-size-lg);
+    }
+
+    .ms-dept__body {
+      padding: var(--space-3);
+    }
+
+    .ms-dept__person {
+      grid-template-areas:
+        "av who status rm"
+        "av role status rm";
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 2px var(--space-2);
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .ms-dept__person > .ms-avatar {
+      grid-area: av;
+    }
+
+    .ms-dept__person > .ms-dept__who {
+      grid-area: who;
+    }
+
+    .ms-dept__person > .ms-role {
+      grid-area: role;
+      justify-self: start;
+    }
+
+    .ms-dept__person > .ms-status {
+      grid-area: status;
+      padding: 0;
+      background: none;
+    }
+
+    .ms-dept__remove {
+      grid-area: rm;
+    }
+
+    .ms-dept__remove .ms-btn__face {
+      width: 40px;
+      padding: 0;
+    }
+
+    .ms-dept__remove-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .ms-dept__person .ms-dept__title {
+      display: none;
+    }
+
+    .ms-dept__empty {
+      padding: var(--space-4) var(--space-3);
+    }
+
+    .ms-dept__error {
+      margin: var(--space-2) var(--space-3) 0;
+    }
+  }
+}

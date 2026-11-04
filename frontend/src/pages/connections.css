@@ -124,11 +124,6 @@
     align-items: center;
   }
 
-  .ms-connections__keyform .ms-input {
-    width: 220px;
-    height: var(--control-sm);
-  }
-
   .ms-connections__row {
     display: flex;
     flex-wrap: wrap;
@@ -181,6 +176,71 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
+  }
+
+  .ms-connections__row-main > .ms-connections__events {
+    margin-top: 6px;
+  }
+
+  .ms-connections__help {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4) 18px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-connections__help p {
+    margin: 0;
+  }
+
+  .ms-connections__curl {
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+    overflow-wrap: normal;
+  }
+
+  .ms-connections__scopes {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .ms-connections__scope {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    cursor: pointer;
+  }
+
+  .ms-connections__scope input {
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--primary);
+  }
+
+  .ms-connections__scope-text {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-connections__scope code {
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-connections__scope-hint {
+    display: block;
+    font-weight: var(--weight-regular);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
   }
 
   .ms-connections__meta,
@@ -240,15 +300,6 @@
     .ms-connections__row,
     .ms-connections__empty {
       padding: var(--space-3);
-    }
-
-    .ms-connections__keyform {
-      flex: 1 1 100%;
-    }
-
-    .ms-connections__keyform .ms-input {
-      width: auto;
-      height: 40px;
     }
 
     .ms-connections__key-meta {
