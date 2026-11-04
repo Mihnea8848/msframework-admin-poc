@@ -38,9 +38,18 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseSeeder.class);
 
-    private static final List<String> DEFAULT_DEPARTMENTS = List.of(
-            "Administration", "Development", "Quality Control", "External Affairs",
-            "Ethics & Regulations", "Human Resources", "Engineering & Innovation"
+    /**
+     * The studio departments, each with the colour key of its seal (the frontend maps the key
+     * to the seal in ui/seal/seals.ts).
+     */
+    private static final List<Map.Entry<String, String>> DEFAULT_DEPARTMENTS = List.of(
+            Map.entry("Administration", "avatar-rose"),
+            Map.entry("Development", "avatar-violet"),
+            Map.entry("Quality Control", "avatar-azure"),
+            Map.entry("External Affairs", "avatar-jade"),
+            Map.entry("Ethics & Regulations", "avatar-silver"),
+            Map.entry("Human Resources", "avatar-orange"),
+            Map.entry("Engineering & Innovation", "avatar-snow")
     );
 
     private final DepartmentRepository departmentRepository;
@@ -87,7 +96,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (departmentRepository.count() == 0) {
             log.info("[SEEDER] Populating departments...");
             departmentRepository.saveAll(DEFAULT_DEPARTMENTS.stream()
-                    .map(name -> Department.builder().name(name).build())
+                    .map(d -> Department.builder().name(d.getKey()).color(d.getValue()).build())
                     .toList());
         }
     }
