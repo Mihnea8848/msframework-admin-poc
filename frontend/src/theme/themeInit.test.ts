@@ -48,9 +48,9 @@ afterEach(() => {
 });
 
 describe("public/theme-init.js", () => {
-    it("defaults to dark, cyan, comfortable and full motion", () => {
+    it("defaults to dark, cobalt, comfortable and full motion", () => {
         runThemeInit();
-        expect(attrs()).toEqual({ theme: "dark", accent: "cyan", density: "comfortable", motion: "full" });
+        expect(attrs()).toEqual({ theme: "dark", accent: "cobalt", density: "comfortable", motion: "full" });
     });
 
     it("applies the saved preferences", () => {
@@ -89,7 +89,7 @@ describe("public/theme-init.js", () => {
         window.localStorage.setItem("density", "tiny");
         window.localStorage.setItem("motion", "slow");
         runThemeInit();
-        expect(attrs()).toEqual({ theme: "dark", accent: "cyan", density: "comfortable", motion: "full" });
+        expect(attrs()).toEqual({ theme: "dark", accent: "cobalt", density: "comfortable", motion: "full" });
     });
 
     it.each([
@@ -97,10 +97,10 @@ describe("public/theme-init.js", () => {
         ["Cyan", "#67e8f9", "cyan"],
         ["Violet", "#a78bfa", "violet"],
         ["Amber", "#d97706", "gold"],
-        ["Lime", "#d2ff72", "cyan"],
-        ["Rose", "#fb7185", "cyan"],
+        ["Lime", "#d2ff72", "cobalt"],
+        ["Rose", "#fb7185", "cobalt"],
         [null, "#6c32db", "violet"],
-        [null, "#123456", "cyan"],
+        [null, "#123456", "cobalt"],
     ])("migrates the old accent %s / %s to %s and removes the old keys", (label, hex, expected) => {
         if (label) window.localStorage.setItem("accentLabel", label);
         window.localStorage.setItem("accent", hex);
@@ -134,7 +134,7 @@ describe("public/theme-init.js", () => {
             throw new Error("denied");
         });
         expect(runThemeInit).not.toThrow();
-        expect(attrs()).toEqual({ theme: "dark", accent: "cyan", density: "comfortable", motion: "full" });
+        expect(attrs()).toEqual({ theme: "dark", accent: "cobalt", density: "comfortable", motion: "full" });
     });
 });
 

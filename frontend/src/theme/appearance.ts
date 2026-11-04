@@ -9,7 +9,7 @@
 import { readStorage, writeStorage } from "../utils/storage";
 
 export const THEMES = ["dark", "light", "system"] as const;
-export const ACCENTS = ["cyan", "cobalt", "violet", "jade", "gold", "silver"] as const;
+export const ACCENTS = ["cobalt", "cyan", "violet", "jade", "gold", "silver"] as const;
 export const DENSITIES = ["comfortable", "compact"] as const;
 export const MOTIONS = ["full", "reduced"] as const;
 
@@ -28,7 +28,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const DEFAULT_THEME: ThemePreference = "dark";
-export const DEFAULT_ACCENT: AccentKey = "cyan";
+export const DEFAULT_ACCENT: AccentKey = "cobalt";
 export const DEFAULT_DENSITY: Density = "comfortable";
 
 export const ACCENT_LABELS: Record<AccentKey, string> = {

@@ -5,7 +5,7 @@
  *
  * Sets on <html>:
  *   data-theme    dark | light   (the "system" preference is resolved; dark is the default)
- *   data-accent   cyan | cobalt | violet | jade | gold | silver   (cyan is the default)
+ *   data-accent   cobalt | cyan | violet | jade | gold | silver   (cobalt is the default)
  *   data-density  comfortable | compact
  *   data-motion   full | reduced (the saved choice, otherwise the OS setting)
  *
@@ -16,7 +16,7 @@
   "use strict";
 
   var root = document.documentElement;
-  var ACCENTS = ["cyan", "cobalt", "violet", "jade", "gold", "silver"];
+  var ACCENTS = ["cobalt", "cyan", "violet", "jade", "gold", "silver"];
 
   function read(key) {
     try {
@@ -71,7 +71,7 @@
     var byLabel = label ? LEGACY_ACCENTS[String(label).toLowerCase()] : null;
     if (byLabel) return byLabel;
     var byHex = hex ? LEGACY_ACCENTS[String(hex).toLowerCase()] : null;
-    return byHex || "cyan";
+    return byHex || "cobalt";
   }
 
   function resolveTheme(preference) {
@@ -92,7 +92,7 @@
       accent = legacyAccent(oldLabel, oldHex);
       write("accentKey", accent);
     } else {
-      accent = "cyan";
+      accent = "cobalt";
     }
   }
   if (oldLabel !== null) remove("accentLabel");
