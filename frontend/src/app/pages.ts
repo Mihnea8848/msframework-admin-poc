@@ -17,9 +17,7 @@ export type LoaderKey = PageKey | "settings";
 export const PAGE_LOADERS: Record<LoaderKey, PageLoader> = {
     home: () => import("../pages/HomePage"),
     dashboard: () => import("../pages/dashboard/Dashboard"),
-    activity: () => import("../pages/Notifications"),
-    // The audit log is the same feed as Activity for now, under its own title (same chunk).
-    audit: () => import("../pages/Notifications").then((m) => ({ default: m.AuditLog })),
+    activity: () => import("../pages/activity/Activity"),
     users: () => import("../pages/UserManagement"),
     departments: () => import("../pages/Departments"),
     goals: () => import("../pages/Goals"),
@@ -32,6 +30,8 @@ export const PAGE_LOADERS: Record<LoaderKey, PageLoader> = {
     database: () => import("../pages/DatabasePage"),
     connections: () => import("../pages/Connections"),
     security: () => import("../pages/Security"),
+    audit: () => import("../pages/activity/AuditLog"),
+    sessions: () => import("../pages/Sessions"),
     timezones: () => import("../pages/Timezones"),
     docs: () => import("../pages/Documentation"),
     settings: () => import("../pages/settings/Settings"),

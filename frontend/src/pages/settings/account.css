@@ -1,7 +1,8 @@
 /*
- * The Account and Security tabs of Settings (AccountTab.tsx, SecurityTab.tsx): the profile and
- * email forms, the password form, and the two-factor and connected-account panels, both marked
- * "Coming soon".
+ * The Account, Security and Organisation tabs of Settings (AccountTab.tsx, SecurityTab.tsx,
+ * OrganisationTab.tsx): the profile and email forms, the password form with its rules, the
+ * sessions summary, the two-factor and connected-account panels (both "Coming soon"), and the
+ * organisation form with its timezone combobox.
  */
 @layer pages {
   .ms-account {
@@ -42,7 +43,9 @@
 
   .ms-account__actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
+    gap: var(--space-2);
   }
 
   .ms-account__strength {
@@ -168,6 +171,120 @@
   .ms-account__account-status {
     color: var(--text-tertiary);
     font-size: var(--font-size-sm);
+  }
+
+  /* Password rules under the form: a check for each rule the new password meets */
+  .ms-account__rules {
+    display: grid;
+    gap: var(--space-1);
+    list-style: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-account__rule {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .ms-account__rule > svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: var(--text-tertiary);
+  }
+
+  .ms-account__rule--met {
+    color: var(--text-primary);
+  }
+
+  .ms-account__rule--met > svg {
+    color: var(--status-ok-fg);
+  }
+
+  /* Sessions summary (Security tab) */
+  .ms-account__head-link {
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-account__sessions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .ms-account__count {
+    font-weight: var(--weight-bold);
+  }
+
+  /* Organisation tab: the form is wider than the clocks panel beside it */
+  @media (width >= 1180px) {
+    .ms-account__grid--wide {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+  }
+
+  .ms-account__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .ms-account__number {
+    max-width: 140px;
+  }
+
+  .ms-account__note {
+    display: block;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  /* The timezone combobox: a dropdown list under the field */
+  .ms-tz-picker {
+    position: relative;
+  }
+
+  .ms-tz-picker__list {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    z-index: var(--z-sticky);
+    max-height: 260px;
+    margin: 0;
+    padding: var(--space-1) 0;
+    overflow-y: auto;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-2);
+    background: var(--surface-2);
+    list-style: none;
+  }
+
+  .ms-tz-picker__list[hidden] {
+    display: none;
+  }
+
+  .ms-tz-picker__option,
+  .ms-tz-picker__empty {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-tz-picker__option {
+    cursor: pointer;
+  }
+
+  .ms-tz-picker__option[aria-selected="true"] {
+    background: var(--accent-tint);
+    color: var(--text-primary);
+    box-shadow: inset 2px 0 0 var(--accent-line);
+  }
+
+  .ms-tz-picker__empty {
+    color: var(--text-tertiary);
   }
 
   @media (width <= 767px) {

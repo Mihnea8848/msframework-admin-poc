@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TriangleAlert } from "lucide-react";
 import { get, post } from "../../api/client";
+import { fetchRegistrationStatus } from "../../api/security";
 import type { DepartmentResponse } from "../../api/types";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
@@ -10,9 +11,11 @@ import {
     validateFullName,
     validateEmail,
     validatePassword,
-    PASSWORD_LABELS,
+    passwordLabels,
     validatePhone,
+    DEFAULT_PASSWORD_MIN_LENGTH,
 } from "../../utils/validators";
+import { throttleNotice } from "../../utils/retryAfter";
 import AuthLayout from "./AuthLayout";
 import "./register.css";
 
@@ -50,7 +53,29 @@ function RequirementMeter<K extends string>({ id, show, checks, labels }: MeterP
     );
 }
 
+/** The page while an administrator has closed self-registration. */
+function RegistrationClosed() {
+    return (
+        <AuthLayout>
+            <h1 className="ms-auth__title">Registration is closed</h1>
+            <p className="ms-auth__lead">
+                The studio is not taking access requests right now. Ask an administrator to create your account,
+                and they will send you a link to set your password.
+            </p>
+            <div className="ms-auth__form">
+                <Alert tone="info" role="status">New accounts are created by an administrator for now.</Alert>
+            </div>
+            <p className="ms-auth__alt">
+                Already have an account? <Link className="ms-link" to="/login">Sign in</Link>
+            </p>
+        </AuthLayout>
+    );
+}
+
 export default function Register() {
+    // null while the registration status loads; the form stays usable if the call fails.
+    const [open, setOpen] = useState<boolean | null>(null);
+    const [minLength, setMinLength] = useState(DEFAULT_PASSWORD_MIN_LENGTH);
     const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
     const [deptLoading, setDeptLoading] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -63,6 +88,18 @@ export default function Register() {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const navigate = useNavigate();
+
+    useEffect(() => {
+        let alive = true;
+        fetchRegistrationStatus()
+            .then((status) => {
+                if (!alive) return;
+                setOpen(Boolean(status?.open));
+                if (status?.passwordMinLength) setMinLength(status.passwordMinLength);
+            })
+            .catch(() => { if (alive) setOpen(true); });
+        return () => { alive = false; };
+    }, []);
 
     useEffect(() => {
         let alive = true;
@@ -86,7 +123,7 @@ export default function Register() {
 
     const nameVal = useMemo(() => validateFullName(fullName), [fullName]);
     const emailVal = useMemo(() => validateEmail(email), [email]);
-    const passVal = useMemo(() => validatePassword(password), [password]);
+    const passVal = useMemo(() => validatePassword(password, minLength), [password, minLength]);
     const confirmOk = confirm.length > 0 && confirm === password;
 
     const phoneVal = useMemo(() => validatePhone(phone), [phone]);
@@ -109,7 +146,10 @@ export default function Register() {
             const notice = res?.message || "Your request was sent. An administrator will review it.";
             navigate("/login", { state: { notice } });
         } catch (err) {
-            setServerError((err instanceof Error && err.message) || "Registration failed.");
+            const notice = throttleNotice(err);
+            setServerError(notice
+                ? `${notice.message}${notice.retry ? ` ${notice.retry}` : ""}`
+                : (err instanceof Error && err.message) || "Registration failed.");
         } finally {
             setLoading(false);
         }
@@ -130,9 +170,11 @@ export default function Register() {
         !phoneVal.ok ? "Please provide a valid phone number (min 7 digits)" :
             !emailVal.ok ? "Please provide a valid email address" :
                 !departmentId ? "Please select a department" :
-                    !passVal.ok ? (passVal.checks.notCommon ? "Password needs 8+ characters, a number and a symbol" : "That password is too common; choose another") :
+                    !passVal.ok ? (passVal.checks.notCommon ? `Password needs ${minLength}+ characters, a number and a symbol` : "That password is too common; choose another") :
                         !confirmOk ? "Passwords do not match" :
                             "Please fix the errors highlighted above";
+
+    if (open === false) return <RegistrationClosed />;
 
     return (
         <AuthLayout>
@@ -240,7 +282,7 @@ export default function Register() {
                         id="reg-password-rules"
                         show={showPassword}
                         checks={passVal.checks}
-                        labels={PASSWORD_LABELS}
+                        labels={passwordLabels(minLength)}
                     />
                 </div>
 
