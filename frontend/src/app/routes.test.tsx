@@ -20,7 +20,15 @@ const viewer: CurrentUserDto = {
     permissions: ["DASHBOARD_READ", "DOCUMENTATION_READ"],
 };
 
-const auditor: CurrentUserDto = { ...viewer, id: 8, email: "aude@mehstudios.net", permissions: ["DASHBOARD_READ", "AUDIT_READ"] };
+const member: CurrentUserDto = {
+    ...viewer,
+    id: 9,
+    email: "mia@mehstudios.net",
+    roles: ["MEMBER"],
+    permissions: ["DASHBOARD_READ", "USER_READ", "DEPARTMENT_READ", "DOCUMENTATION_READ"],
+};
+
+const auditor: CurrentUserDto ={ ...viewer, id: 8, email: "aude@mehstudios.net", permissions: ["DASHBOARD_READ", "AUDIT_READ"] };
 
 let fetchMock: Mock<typeof fetch>;
 
@@ -138,6 +146,46 @@ describe("router guards", () => {
         await userEvent.keyboard("{ArrowRight}");
         await settlesAt(router, "/settings/account");
         expect(screen.getByRole("tabpanel")).toHaveAccessibleName("Account");
+    });
+
+    it("opens a user's profile and a department's detail for a member, with the parent page current", async () => {
+        backend(member);
+        const router = start("/users/8");
+        await settlesAt(router, "/users/8");
+        await waitFor(() => expect(document.querySelector(".ms-sidebar [aria-current=page]")).toHaveAttribute("href", "/users"));
+        await act(() => router.navigate("/departments/2"));
+        await settlesAt(router, "/departments/2");
+        await waitFor(() => expect(document.querySelector(".ms-sidebar [aria-current=page]")).toHaveAttribute("href", "/departments"));
+    });
+
+    it("sends a viewer home from the profile and department detail", async () => {
+        backend(viewer);
+        const router = start("/users/8");
+        await settlesAt(router, "/");
+        await act(() => router.navigate("/departments/2"));
+        await settlesAt(router, "/");
+    });
+
+    it("needs both DEPARTMENT_READ and USER_READ for a department's detail", async () => {
+        backend({ ...member, permissions: ["DASHBOARD_READ", "DEPARTMENT_READ"] });
+        const router = start("/departments/2");
+        await settlesAt(router, "/");
+    });
+
+    it("keeps Roles and Access requests behind their permissions", async () => {
+        backend(member);
+        const router = start("/roles");
+        await settlesAt(router, "/");
+        await act(() => router.navigate("/access-requests"));
+        await settlesAt(router, "/");
+    });
+
+    it("opens Roles with ROLES_READ and Access requests with ACCESS_REQUESTS_MANAGE", async () => {
+        backend({ ...member, permissions: [...member.permissions, "ROLES_READ", "ACCESS_REQUESTS_MANAGE"] });
+        const router = start("/roles");
+        await settlesAt(router, "/roles");
+        await act(() => router.navigate("/access-requests"));
+        await settlesAt(router, "/access-requests");
     });
 
     it("opens Activity and Sessions for anyone signed in, and keeps the Audit log for AUDIT_READ", async () => {

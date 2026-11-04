@@ -1,0 +1,192 @@
+/*
+ * Access requests (pages/AccessRequests.tsx): status tabs, then a clipped card per request (who,
+ * the department they asked for, when, and Approve or Reject). Below 768px the card stacks.
+ */
+@layer pages {
+  .ms-access {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    min-width: 0;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--leading-normal);
+  }
+
+  :where(.ms-access) :where(p, ul) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ms-access .ms-notice {
+    margin-bottom: 0;
+  }
+
+  .ms-access__tabs {
+    display: flex;
+    gap: var(--space-1);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .ms-access__tab {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .ms-access__tab:hover {
+    color: var(--text-primary);
+  }
+
+  .ms-access__tab[aria-selected="true"] {
+    border-bottom-color: var(--accent-solid);
+    color: var(--text-primary);
+  }
+
+  .ms-access__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  .ms-access__list {
+    display: grid;
+    gap: var(--space-2);
+    list-style: none;
+  }
+
+  .ms-access__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: 14px 18px;
+  }
+
+  .ms-access__name {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-access__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px var(--space-3);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-access__contact a,
+  .ms-access__contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ms-access__contact svg {
+    flex: none;
+    width: 13px;
+    height: 13px;
+  }
+
+  .ms-access__dept,
+  .ms-access__when {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-access__label {
+    color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-access__dept-name {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-access__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .ms-access__note {
+    grid-column: 2 / -1;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-access__textarea {
+    height: auto;
+    min-height: 88px;
+    padding-top: var(--space-2);
+    resize: vertical;
+  }
+
+  @media (width <= 1023px) {
+    .ms-access__item {
+      grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .ms-access__who {
+      grid-column: 2 / -1;
+    }
+
+    .ms-access__dept {
+      grid-column: 2;
+    }
+
+    .ms-access__actions {
+      grid-column: 2 / -1;
+      justify-content: flex-start;
+    }
+  }
+
+  @media (width <= 767px) {
+    .ms-access {
+      gap: var(--space-3);
+    }
+
+    .ms-access__tab {
+      flex: 1;
+      padding: 0 var(--space-2);
+    }
+
+    .ms-access__item {
+      grid-template-columns: auto minmax(0, 1fr);
+      padding: var(--space-3);
+    }
+
+    .ms-access__avatar {
+      align-self: start;
+    }
+
+    .ms-access__who,
+    .ms-access__dept,
+    .ms-access__when,
+    .ms-access__actions,
+    .ms-access__note {
+      grid-column: 2;
+    }
+  }
+}

@@ -13,6 +13,13 @@ export function hasPermission(user: MaybeUser, permission: Permission | null | u
     return Boolean(user?.permissions?.includes(permission));
 }
 
+/** Whether the user has every one of the permissions (a single one, a list, or none). */
+export function hasAllPermissions(user: MaybeUser, permissions: Permission | readonly Permission[] | null | undefined): boolean {
+    if (!permissions) return true;
+    if (typeof permissions === "string") return hasPermission(user, permissions);
+    return permissions.every((p) => hasPermission(user, p));
+}
+
 export function hasRole(user: MaybeUser, roleName: RoleName): boolean {
     return Boolean(user?.roles?.includes(roleName));
 }

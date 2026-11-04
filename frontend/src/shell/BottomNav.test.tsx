@@ -14,7 +14,7 @@ function renderNav(pathname: string, badge: string | null = null, onOpenMore = v
                 tabs={mobileTabs(admin)}
                 more={morePages(admin)}
                 pathname={pathname}
-                badge={badge}
+                badges={{ activity: badge }}
                 moreOpen={false}
                 onOpenMore={onOpenMore}
             />
