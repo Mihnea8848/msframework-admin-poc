@@ -1,0 +1,169 @@
+@layer pages {
+  .ms-expenses__tabs {
+    display: flex;
+    gap: var(--space-1);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .ms-expenses__tab {
+    min-height: 40px;
+    margin-bottom: -1px;
+    padding: 0 var(--space-4);
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .ms-expenses__tab:hover {
+    color: var(--text-primary);
+  }
+
+  .ms-expenses__tab[aria-selected="true"] {
+    border-bottom-color: var(--accent-line);
+    color: var(--text-primary);
+  }
+
+  .ms-expenses__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  .ms-expenses__date {
+    flex-basis: 150px;
+  }
+
+  .ms-expenses__wrap {
+    transition: opacity var(--duration-base) var(--ease-standard);
+  }
+
+  .ms-expenses__wrap--busy {
+    opacity: 0.6;
+  }
+
+  .ms-expenses__date-cell {
+    white-space: nowrap;
+  }
+
+  .ms-expenses__vendor {
+    display: grid;
+    gap: 2px;
+    min-width: 160px;
+  }
+
+  .ms-expenses__note {
+    color: var(--status-danger-fg);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-expenses__amount {
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-expenses__status {
+    white-space: nowrap;
+  }
+
+  .ms-expenses__status .ms-flag {
+    display: flex;
+    margin-top: 4px;
+  }
+
+  .ms-expenses__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .ms-expenses__fixed {
+    display: flex;
+    align-items: center;
+    min-height: var(--control-field);
+    color: var(--text-secondary);
+  }
+
+  /* Phones: each row becomes a card */
+  @media (width <= 767px) {
+    .ms-expenses__tabs {
+      overflow-x: auto;
+    }
+
+    .ms-expenses__tab {
+      flex: none;
+      min-height: var(--touch-target);
+    }
+
+    .ms-expenses__date {
+      flex-basis: 120px;
+    }
+
+    .ms-expenses__table thead {
+      display: none;
+    }
+
+    .ms-expenses__table,
+    .ms-expenses__table tbody {
+      display: block;
+    }
+
+    .ms-expenses__row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px var(--space-3);
+      padding: var(--space-3);
+      border-bottom: 1px solid var(--border-faint);
+    }
+
+    .ms-expenses__table td {
+      padding: 0;
+      border: 0;
+    }
+
+    .ms-expenses__vendor {
+      grid-column: 1;
+      grid-row: 1;
+      min-width: 0;
+    }
+
+    .ms-expenses__amount {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .ms-expenses__date-cell,
+    .ms-expenses__dept,
+    .ms-expenses__who {
+      grid-column: 1 / -1;
+      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+    }
+
+    .ms-expenses__status {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .ms-expenses__status .ms-flag {
+      margin: 0;
+    }
+
+    .ms-expenses__act {
+      grid-column: 1 / -1;
+      text-align: left;
+    }
+
+    .ms-expenses__actions {
+      justify-content: flex-start;
+    }
+  }
+}

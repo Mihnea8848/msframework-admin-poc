@@ -70,7 +70,7 @@ export const routes: RouteObject[] = [
                         handle: { pageKey: page.key },
                         lazy: async () => {
                             const { default: Page } = await PAGE_LOADERS[page.key]();
-                            return { element: <RequirePermission permission={page.permissions}><Page /></RequirePermission> };
+                            return { element: <RequirePermission allOf={page.permissions}><Page /></RequirePermission> };
                         },
                     })),
                     {

@@ -165,7 +165,7 @@ Frontend scripts (in `frontend/`):
 | `npm test` | Vitest unit tests, once (`npm run test:watch` re-runs on save) |
 | `npm run typecheck` | `tsc -b` on its own |
 | `npm run build` | `tsc -b` type check, `vite build`, then the bundle budget (`scripts/check-bundle.mjs`) |
-| `npm run check:bundle` | The bundle budget on its own, against an existing `dist/`: gzip sizes of the entry JS (<= 130 kB), all CSS together, including each page's own stylesheet (<= 40 kB), each lazy chunk (<= 40 kB) and the latin `.woff2` fonts (<= 70 kB). Prints a table and fails when one is over |
+| `npm run check:bundle` | The bundle budget on its own, against an existing `dist/`: gzip sizes of the entry JS (<= 130 kB), the CSS index.html links (<= 15 kB), each lazily loaded stylesheet on its own (<= 8 kB), each lazy chunk (<= 40 kB) and the latin `.woff2` fonts (<= 70 kB). Prints a table and fails when one is over |
 
 - Frontend unit tests are `*.test.ts` (or `.test.tsx` for components) files next to the module they test (`src/utils/csv.test.ts`, `src/shell/MoreSheet.test.tsx`). Router tests build a `createMemoryRouter(routes)` from `src/app/routes.tsx` inside `AuthProvider` and assert on `router.state.location`. jsdom has no `HTMLDialogElement.showModal`, so dialogs must work with the `open` attribute too (see `shell/MoreSheet.tsx`). They run in jsdom with Testing Library and jest-dom matchers (`src/test/setup.ts`). Mock `fetch` with `vi.stubGlobal`; never call the real backend from a unit test.
 - `eslint-plugin-jsx-a11y` runs its recommended rules as **errors**. If a rule is wrong for one element (an `option` in a combobox listbox, for example), disable it on that line with a comment that says why.
@@ -274,6 +274,9 @@ Component, shell and page styles live next to their component (`src/ui/brand/log
 - **Throttling and registration on the auth pages:** a 429 carries `Retry-After`, which `ApiError.retryAfterSeconds` exposes; show it with `throttleNotice`/`signInProblem` from `utils/retryAfter.ts` ("Try again in N minutes"), never by parsing the message. Pages that ask for a new password read the minimum length from `GET /api/auth/registration` (public) and pass it to `validatePassword`/`passwordLabels`; Login and Register also use its `open` flag.
 - **Auth pages** live in `src/pages/auth/`. Each page renders `<AuthLayout>` (pass `trace` on Login) with its title, lead and form inside, using the `ms-auth__title`, `ms-auth__lead`, `ms-auth__form` and `ms-auth__alt` classes. The layout keeps the art in one DOM node that moves from page to page, so it is never remounted even though the router renders each auth page separately; only the panel content fades in (`--duration-base`, 6px rise). The logo trace plays once per tab, on the first Login, and is skipped under `[data-motion="reduced"]`. Don't wrap the auth routes in `AuthLayout` in the router as well.
 - **People pages:** `pages/UserManagement.tsx` reads its filters from the URL (`?q=&role=&status=&dept=&sort=&page=`, page 1-based) with the pure helpers in `utils/people.ts` (filters, the search path, bulk result summaries, eligible managers, budget sums; tested in `people.test.ts`), and calls `GET /api/users/search`. Only users the caller may edit can be selected; bulk actions go to `POST /api/users/bulk` and every failure is listed with the API's message. The add and edit dialog is `pages/users/UserFormDialog.tsx`, shared with the profile (`pages/users/UserProfile.tsx`). `pages/departments/` holds the detail page and the figure pieces (`Sparkline`, `BudgetBar`, `figures.ts`). Permission labels and areas are in `utils/permissionGroups.ts` (a `Record<Permission, ...>`, so a new permission needs a label there). Shared pieces: `ui/ActivityTimeline.tsx` (a keyset-paged activity feed with Load more), `ui/Avatar.tsx`, `ui/StatusPill.tsx`, `ui/BackLink.tsx`. DTO types for these APIs are in `api/people.ts`.
+- **Pages:** each page is one `.tsx` file in `src/pages/` with its own stylesheet next to it (`ms-<page>` block, `@layer pages`), built from the shared controls above. A page whose root is a grid uses `grid-template-columns: minmax(0, 1fr)`, or the one-line phone header description widens the column past 360px. Sample data (the department cards' performance and budget figures) carries an `ms-tag` saying "Sample data" or "Demo".
+- **Charts** (`ui/charts/`, no chart library; read the `dataviz` skill before adding one): `Sparkline` (trend line with an end dot; arrow keys move along it; optional `reference` hairline), `BarList` (label, value and a bar per row, shares in the tooltip; `max` fixes the scale, `noShare` for scores), `ColumnChart` (monthly columns, `stacked` or grouped, one value axis, a legend for two or more series), `ScoreRing` (attainment ring, full above 100%) and `BudgetBar` (budget track with spent and committed segments; past the budget the track grows and a tick marks the budget). Pure maths is in `scale.ts` (scales, nice ticks, paths, budget segments; `scale.test.ts`). Every chart has an accessible name, a hover and focus tooltip (`useChartTip` + `ChartTip`, `aria-hidden` because it repeats visible or tabled values) and, for multi-value charts, a visually hidden `DataTable`. Colours are roles in `charts.css`: `--chart-1` (the accent line colour), `--chart-2` (a lighter step of it, for committed), `--chart-over` (danger, always with a text label) and `--chart-track`; inside `[data-seal]` marks use `--seal-border`, which stays visible for the white and silver seals in light mode. Charts measure their width (`useWidth`) and draw in real pixels.
+- **Business pages** (Goals, Reports, Budgets, Expenses, Payments) share `ui/business.css` (`ms-biz` page grid, `ms-filters`, `ms-tiles`/`ms-tile`, `ms-pager`, `ms-dl`, `ms-flag`) and `ui/BizControls.tsx` (`QuarterSelect`, `DepartmentSelect`, `Tile`, `Pager`), plus `ui/useDepartments.ts`. Their types are in `api/business.ts`. Money goes through `utils/money.ts` (`formatMoney` with `Intl.NumberFormat` in the currency the API sends, compact amounts, dates in the user's locale, quarters and the range presets); goal display and form rules through `utils/goals.ts` (attainment label and bar, `goalFormProblem` mirroring `GoalService`, check-in dates); expense statuses, tabs and form rules through `utils/expenses.ts`. Row actions come from each expense's `actions` flags (`expenseActions`), never from the role. A page `permission` in `routes/navigation.ts` may be a list, meaning any one of them (Expenses, and Import, which managers open for check-ins).
 - **Dashboard** lives in `src/pages/dashboard/`. `status.ts` holds the pure functions that turn the API results into the status cards, the summary line and the figures (tested in `status.test.ts`); the security score comes from `utils/securityChecks.ts`, shared with the Security page. Never show a number the API did not give: a card the role may not read says "Not checked".
 - **Brand names:** the product is MSFramework; in UI text the company is "Multimedia Entertainment Hub" ("MEH Studios Inc" in the narrow sidebar label). Example addresses use the `mehstudios.net` domain.
 
@@ -332,14 +335,16 @@ frontend/src/
   shell/               AppShell (the layout route, mounted once), Sidebar (+ rail), Topbar, BottomNav, MoreSheet,
                        PageLink (prefetch + view transition), useUnreadAudit (the badge poll)
   api/client.ts        the only place that calls fetch(); typed get<T>/post<T>/...; throws ApiError(status, message, data)
-  api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/)
+  api/types.ts         hand-written types mirroring the backend DTOs (keep in sync with backend dto/); api/business.ts
+                       has the budgets, expenses, payments, goals and reports DTOs
   auth/                AuthProvider (user, login, logout, sessionExpired), auth.ts API calls, permissions.ts helpers
   routes/navigation.ts every page with its path, icon, group, required permission and mobilePriority (router, sidebar,
                        bottom bar, More sheet and palette use it), the Settings tabs and the redirected old paths
   styles/              index.css (the only CSS entry), tokens/, base/ (see "Frontend styles and design tokens")
   theme/appearance.ts  appearance preferences; public/theme-init.js applies them before the first paint
   pages/auth/          AuthLayout (split layout, shared art, motion) + Login, Register, ForgotPassword, ResetPassword
-  pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures)
+  pages/dashboard/     Dashboard.tsx + status.ts (status cards, summary, figures) + BusinessPanels.tsx (department
+                       performance and spending this quarter)
   pages/settings/      Settings.tsx (the tab row and panel) + AccountTab, SecurityTab, AppearanceTab, OrganisationTab
   pages/activity/      Activity.tsx (your own feed) + AuditLog.tsx (every event, AUDIT_READ), FeedList.tsx (the
                        shared rows), feed.ts (who reads which feed, the Audit log filters), activity.css
@@ -347,14 +352,18 @@ frontend/src/
   pages/departments/   DepartmentDetail, Sparkline, BudgetBar, figures.ts
   pages/               the other pages (HomePage, UserManagement, Departments, Roles, AccessRequests, Sessions,
                        DatabasePage, Connections, Timezones, Documentation, Security, Payments, ImportData,
+  pages/               the other pages (HomePage, UserManagement, Departments, Sessions, DatabasePage, Connections,
+                       Timezones, Documentation, Security, Goals, Reports, Budgets, Expenses, Payments, ImportData,
                        ExportData), each .tsx with its own .css
   ui/                  Button, Alert, PageHeader, Dialog, Toggle, QuickActions, CountUp, useReveal (+ motion.css),
-                       seal/ (Seal.tsx, OfficialSeal.tsx, seals.ts), brand/Logo.tsx, brand/LogoArt.tsx, and the CSS
-                       blocks field.css, surface.css, list.css
+                       seal/ (Seal.tsx, OfficialSeal.tsx, seals.ts), brand/Logo.tsx, brand/LogoArt.tsx, charts/ (SVG
+                       charts, see Charts), BizControls.tsx, useDepartments.ts, and the CSS blocks field.css,
+                       surface.css, list.css, business.css
   utils/               validators.ts (mirrors backend rules), csv.ts, format.ts, storage.ts, auditTypes.ts, auditSeen.ts,
                        securityChecks.ts (Security page and Dashboard), activityBadge.ts (the unread rule, kept out
                        of auditTypes so the shell stays small), userAgent.ts (browser and device for Sessions),
-                       retryAfter.ts (429 and pending-approval wording for the auth pages)
+                       retryAfter.ts (429 and pending-approval wording for the auth pages), money.ts, goals.ts and
+                       expenses.ts (business formatting and rules, see Business pages)
   test/setup.ts        Vitest setup (jest-dom matchers, Testing Library cleanup)
   **/*.test.ts(x)      unit tests, next to the module they cover
 frontend/scripts/check-bundle.mjs  the bundle size budget, run by npm run build
@@ -379,3 +388,4 @@ Conventions:
 - **Passwords:** new passwords go through `PasswordPolicy` (organisation minimum length, 72 bytes, a number, a symbol, not in `security/common-passwords.txt`). The frontend mirror is `utils/validators.ts` with `utils/commonPasswords.ts`; `PasswordPolicyTests` fails when the two blocklists disagree.
 - **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.ts`. Keep them in sync, and cover a changed rule in `utils/validators.test.ts`.
 - Pages labelled as demo or sample data (Payments, MFA, SSO) are intentionally not backed by real services. Keep them clearly labelled until they are. The department cards show real performance and budget figures, and hide a row the role may not read.
+- Pages labelled as demo or sample data (the department cards' performance and budget figures, MFA, SSO) are intentionally not backed by real services. Keep them clearly labelled until they are.

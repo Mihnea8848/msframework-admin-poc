@@ -21,6 +21,7 @@ import { auditMeta } from "../../utils/auditTypes";
 import { relTime } from "../../utils/format";
 import { SECURITY_AUDIT_LIMIT, securityChecks } from "../../utils/securityChecks";
 import type { SecurityCheck } from "../../utils/securityChecks";
+import BusinessPanels from "./BusinessPanels";
 import {
     checkedLabel, departmentFigure, deriveStatusCards, summarizeStatus, userFigures,
 } from "./status";
@@ -78,9 +79,9 @@ function quickLinkMeta(key: PageKey, snapshot: Snapshot | null, unread: number |
             return c && c.state !== "neutral" ? c.text : "Live schema of the application database";
         }
         case "payments":
-            return "Sample data, not connected";
+            return "Paid expenses by month";
         case "import":
-            return "Create users or departments from CSV";
+            return "People, money and check-ins from CSV";
         case "export":
             return "Users and audit log as CSV";
         default:
@@ -98,6 +99,8 @@ export default function Dashboard() {
     const canReadConnections = hasPermission(user, "CONNECTIONS_READ");
     const canReadSecurity = hasPermission(user, "SECURITY_READ");
     const canReadKeys = hasPermission(user, "API_KEY_READ");
+    const showPerformance = hasPermission(user, ["GOALS_READ", "REPORTS_READ"]);
+    const showSpending = hasPermission(user, "FINANCE_READ");
 
     const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
     const [version, setVersion] = useState(0);
@@ -267,6 +270,8 @@ export default function Dashboard() {
                     </p>
                 )}
             </section>
+
+            <BusinessPanels showPerformance={showPerformance} showSpending={showSpending} version={version} />
 
             {(showActivity || showQuick) && (
                 <div className={showActivity && showQuick ? "ms-dashboard__cols" : "ms-dashboard__cols ms-dashboard__cols--single"}>

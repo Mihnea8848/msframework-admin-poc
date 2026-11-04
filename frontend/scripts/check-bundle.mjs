@@ -4,7 +4,8 @@
  * when the output in dist/ grows past a budget. Sizes are gzip (level 9), the way they travel.
  *
  *   entry JS      the script index.html loads, plus the chunks it imports statically
- *   CSS           every stylesheet in dist/, together
+ *   entry CSS     the stylesheets index.html links, together (every page view loads them)
+ *   page CSS      each lazily loaded stylesheet (one per page or shared block), on its own
  *   page chunk    each lazy-loaded chunk (one per page, see src/app/pages.ts), on its own
  *   fonts         the latin .woff2 files, together (latin-ext is only fetched for those letters)
  *
@@ -17,12 +18,11 @@ import { gzipSync } from "node:zlib";
 const KB = 1024;
 const BUDGETS = {
     entry: 130 * KB,
-    // Every stylesheet together, including each page's own lazy CSS, so a single page view
-    // loads less than this. Raised from 25 kB when every page got its own Chevron stylesheet,
-    // and from 30 kB for the Settings page, the sign-in art and the official seals (wave 1).
-    // Raised from 34 kB for the people pages (user profile, department detail, roles, access
-    // requests: about 6 kB together); a page view still loads only the entry CSS and its own.
-    css: 40 * KB,
+    // The CSS every page view downloads (tokens, base, shell, shared components).
+    entryCss: 15 * KB,
+    // Each lazily loaded stylesheet on its own. Measuring all stylesheets together grew with
+    // every new page even though a page view only loads the entry CSS plus its own.
+    pageCss: 8 * KB,
     page: 40 * KB,
     fonts: 70 * KB,
 };
@@ -62,7 +62,8 @@ const files = fs.readdirSync(assets).map((f) => path.join(assets, f));
 const js = files.filter((f) => f.endsWith(".js"));
 const entrySet = staticGraph([...entryScripts, ...preloads]);
 const lazy = js.filter((f) => !entrySet.has(f));
-const css = files.filter((f) => f.endsWith(".css"));
+const entryCss = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="\/?([^"]+)"/g)].map((m) => path.join(dist, m[1]));
+const lazyCss = files.filter((f) => f.endsWith(".css") && !entryCss.includes(f));
 const fonts = files.filter((f) => f.endsWith(".woff2") && /-latin-(?!ext)/.test(path.basename(f)));
 
 const rows = [];
@@ -75,7 +76,8 @@ function check(label, detail, size, budget) {
 
 const sum = (list) => list.reduce((n, f) => n + gzipSize(f), 0);
 check("entry JS", [...entrySet].map(rel).join(", "), sum([...entrySet]), BUDGETS.entry);
-check("CSS (all)", `${css.length} file(s)`, sum(css), BUDGETS.css);
+check("entry CSS", entryCss.map(rel).join(", "), sum(entryCss), BUDGETS.entryCss);
+for (const file of lazyCss.sort()) check("page CSS", rel(file), gzipSize(file), BUDGETS.pageCss);
 check("fonts (latin woff2)", `${fonts.length} file(s)`, sum(fonts), BUDGETS.fonts);
 for (const file of lazy.sort()) check("lazy chunk", rel(file), gzipSize(file), BUDGETS.page);
 

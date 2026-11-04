@@ -6,7 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import QuickActions from "./QuickActions";
 import { PAGES, SETTINGS_TABS } from "../routes/navigation";
 
-const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.map((p) => p.permission).filter((p) => p !== null))] };
+const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.flatMap((p) => (p.permission === null ? [] : typeof p.permission === "string" ? [p.permission] : [...p.permission])))] };
 
 vi.mock("../auth/AuthProvider", () => ({ useAuth: () => ({ user: admin }) }));
 

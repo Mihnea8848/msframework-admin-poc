@@ -1,0 +1,122 @@
+@layer pages {
+  .ms-budgets__dept {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .ms-budgets__lines {
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-budgets__line {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 1.6fr) 76px;
+    gap: var(--space-2) var(--space-5);
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-budgets__line:last-child {
+    border-bottom: 0;
+  }
+
+  .ms-budgets__name {
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-budgets__nums {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-budgets__nums dt {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-budgets__nums dd {
+    white-space: nowrap;
+  }
+
+  .ms-budgets__over {
+    color: var(--status-danger-fg);
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-budgets__actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .ms-budgets__add {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+  }
+
+  .ms-budgets__add .ms-field {
+    flex: 1;
+    margin: 0;
+  }
+
+  .ms-budgets__cats {
+    padding: 0;
+    list-style: none;
+  }
+
+  .ms-budgets__cats li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .ms-budgets__cat-name,
+  .ms-budgets__cats .ms-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (width <= 1100px) {
+    .ms-budgets__line {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .ms-budgets__actions {
+      justify-content: flex-start;
+    }
+  }
+
+  .ms-budgets__btn-sr {
+    display: none;
+  }
+
+  @media (width <= 767px) {
+    .ms-budgets__btn-label {
+      display: none;
+    }
+
+    .ms-budgets__btn-sr {
+      display: inline;
+    }
+
+    .ms-budgets__line {
+      grid-template-columns: minmax(0, 1fr);
+      padding: var(--space-3);
+    }
+
+    .ms-budgets__nums {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

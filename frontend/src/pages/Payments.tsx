@@ -1,234 +1,169 @@
-import { useEffect, useId, useRef, useState } from "react";
-import type { FormEvent } from "react";
-import { ArrowDownLeft, ArrowUpRight, CircleAlert, CircleCheck, Clock3 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CircleMinus, PlugZap } from "lucide-react";
 import { get } from "../api/client";
-import type { DepartmentResponse } from "../api/types";
+import type { PaymentLedger } from "../api/business";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import PageHeader from "../ui/PageHeader";
+import { DepartmentSelect, Pager, Tile } from "../ui/BizControls";
+import ColumnChart from "../ui/charts/ColumnChart";
+import { useDepartments } from "../ui/useDepartments";
+import { useReveal } from "../ui/useReveal";
+import { formatDate, formatMoney, formatMoneyCompact, formatMonth, presetRange, RANGE_PRESETS } from "../utils/money";
+import type { DateRange, RangePreset } from "../utils/money";
 import "../ui/field.css";
 import "../ui/list.css";
 import "../ui/surface.css";
+import "../ui/business.css";
 import "./payments.css";
 
-// Everything on this page except the department list is sample data: no payment provider is connected.
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-const SPENDING = [3200, 4800, 2900, 5100, 3800, 4200];
-const MAX_SPEND = Math.max(...SPENDING);
+const PAGE_SIZE = 25;
+const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-type TxStatus = "completed" | "pending" | "failed";
-
-interface Transaction {
-    id: string;
-    type: "in" | "out";
-    desc: string;
-    amount: number;
-    date: string;
-    status: TxStatus;
-}
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-    { id: "txn-001", type: "out", desc: "SaaS Subscriptions", amount: 1240.00, date: "2026-05-07", status: "completed" },
-    { id: "txn-002", type: "in", desc: "Client Invoice #3201", amount: 8500.00, date: "2026-05-06", status: "completed" },
-    { id: "txn-003", type: "out", desc: "Cloud Infrastructure", amount: 620.50, date: "2026-05-05", status: "completed" },
-    { id: "txn-004", type: "out", desc: "Office Supplies", amount: 184.20, date: "2026-05-04", status: "completed" },
-    { id: "txn-005", type: "in", desc: "Client Invoice #3198", amount: 3200.00, date: "2026-05-03", status: "completed" },
-    { id: "txn-006", type: "out", desc: "Marketing Campaign", amount: 2100.00, date: "2026-05-01", status: "pending" },
-    { id: "txn-007", type: "out", desc: "Legal Fees", amount: 950.00, date: "2026-04-29", status: "completed" },
-    { id: "txn-008", type: "in", desc: "Refund — Vendor", amount: 340.00, date: "2026-04-28", status: "completed" },
-    { id: "txn-009", type: "out", desc: "Team Lunch", amount: 220.00, date: "2026-04-27", status: "completed" },
-    { id: "txn-010", type: "out", desc: "Software Licences", amount: 580.00, date: "2026-04-25", status: "failed" },
-];
-
-const STATUS_PILL = {
-    completed: { label: "Completed", tone: "ok", Icon: CircleCheck },
-    pending: { label: "Pending", tone: "warn", Icon: Clock3 },
-    failed: { label: "Failed", tone: "danger", Icon: CircleAlert },
-} as const;
-
-const EMPTY_FORM = { amount: "", dept: "", memo: "" };
-
-/** The spending bars, drawn in a stretched SVG so each height needs no inline style. */
-function SpendingChart() {
-    const gap = 24;
-    const width = 100;
-    return (
-        <figure className="ms-payments__chart">
-            <svg
-                className="ms-payments__bars"
-                viewBox={`0 0 ${MONTHS.length * (width + gap) - gap} 100`}
-                preserveAspectRatio="none"
-                aria-hidden="true"
-            >
-                {SPENDING.map((value, i) => {
-                    const h = (value / MAX_SPEND) * 100;
-                    return (
-                        <rect key={MONTHS[i]} className="ms-payments__bar" x={i * (width + gap)} y={100 - h} width={width} height={h}>
-                            <title>{`$${value.toLocaleString()}`}</title>
-                        </rect>
-                    );
-                })}
-            </svg>
-            <figcaption className="ms-payments__months">
-                {MONTHS.map((m, i) => (
-                    <span key={m}>
-                        {m}
-                        <span className="ms-visually-hidden">: ${(SPENDING[i] ?? 0).toLocaleString()}</span>
-                    </span>
-                ))}
-            </figcaption>
-        </figure>
-    );
-}
-
+/**
+ * The payments ledger: every PAID expense by payment date, with monthly totals. MSFramework
+ * records payments when finance marks an approved expense as paid; it does not move money.
+ */
 export default function Payments() {
-    const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
-    const [form, setForm] = useState(EMPTY_FORM);
-    const [sent, setSent] = useState<string | false>(false);
-    const [sending, setSending] = useState(false);
-    const [formError, setFormError] = useState<string | null>(null);
-    const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const id = useId();
+    const [now] = useState(() => new Date());
+    const departments = useDepartments();
+    const [preset, setPreset] = useState<RangePreset | "custom">("6m");
+    const [range, setRange] = useState<DateRange>(() => presetRange("6m", now));
+    const [departmentId, setDepartmentId] = useState("");
+    const [page, setPage] = useState(0);
+    const [data, setData] = useState<PaymentLedger | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [version, setVersion] = useState(0);
+    const reveal = useReveal(data !== null);
 
     useEffect(() => {
-        get<DepartmentResponse[]>("/api/departments")
-            .then((d) => setDepartments(Array.isArray(d) ? d : []))
-            .catch(() => setDepartments([]));
-        return () => clearTimeout(timer.current);
-    }, []);
+        if (!range.from || !range.to) return undefined;
+        let alive = true;
+        const dept = departmentId ? `&departmentId=${departmentId}` : "";
+        get<PaymentLedger>(`/api/payments?from=${range.from}&to=${range.to}${dept}&page=${page}&size=${PAGE_SIZE}`)
+            .then((d) => { if (alive) { setData(d); setError(null); setLoading(false); } })
+            .catch((err) => { if (alive) { setError(messageOf(err)); setLoading(false); } });
+        return () => { alive = false; };
+    }, [range, departmentId, page, version]);
 
-    async function handleSend(e: FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        setFormError(null);
-        const amount = Number(form.amount);
-        if (!Number.isFinite(amount) || amount <= 0) { setFormError("Enter an amount greater than 0."); return; }
-        if (!form.dept) { setFormError("Choose a recipient department."); return; }
-        setSending(true);
-        await new Promise((r) => setTimeout(r, 600));
-        setSending(false);
-        const dept = departments.find((d) => String(d.id) === String(form.dept));
-        setSent(`Simulated payment of $${amount.toFixed(2)} to ${dept?.name ?? "department"} — no money was moved.`);
-        setForm(EMPTY_FORM);
-        clearTimeout(timer.current);
-        timer.current = setTimeout(() => setSent(false), 5000);
+    function update(next: () => void) {
+        setLoading(true);
+        setPage(0);
+        next();
     }
 
+    const currency = data?.currency ?? "EUR";
+    const money = (v: number) => formatMoney(v, currency);
+    const months = useMemo(() => (data?.months ?? []).map((m) => ({ key: m.month, label: formatMonth(m.month, true), title: `${formatMonth(m.month)} (${m.count} payment${m.count === 1 ? "" : "s"})`, total: m.total })), [data]);
+    const largest = months.reduce((best, m) => (m.total > (best?.total ?? -1) ? m : best), months[0]);
+
     return (
-        <section className="ms-payments">
+        <section className="ms-biz ms-payments">
             <PageHeader
                 eyebrow="Finance"
                 title="Payments"
-                description="Proof-of-concept payments dashboard. Balances and transactions are sample data; no payment provider is connected."
+                count={data?.count ?? null}
+                description="Approved expenses that finance has marked as paid, by payment date."
             />
 
-            <div className="ms-cut ms-payments__balance">
-                <p className="ms-payments__balance-label">
-                    Available Balance <span className="ms-tag">Sample data</span>
-                </p>
-                <p className="ms-payments__balance-amount">$24,860.00</p>
-                <p className="ms-payments__balance-sub">Updated just now · USD</p>
+            <div className="ms-filters" role="group" aria-label="Period and department">
+                <div className="ms-chips">
+                    {RANGE_PRESETS.map((p) => (
+                        <button key={p.key} type="button" className="ms-chip" aria-pressed={preset === p.key}
+                            onClick={() => update(() => { setPreset(p.key); setRange(presetRange(p.key, now)); })}>
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="ms-field">
+                    <label className="ms-field__label" htmlFor="pay-from">From</label>
+                    <input id="pay-from" className="ms-input" type="date" value={range.from} max={range.to}
+                        onChange={(e) => update(() => { setPreset("custom"); setRange((r) => ({ ...r, from: e.target.value })); })} />
+                </div>
+                <div className="ms-field">
+                    <label className="ms-field__label" htmlFor="pay-to">To</label>
+                    <input id="pay-to" className="ms-input" type="date" value={range.to} min={range.from}
+                        onChange={(e) => update(() => { setPreset("custom"); setRange((r) => ({ ...r, to: e.target.value })); })} />
+                </div>
+                <DepartmentSelect id="pay-dept" value={departmentId} departments={departments} onChange={(v) => update(() => setDepartmentId(v))} />
             </div>
 
-            <div className="ms-payments__grid">
-                <div className="ms-payments__main">
-                    <section className="ms-panel" aria-labelledby={`${id}-spend`}>
+            {error && (
+                <Alert tone="danger" role="alert" className="ms-notice">
+                    <span>Could not load payments: {error}</span>
+                    <Button size="sm" onClick={() => { setLoading(true); setVersion((v) => v + 1); }}>Retry</Button>
+                </Alert>
+            )}
+
+            {!data && !error && <div className="ms-empty"><p>Loading payments…</p></div>}
+
+            {data && (
+                <>
+                    <div className="ms-payments__top">
+                        <ul className="ms-tiles" aria-label="Totals">
+                            <Tile {...reveal(0)} label="Paid out" value={money(data.totalAmount)} detail={`${formatDate(data.from)} to ${formatDate(data.to)}`} />
+                            <Tile {...reveal(1)} label="Payments" value={data.count} detail={largest && largest.total > 0 ? `Most in ${formatMonth(largest.key)}` : "None in this period"} />
+                        </ul>
+                        <section {...reveal(2, "ms-panel ms-payments__provider")} aria-labelledby="pay-provider">
+                            <h2 className="ms-payments__provider-title" id="pay-provider">
+                                <PlugZap aria-hidden="true" />
+                                Payment provider not connected
+                            </h2>
+                            <p className="ms-muted">{data.provider.note}</p>
+                            <span className="ms-status ms-status--neutral"><CircleMinus aria-hidden="true" />Not connected</span>
+                        </section>
+                    </div>
+
+                    <section className="ms-panel" aria-labelledby="pay-monthly">
                         <div className="ms-panel__head">
-                            <h2 className="ms-panel__title" id={`${id}-spend`}>Spending (last 6 months)</h2>
-                            <span className="ms-tag">Sample data</span>
+                            <h2 className="ms-panel__title" id="pay-monthly">Paid per month</h2>
+                            <span className="ms-panel__meta">By payment date</span>
                         </div>
-                        <SpendingChart />
+                        <div className={`ms-panel__body${loading ? " ms-payments__busy" : ""}`}>
+                            {data.count === 0 ? <p className="ms-muted">No payments in this period.</p> : (
+                                <ColumnChart label="Paid per month" categories={months} series={[{ key: "paid", label: "Paid", tone: "1" }]}
+                                    values={months.map((m) => [m.total])} format={money} formatAxis={(v) => formatMoneyCompact(v, currency)} height={200} />
+                            )}
+                        </div>
                     </section>
 
-                    <section className="ms-panel" aria-labelledby={`${id}-tx`}>
+                    <section className="ms-panel" aria-labelledby="pay-ledger">
                         <div className="ms-panel__head">
-                            <h2 className="ms-panel__title" id={`${id}-tx`}>Transaction History</h2>
-                            <span className="ms-tag">Sample data</span>
+                            <h2 className="ms-panel__title" id="pay-ledger">Ledger</h2>
+                            <span className="ms-panel__meta">Newest first</span>
                         </div>
-                        <ul className="ms-payments__tx">
-                            {MOCK_TRANSACTIONS.map((tx) => {
-                                const pill = STATUS_PILL[tx.status];
-                                const incoming = tx.type === "in";
-                                return (
-                                    <li key={tx.id} className={`ms-payments__tx-row ms-payments__tx-row--${tx.type}`}>
-                                        <span className="ms-payments__tx-icon" aria-hidden="true">
-                                            {incoming ? <ArrowDownLeft /> : <ArrowUpRight />}
-                                        </span>
-                                        <div className="ms-payments__tx-body">
-                                            <p className="ms-payments__tx-desc">{tx.desc}</p>
-                                            <p className="ms-payments__tx-date"><time dateTime={tx.date}>{tx.date}</time></p>
+                        {data.items.length === 0 ? (
+                            <p className="ms-panel__body ms-muted">No payments recorded in this period. Payments appear here when finance marks an approved expense as paid on the Expenses page.</p>
+                        ) : (
+                            <ul className={`ms-payments__list${loading ? " ms-payments__busy" : ""}`} aria-busy={loading}>
+                                {data.items.map((p) => (
+                                    <li key={p.expenseId} className="ms-payments__row">
+                                        <div className="ms-payments__main">
+                                            <p className="ms-payments__vendor">{p.vendor}</p>
+                                            <p className="ms-muted">
+                                                {p.departmentName} · {p.categoryName}
+                                                {p.description ? ` · ${p.description}` : ""}
+                                            </p>
+                                            <p className="ms-muted">
+                                                {p.paymentReference ? `Ref ${p.paymentReference}` : "No payment reference"}
+                                                {p.reference ? ` · Invoice ${p.reference}` : ""}
+                                                {p.paidByEmail ? ` · Marked paid by ${p.paidByEmail}` : ""}
+                                            </p>
                                         </div>
-                                        <div className="ms-payments__tx-side">
-                                            <span className="ms-payments__tx-amount">
-                                                <span className="ms-visually-hidden">{incoming ? "Received " : "Paid "}</span>
-                                                {incoming ? "+" : "−"}${tx.amount.toFixed(2)}
-                                            </span>
-                                            <span className={`ms-status ms-status--${pill.tone}`}>
-                                                <pill.Icon aria-hidden="true" />
-                                                {pill.label}
-                                            </span>
+                                        <div className="ms-payments__side">
+                                            <span className="ms-payments__amount">{formatMoney(p.amount, p.currency)}</span>
+                                            <time className="ms-muted" dateTime={p.paidOn}>{formatDate(p.paidOn)}</time>
                                         </div>
                                     </li>
-                                );
-                            })}
-                        </ul>
+                                ))}
+                            </ul>
+                        )}
                     </section>
-                </div>
-
-                <form className="ms-panel ms-payments__form" onSubmit={handleSend} aria-labelledby={`${id}-pay`}>
-                    <div className="ms-panel__head">
-                        <h2 className="ms-panel__title" id={`${id}-pay`}>Quick Pay</h2>
-                        <span className="ms-tag">Demo</span>
-                    </div>
-                    <div className="ms-payments__fields">
-                        <div className="ms-field">
-                            <label className="ms-field__label" htmlFor={`${id}-amount`}>Amount (USD)</label>
-                            <input
-                                id={`${id}-amount`}
-                                className="ms-input"
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                inputMode="decimal"
-                                placeholder="0.00"
-                                value={form.amount}
-                                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                            />
-                        </div>
-                        <div className="ms-field">
-                            <label className="ms-field__label" htmlFor={`${id}-dept`}>Recipient (Department)</label>
-                            <div className="ms-select">
-                                <select
-                                    id={`${id}-dept`}
-                                    className="ms-input"
-                                    value={form.dept}
-                                    onChange={(e) => setForm((f) => ({ ...f, dept: e.target.value }))}
-                                >
-                                    <option value="">Select department…</option>
-                                    {departments.map((d) => (
-                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="ms-field">
-                            <label className="ms-field__label" htmlFor={`${id}-memo`}>Memo (optional)</label>
-                            <input
-                                id={`${id}-memo`}
-                                className="ms-input"
-                                type="text"
-                                placeholder="e.g. Q2 budget allocation"
-                                value={form.memo}
-                                onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                            />
-                        </div>
-                        {formError && <Alert tone="danger" role="alert">{formError}</Alert>}
-                        {sent && <Alert tone="ok" role="status">{sent}</Alert>}
-                        <Button type="submit" variant="primary" full disabled={sending}>
-                            {sending ? "Sending…" : "Simulate Payment"}
-                        </Button>
-                    </div>
-                </form>
-            </div>
+                    <Pager page={data.page} totalPages={data.totalPages} total={data.count} noun={data.count === 1 ? "payment" : "payments"} busy={loading}
+                        onPage={(p) => { setLoading(true); setPage(p); }} />
+                </>
+            )}
         </section>
     );
 }

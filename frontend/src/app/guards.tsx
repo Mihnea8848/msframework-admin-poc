@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
-import { hasAllPermissions } from "../auth/permissions";
+import { hasAllPermissions, hasPermission } from "../auth/permissions";
 import type { Permission } from "../api/types";
 import "./guards.css";
 
@@ -36,13 +36,19 @@ export function RedirectIfAuthed({ children }: Children) {
     return children;
 }
 
-/** A page that needs a permission (or several, all of them): without it the user is sent home. */
-export function RequirePermission({ permission, children }: Children & { permission: Permission | readonly Permission[] | null }) {
+/**
+ * A page that needs a permission: `permission` is one permission or a list meaning any of them,
+ * `allOf` a list that must all be held. Without them the user is sent home.
+ */
+export function RequirePermission({ permission, allOf, children }: Children & {
+    permission?: Permission | readonly Permission[] | null;
+    allOf?: readonly Permission[];
+}) {
     const { user, loading } = useAuth();
 
     if (loading) return <FullPageLoading />;
     if (!user) return <Navigate to="/login" replace />;
-    if (!hasAllPermissions(user, permission)) return <Navigate to="/" replace />;
+    if (!hasPermission(user, permission) || !hasAllPermissions(user, allOf)) return <Navigate to="/" replace />;
 
     return children;
 }

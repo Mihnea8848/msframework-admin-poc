@@ -45,6 +45,34 @@ section into a version (see `AGENTS.md`, Git workflow).
 - Labels and icons for the people audit events (access requested,
   approved and rejected, sign-in awaiting approval, department manager
   changed, reset link created).
+### Added (business screens)
+- Goals page (`/goals`): each department's KPIs per quarter with its score
+  ring; per goal the baseline, current against target, an attainment bar
+  with a status label, the last check-in, the owner and which way is better.
+  A detail dialog has the check-in history (list and line) and Record
+  check-in; managers create, edit and delete their department's goals (admins
+  any), with the target checked against the direction as on the server.
+- Reports page (`/reports`): period presets and custom dates, totals, monthly
+  spend (spent and committed), spend by department and category, budget vs
+  spend, performance by department, headcount and CSV exports (expenses only
+  with `FINANCE_READ`).
+- Budgets page (`/budgets`): lines grouped by department with a
+  budget-vs-spend bar per category, unbudgeted spend flagged, and for
+  `FINANCE_MANAGE` line dialogs and expense category management.
+- Expenses page (`/expenses`): Mine, To approve and All tabs, filters, paging
+  (cards on phones), status pills, the over-budget flag, a New expense dialog
+  (draft or submit) and the row actions the API allows, with a reason for
+  rejections and a date and reference for payments.
+- Dashboard: department performance (score and trend sparkline) and spending
+  this quarter against budget, for the roles that may read them.
+- Import: expenses, budgets and goal check-ins, with a template download for
+  every type; managers can open Import to bring in their check-ins.
+- Connections: API keys get scopes when they are created (`ingest:checkins`)
+  and list them; a help panel shows how to push KPI values with `curl`.
+- `ui/charts/`: small SVG charts (sparkline, bar list, column chart, score
+  ring, budget bar) with token colours, hover and keyboard tooltips and a
+  hidden data table. Labels, icons and Finance and Performance filters for
+  the business audit events.
 
 ### Added (sessions and organisation)
 - Sessions page (`/sessions`, every signed-in user): your sessions with the
@@ -170,7 +198,12 @@ section into a version (see `AGENTS.md`, Git workflow).
   with a six-month trend, and budget used (spent of budget), only for roles
   that may read them. The "Sample data" tags are gone, and the cards show
   the manager and open the department's detail.
-- The total CSS budget is 40 kB, for the people pages.
+- The CSS budget measures what a page view loads: the shared CSS (at most
+  15 kB) and each page's own stylesheet (at most 8 kB), instead of every
+  stylesheet added together.
+- Payments shows the real ledger of paid expenses instead of sample data and
+  needs `FINANCE_READ` (was `PAYMENTS_READ`). The CSS budget changed (see above)
+  for the business pages and charts.
 - Registering creates an access request instead of an account
   (`POST /api/auth/register` answers 202 with a message). An admin approves
   or rejects it; signing in before that says the request is still waiting.

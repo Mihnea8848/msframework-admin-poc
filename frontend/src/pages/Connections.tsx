@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
     BarChart2, Bell, BookOpen, Chrome, CircleCheck, CircleMinus, CirclePause, Cloud, Copy, CreditCard,
-    Github, Layers, Mail, MessageSquare, Phone, Plus, Trash2, X, Zap,
+    Github, KeyRound, Layers, Mail, MessageSquare, Phone, Plus, Trash2, X, Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
@@ -12,6 +12,7 @@ import type { ApiKeyDto, ServiceConnection, Webhook } from "../api/types";
 import { formatDateTime } from "../utils/format";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
+import Dialog, { DialogBody, DialogFooter } from "../ui/Dialog";
 import PageHeader from "../ui/PageHeader";
 import Toggle from "../ui/Toggle";
 import "../ui/field.css";
@@ -35,6 +36,20 @@ const SERVICE_META: Record<string, { name: string; icon: LucideIcon; category: s
 };
 
 const SERVICE_ORDER = Object.keys(SERVICE_META);
+
+/** The scopes a key can be given (ApiKeyCreateRequest), with what each lets an integration do. */
+const KEY_SCOPES: readonly { scope: string; label: string; hint: string }[] = [
+    { scope: "ingest:checkins", label: "Push KPI check-ins", hint: "Lets an integration push KPI check-ins (POST /api/ingest/checkins)." },
+];
+
+const scopeLabel = (scope: string) => KEY_SCOPES.find((s) => s.scope === scope)?.label ?? scope;
+
+const INGEST_EXAMPLE = [
+    "curl -X POST https://<your-msframework-host>/api/ingest/checkins \\",
+    "  -H \"Authorization: Bearer <API key>\" \\",
+    "  -H \"Content-Type: application/json\" \\",
+    "  -d '{\"checkins\": [{\"goalId\": 13, \"date\": \"2026-11-02\", \"value\": 48, \"note\": \"Sprint 22\"}]}'",
+].join("\n");
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
@@ -67,6 +82,8 @@ export default function Connections() {
     const [whError, setWhError] = useState<string | null>(null);
 
     const [keyName, setKeyName] = useState("");
+    const [keyScopes, setKeyScopes] = useState<string[]>([]);
+    const [keyDialog, setKeyDialog] = useState(false);
     const [newSecret, setNewSecret] = useState<{ name: string; secret: string } | null>(null);
     const [copied, setCopied] = useState(false);
     const [keyToRevoke, setKeyToRevoke] = useState<number | null>(null);
@@ -157,12 +174,14 @@ export default function Connections() {
     const generateKey = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         return run("key:new", async () => {
-            const saved = await post<ApiKeyDto>("/api/keys", { name: keyName.trim() || "API key" });
+            const saved = await post<ApiKeyDto>("/api/keys", { name: keyName.trim() || "API key", scopes: keyScopes });
             const { secret, ...rest } = saved;
             setApiKeys((prev) => [rest, ...prev]);
             setNewSecret({ name: saved.name, secret: secret ?? "" });
             setCopied(false);
             setKeyName("");
+            setKeyScopes([]);
+            setKeyDialog(false);
         });
     };
 
@@ -326,19 +345,9 @@ export default function Connections() {
                     <div className="ms-panel__head ms-connections__keys-head">
                         <h2 className="ms-panel__title" id="conn-keys">API Keys</h2>
                         {canCreateKeys && (
-                            <form onSubmit={generateKey} className="ms-connections__inline ms-connections__keyform">
-                                <input
-                                    className="ms-input"
-                                    placeholder="Key name (e.g. CI deploy)"
-                                    value={keyName}
-                                    onChange={(e) => setKeyName(e.target.value)}
-                                    maxLength={60}
-                                    aria-label="New API key name"
-                                />
-                                <Button type="submit" size="sm" icon={<Plus aria-hidden="true" />} disabled={pending === "key:new"}>
-                                    {pending === "key:new" ? "Generating…" : "Generate New Key"}
-                                </Button>
-                            </form>
+                            <Button size="sm" icon={<Plus aria-hidden="true" />} onClick={() => { setError(null); setKeyDialog(true); }}>
+                                Generate New Key
+                            </Button>
                         )}
                     </div>
 
@@ -364,6 +373,11 @@ export default function Connections() {
                                 <div className="ms-connections__row-main">
                                     <p className="ms-connections__key-name">{key.name}</p>
                                     <p className="ms-connections__masked">{key.maskedDisplay}</p>
+                                    <div className="ms-connections__events">
+                                        {(key.scopes ?? []).length === 0
+                                            ? <span className="ms-tag">No scopes</span>
+                                            : (key.scopes ?? []).map((sc) => <span key={sc} className="ms-tag" title={sc}>{scopeLabel(sc)}</span>)}
+                                    </div>
                                 </div>
                                 <div className="ms-connections__key-meta">
                                     <p>Created {formatDateTime(key.createdAt)}{key.createdBy ? ` by ${key.createdBy}` : ""}</p>
@@ -387,6 +401,56 @@ export default function Connections() {
                         ))}
                     </ul>
                 </section>
+            )}
+
+            <section className="ms-panel ms-connections__section" aria-labelledby="conn-ingest">
+                <div className="ms-panel__head">
+                    <h2 className="ms-panel__title" id="conn-ingest">Push KPI values from your tools</h2>
+                </div>
+                <div className="ms-connections__help">
+                    <p>
+                        A build server, a support desk or a spreadsheet script can record goal check-ins for you. Generate an API key
+                        with the <strong>Push KPI check-ins</strong> scope, then send the values with the goal&apos;s id. Up to 500
+                        check-ins per request; invalid ones are skipped and reported by their position.
+                    </p>
+                    <pre className="ms-connections__code ms-connections__curl">{INGEST_EXAMPLE}</pre>
+                </div>
+            </section>
+
+            {keyDialog && (
+                <Dialog eyebrow="API keys" title="Generate an API key" description="The key is shown once, right after it is created."
+                    onClose={() => setKeyDialog(false)} busy={pending === "key:new"}>
+                    <form onSubmit={generateKey}>
+                        <DialogBody>
+                            <div className="ms-field">
+                                <label className="ms-field__label" htmlFor="key-name">Name</label>
+                                <input id="key-name" data-autofocus className="ms-input" placeholder="e.g. CI metrics" value={keyName}
+                                    onChange={(e) => setKeyName(e.target.value)} maxLength={60} />
+                            </div>
+                            <fieldset className="ms-connections__scopes">
+                                <legend className="ms-field__label">What may it do?</legend>
+                                {KEY_SCOPES.map((sc) => (
+                                    <label key={sc.scope} className="ms-connections__scope" htmlFor={`scope-${sc.scope}`}>
+                                        <input id={`scope-${sc.scope}`} type="checkbox" checked={keyScopes.includes(sc.scope)}
+                                            onChange={(e) => setKeyScopes((list) => (e.target.checked ? [...list, sc.scope] : list.filter((x) => x !== sc.scope)))} />
+                                        <span className="ms-connections__scope-text">
+                                            {sc.label} <code>{sc.scope}</code>
+                                            <span className="ms-connections__scope-hint">{sc.hint}</span>
+                                        </span>
+                                    </label>
+                                ))}
+                                <p className="ms-field__hint">Without a scope the key cannot call any ingest endpoint.</p>
+                            </fieldset>
+                            {error && <Alert tone="danger" role="alert">{error}</Alert>}
+                        </DialogBody>
+                        <DialogFooter>
+                            <Button onClick={() => setKeyDialog(false)} disabled={pending === "key:new"}>Cancel</Button>
+                            <Button type="submit" variant="primary" icon={<KeyRound aria-hidden="true" />} disabled={pending === "key:new"}>
+                                {pending === "key:new" ? "Generating…" : "Generate key"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Dialog>
             )}
         </section>
     );
