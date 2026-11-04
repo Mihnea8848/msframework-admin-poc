@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Pencil, Plus, Trash2, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Pencil, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission, hasRole } from "../auth/permissions";
 import { del, get, post, put } from "../api/client";
 import type { DepartmentResponse } from "../api/types";
+import type { BudgetSummaryLite, DepartmentPerformanceLite, PerformanceOverviewLite } from "../api/people";
+import { prefetchPage } from "../app/pages";
+import { formatMoney } from "../utils/format";
+import { budgetsByDepartment, quarterLabel, utilisation } from "../utils/people";
+import type { DepartmentBudget } from "../utils/people";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import Dialog, { DialogBody, DialogFooter } from "../ui/Dialog";
@@ -15,54 +21,67 @@ import { SealMini } from "../ui/seal/Seal";
 import { DEFAULT_COLOR, SEALS, sealForColor, sealRingTitle } from "../ui/seal/seals";
 import "../ui/field.css";
 import "../ui/list.css";
+import BudgetBar from "./departments/BudgetBar";
+import Sparkline from "./departments/Sparkline";
 import "../ui/surface.css";
 import "./departments.css";
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-// Deterministic per-department sample stats (performance and budget), stable across renders.
-function deptStats(dept: DepartmentResponse) {
-    const seed = dept.id * 7919;
-    const perfPct = 40 + (dept.id * 37 + 11) % 55;
-    const isUp = (dept.id % 3) !== 0;
-    const budgetUsed = 30 + (dept.id * 53 + 7) % 65;
-    return { perfPct, isUp, budgetUsed, seed };
+/** What the cards show from /api/performance and /api/budgets; null where the user may not read it. */
+interface Figures {
+    performance: { period: string; byDept: Map<number, DepartmentPerformanceLite> } | null;
+    budgets: { period: string; currency: string; byDept: Map<number, DepartmentBudget> } | null;
 }
 
-function sparklinePath(seed: number, width = 80, height = 28, points = 8) {
-    let s = seed;
-    const rand = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
-    const values = Array.from({ length: points }, () => rand());
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const norm = values.map((v) => (max === min ? 0.5 : (v - min) / (max - min)));
-    return norm.map((v, i) => `${(i / (points - 1)) * width},${height - v * height}`).join(" ");
-}
-
-function SampleStats({ dept }: { dept: DepartmentResponse }) {
-    const { perfPct, isUp, budgetUsed, seed } = deptStats(dept);
-    const TrendIcon = isUp ? TrendingUp : TrendingDown;
-    const budgetTone = budgetUsed > 80 ? "danger" : budgetUsed > 60 ? "warn" : "ok";
+/**
+ * The department's real figures for the current quarter: the performance score with its six-month
+ * trend, and the share of its budget spent. A row the user may not read is not shown at all.
+ */
+function DepartmentFigures({ deptId, figures }: { deptId: number; figures: Figures }) {
+    const { performance, budgets } = figures;
+    if (!performance && !budgets) return null;
+    const perf = performance?.byDept.get(deptId);
+    const budget = budgets?.byDept.get(deptId);
+    const used = budget ? utilisation(budget.spent, budget.budget) : null;
     return (
-        <div className="ms-departments__sample">
-            <span className="ms-tag">Sample data</span>
-            <div className={`ms-departments__perf ms-departments__perf--${isUp ? "up" : "down"}`}>
-                <span className="ms-departments__stat-label">Performance</span>
-                <TrendIcon aria-hidden="true" />
-                <span className="ms-departments__stat-value">{perfPct}%</span>
-                <svg className="ms-departments__spark" width="80" height="28" viewBox="0 0 80 28" fill="none" aria-hidden="true">
-                    <polyline points={sparklinePath(seed)} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" fill="none" />
-                </svg>
-            </div>
-            <div className="ms-departments__budget">
-                <span className="ms-departments__stat-label">Budget used</span>
-                <span className="ms-departments__stat-value">{budgetUsed}%</span>
-                <svg className={`ms-departments__bar ms-departments__bar--${budgetTone}`} viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
-                    <rect className="ms-departments__bar-track" width="100" height="4" />
-                    <rect className="ms-departments__bar-fill" width={budgetUsed} height="4" />
-                </svg>
-            </div>
-        </div>
+        <dl className="ms-departments__figures">
+            {performance && (
+                <div className="ms-departments__figure">
+                    <dt className="ms-departments__stat-label">Performance <span className="ms-departments__period">{performance.period}</span></dt>
+                    <dd className="ms-departments__perf">
+                        {perf?.score != null ? (
+                            <>
+                                <span className="ms-departments__stat-value">{Math.round(perf.score)}%</span>
+                                <Sparkline trend={perf.trend} />
+                            </>
+                        ) : (
+                            <span className="ms-departments__stat-none">{perf && perf.goalCount > 0 ? "No check-ins yet" : "No goals"}</span>
+                        )}
+                    </dd>
+                </div>
+            )}
+            {budgets && (
+                <div className="ms-departments__figure">
+                    <dt className="ms-departments__stat-label">Budget used <span className="ms-departments__period">{budgets.period}</span></dt>
+                    <dd className="ms-departments__budget">
+                        {used != null && budget ? (
+                            <>
+                                <span className="ms-departments__stat-value">{used}%</span>
+                                <BudgetBar percent={used} className="ms-departments__bar" />
+                                <span className="ms-departments__money">
+                                    {formatMoney(budget.spent, budgets.currency)} of {formatMoney(budget.budget, budgets.currency)}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="ms-departments__stat-none">
+                                {budget && budget.spent > 0 ? `${formatMoney(budget.spent, budgets.currency)} spent, no budget set` : "No budget set"}
+                            </span>
+                        )}
+                    </dd>
+                </div>
+            )}
+        </dl>
     );
 }
 
@@ -103,6 +122,42 @@ export default function Departments() {
     }, []);
 
     useEffect(() => { fetchDepartments(); }, [fetchDepartments]);
+
+    const canReadPerformance = hasPermission(user, "GOALS_READ") || hasPermission(user, "REPORTS_READ");
+    const canReadBudgets = hasPermission(user, "FINANCE_READ");
+    const [performance, setPerformance] = useState<PerformanceOverviewLite | null>(null);
+    const [budgetSummary, setBudgetSummary] = useState<BudgetSummaryLite | null>(null);
+
+    useEffect(() => {
+        if (!canReadPerformance) return;
+        get<PerformanceOverviewLite>("/api/performance")
+            .then(setPerformance)
+            .catch(() => setPerformance(null));
+    }, [canReadPerformance]);
+
+    useEffect(() => {
+        if (!canReadBudgets) return;
+        get<BudgetSummaryLite>("/api/budgets")
+            .then(setBudgetSummary)
+            .catch(() => setBudgetSummary(null));
+    }, [canReadBudgets]);
+
+    const figures = useMemo<Figures>(() => ({
+        performance: canReadPerformance && performance
+            ? {
+                period: quarterLabel(performance.year, performance.quarter),
+                byDept: new Map((performance.departments ?? []).map((d) => [d.departmentId, d])),
+            }
+            : null,
+        budgets: canReadBudgets && budgetSummary
+            ? {
+                period: quarterLabel(budgetSummary.year, budgetSummary.quarter),
+                currency: budgetSummary.currency,
+                byDept: budgetsByDepartment(budgetSummary.lines ?? []),
+            }
+            : null,
+    }), [canReadPerformance, performance, canReadBudgets, budgetSummary]);
+    const prefetchDetail = () => prefetchPage("departmentDetail");
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -185,7 +240,7 @@ export default function Departments() {
                 eyebrow="People"
                 title="Departments"
                 count={loading || authLoading ? null : departments.length}
-                description="The studio departments, their seals and members. Performance and budget figures are illustrative sample data; member counts are live."
+                description="The studio departments, their seals, managers and members, with this quarter's performance and budget."
                 actions={canCreateDepartments && (
                     <Button variant="primary" icon={<Plus aria-hidden="true" />} onClick={openCreateModal}>
                         Add department
@@ -222,17 +277,24 @@ export default function Departments() {
                         const canEditThisDepartment = canEditDepartments && (currentUserIsAdmin || isOwnDepartment);
                         const canDeleteThisDepartment = canDeleteDepartments;
                         return (
-                            <li key={dept.id} {...reveal(i, "ms-cut ms-departments__card")}>
+                            <li key={dept.id} {...reveal(i, "ms-cut ms-lift ms-departments__card")}>
                                 <OfficialSeal className="ms-departments__seal" seal={seal.key} title={sealRingTitle(dept.name, seal)} />
                                 <span className="ms-departments__mini"><SealMini seal={seal.key} /></span>
                                 <div className="ms-departments__info">
-                                    <h2 className="ms-departments__name">{dept.name}</h2>
+                                    <h2 className="ms-departments__name">
+                                        <Link className="ms-departments__link" to={`/departments/${dept.id}`} onMouseEnter={prefetchDetail} onFocus={prefetchDetail}>
+                                            {dept.name}
+                                        </Link>
+                                    </h2>
                                     <p className="ms-departments__meta">
                                         <b>{members}</b> {members === 1 ? "member" : "members"}
-                                        <span className="ms-departments__seal-name"> · {seal.name} seal</span>
+                                        <span className="ms-departments__manager">
+                                            {" · "}
+                                            {dept.managerName ? <>Led by <b>{dept.managerName}</b></> : "No manager"}
+                                        </span>
                                     </p>
                                 </div>
-                                <SampleStats dept={dept} />
+                                <DepartmentFigures deptId={dept.id} figures={figures} />
                                 {showActions && (
                                     <div className="ms-departments__actions">
                                         {canEditThisDepartment ? (

@@ -1,0 +1,55 @@
+/*
+ * The department figures shared by the Departments cards and the department detail: the score
+ * trend sparkline (Sparkline.tsx) and the budget utilisation bar (BudgetBar.tsx).
+ */
+@layer components {
+  .ms-spark {
+    flex: none;
+    overflow: visible;
+    color: var(--accent-text);
+  }
+
+  .ms-spark__line {
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Invisible hover targets, larger than the line, each with its own tooltip */
+  .ms-spark__hit {
+    fill: transparent;
+  }
+
+  .ms-spark__dot {
+    fill: currentcolor;
+    stroke: var(--surface-1);
+    stroke-width: 2;
+    pointer-events: none;
+  }
+
+  .ms-budget-bar {
+    display: block;
+    height: 4px;
+  }
+
+  .ms-budget-bar__track {
+    fill: var(--border-faint);
+  }
+
+  .ms-budget-bar__fill {
+    fill: var(--text-tertiary);
+  }
+
+  .ms-budget-bar--ok .ms-budget-bar__fill {
+    fill: var(--status-ok-fg);
+  }
+
+  .ms-budget-bar--warn .ms-budget-bar__fill {
+    fill: var(--status-warn-fg);
+  }
+
+  .ms-budget-bar--danger .ms-budget-bar__fill {
+    fill: var(--status-danger-fg);
+  }
+}

@@ -1,6 +1,7 @@
 /*
- * Departments (pages/Departments.tsx): cards with the department's official seal, in a grid. Below
- * 768px the cards become rows (seal, name and actions, member line) and the sample figures are hidden.
+ * Departments (pages/Departments.tsx): cards with the department's official seal, manager and this
+ * quarter's figures, in a grid; the name links to the department (the whole card is the target).
+ * Below 768px the cards become rows (seal, name and actions, member line) and the figures are hidden.
  */
 @layer pages {
   .ms-departments {
@@ -12,7 +13,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  :where(.ms-departments) :where(h2, p, ul) {
+  :where(.ms-departments) :where(h2, p, ul, dl, dd) {
     margin: 0;
     padding: 0;
   }
@@ -70,75 +71,96 @@
     color: var(--text-primary);
   }
 
-  .ms-departments__seal-name {
-    color: var(--text-tertiary);
+  .ms-departments__manager b {
+    font-weight: var(--weight-semibold);
   }
 
-  .ms-departments__sample {
+  /* The name is the card's link; its ::after covers the card, the actions sit above it */
+  .ms-departments__link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ms-departments__link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .ms-departments__link:focus-visible {
+    outline: none;
+  }
+
+  .ms-departments__card:has(.ms-departments__link:focus-visible) {
+    --cut-line: var(--focus-ring);
+  }
+
+  .ms-departments__card:hover .ms-departments__link {
+    color: var(--accent-text);
+  }
+
+  .ms-departments__figures {
     display: grid;
-    gap: 6px;
-    justify-items: center;
+    gap: var(--space-2);
     width: 100%;
     margin-top: 14px;
     padding-top: 12px;
     border-top: 1px dashed var(--border-subtle);
     font-size: var(--font-size-xs);
+    text-align: left;
+  }
+
+  .ms-departments__figure {
+    display: grid;
+    gap: 2px;
   }
 
   .ms-departments__perf,
   .ms-departments__budget {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 4px var(--space-2);
+    min-height: 28px;
   }
 
   .ms-departments__stat-label {
     color: var(--text-tertiary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .ms-departments__period {
+    color: var(--text-tertiary);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
   }
 
   .ms-departments__stat-value {
+    font-size: var(--font-size-lg);
     font-weight: var(--weight-bold);
   }
 
-  .ms-departments__perf > svg:not(.ms-departments__spark) {
-    width: 14px;
-    height: 14px;
-  }
-
-  .ms-departments__perf--up {
-    color: var(--status-ok-fg);
-  }
-
-  .ms-departments__perf--down {
-    color: var(--status-danger-fg);
-  }
-
-  .ms-departments__spark polyline {
-    stroke: currentcolor;
+  .ms-departments__stat-none {
+    color: var(--text-tertiary);
   }
 
   .ms-departments__bar {
-    width: 64px;
-    height: 4px;
+    flex: 1 1 48px;
+    max-width: 80px;
   }
 
-  .ms-departments__bar-track {
-    fill: var(--border-faint);
-  }
-
-  .ms-departments__bar--ok .ms-departments__bar-fill {
-    fill: var(--status-ok-fg);
-  }
-
-  .ms-departments__bar--warn .ms-departments__bar-fill {
-    fill: var(--status-warn-fg);
-  }
-
-  .ms-departments__bar--danger .ms-departments__bar-fill {
-    fill: var(--status-danger-fg);
+  .ms-departments__money {
+    flex-basis: 100%;
+    color: var(--text-secondary);
   }
 
   .ms-departments__actions {
+    position: relative;
+    z-index: var(--z-raised);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -300,7 +322,7 @@
       white-space: nowrap;
     }
 
-    .ms-departments__sample {
+    .ms-departments__figures {
       display: none;
     }
 

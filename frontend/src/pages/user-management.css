@@ -1,6 +1,7 @@
 /*
- * User management (pages/UserManagement.tsx): the concept's user table on wide screens; below
- * 768px each row becomes a card (avatar, name and status, email, role and department, actions).
+ * User management (pages/UserManagement.tsx): search and filters, the sortable user table with
+ * selection checkboxes, the pager and the sticky bulk action bar. Below 768px each row becomes a
+ * card (checkbox, avatar, name and status, title, role and department, actions).
  */
 @layer pages {
   .ms-users {
@@ -11,36 +12,127 @@
     line-height: var(--leading-normal);
   }
 
+  .ms-users__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .ms-users__filters .ms-select {
+    width: 160px;
+  }
+
   /* The concept's table runs at the body size (14px), not the shared table's 12.5px */
   .ms-users__table {
-    min-width: 880px;
+    min-width: 960px;
     font-size: var(--font-size-md);
+  }
+
+  .ms-users__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+  }
+
+  .ms-users__sort > svg {
+    width: 13px;
+    height: 13px;
+    color: var(--text-tertiary);
+  }
+
+  .ms-users__sort:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  th[aria-sort="ascending"] .ms-users__sort,
+  th[aria-sort="descending"] .ms-users__sort {
+    color: var(--text-primary);
+  }
+
+  th[aria-sort="ascending"] .ms-users__sort > svg,
+  th[aria-sort="descending"] .ms-users__sort > svg {
+    color: var(--accent-text);
+  }
+
+  .ms-users__check {
+    width: 44px;
+    padding-right: 0;
+  }
+
+  .ms-users__checkbox {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--accent-solid);
+    vertical-align: middle;
+    cursor: pointer;
+  }
+
+  .ms-users__checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  .ms-users__row--selected {
+    background: var(--accent-tint);
   }
 
   .ms-users__name {
     white-space: nowrap;
   }
 
+  .ms-users__person {
+    display: grid;
+    grid-template-areas:
+      "av name"
+      "av mail";
+    grid-template-columns: 32px auto;
+    align-items: center;
+    gap: 0 10px;
+  }
+
   .ms-users__avatar {
-    display: inline-grid;
-    margin-right: 10px;
-    vertical-align: middle;
-    flex: none;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-2);
-    background: var(--avatar-bg);
-    color: var(--avatar-text);
-    font-family: var(--font-cap);
-    font-size: 11.5px;
-    font-weight: var(--weight-bold);
-    letter-spacing: 0.04em;
+    grid-area: av;
   }
 
   .ms-users__pname {
+    grid-area: name;
     font-weight: var(--weight-bold);
+    line-height: var(--leading-tight);
     white-space: nowrap;
+  }
+
+  .ms-users__link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ms-users__link:hover {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ms-users__link:focus-visible {
+    border-radius: var(--radius-2);
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Only on phones: the title (or the email) under the name */
+  .ms-users__sub {
+    display: none;
   }
 
   .ms-users__you {
@@ -48,9 +140,28 @@
     font-weight: var(--weight-medium);
   }
 
+  .ms-users__title {
+    max-width: 200px;
+    overflow: hidden;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .ms-users__email {
+    grid-area: mail;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+
+  .ms-users__login {
     color: var(--text-secondary);
     font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .ms-users__none {
+    color: var(--text-tertiary);
   }
 
   .ms-users__dept-chip {
@@ -72,7 +183,102 @@
     font-size: var(--font-size-xs);
   }
 
+  .ms-users__bulk-result .ms-alert__body {
+    align-items: flex-start;
+  }
+
+  .ms-users__bulk-headline {
+    margin: 0;
+    font-weight: var(--weight-bold);
+  }
+
+  .ms-users__failures {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-users__pager {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .ms-users__page {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-users__pager .ms-btn__face > svg:last-child {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* The bulk action bar sticks to the bottom of the screen while users are selected */
+  .ms-users__bulkbar {
+    position: sticky;
+    bottom: var(--space-4);
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-top: var(--space-4);
+    padding: 10px var(--space-4);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-2);
+    background: var(--surface-3);
+    animation: ms-users-bar var(--duration-base) var(--ease-standard) both;
+  }
+
+  @keyframes ms-users-bar {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  .ms-users__bulk-count {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  .ms-users__bulk-count strong {
+    color: var(--text-primary);
+  }
+
+  .ms-users__bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-right: auto;
+  }
+
   @media (width <= 767px) {
+    .ms-users__filters {
+      display: grid;
+      flex: 1 1 100%;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .ms-users__filters .ms-select {
+      width: auto;
+    }
+
+    .ms-users__filters .ms-select:nth-child(3) {
+      grid-column: 1 / -1;
+    }
+
+    .ms-users__filters .ms-btn {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
     .ms-users__table {
       display: block;
       min-width: 0;
@@ -94,13 +300,22 @@
       display: grid;
       grid-template-areas:
         "av name name status act"
-        "av email email email act"
+        "av sub sub sub act"
         "av role dept dept act";
       grid-template-columns: 32px auto minmax(0, 1fr) auto auto;
       align-items: center;
       gap: 1px var(--space-2);
       min-height: 66px;
       padding: 6px 4px 6px 12px;
+    }
+
+    .ms-users__table--select tr {
+      grid-template-areas:
+        "sel av name name status act"
+        "sel av sub sub sub act"
+        "sel av role dept dept act";
+      grid-template-columns: 28px 32px auto minmax(0, 1fr) auto auto;
+      padding-left: 6px;
     }
 
     .ms-users__table tbody tr + tr {
@@ -111,6 +326,10 @@
       background: none;
     }
 
+    .ms-users__table tbody tr.ms-users__row--selected {
+      background: var(--accent-tint);
+    }
+
     .ms-users__table td {
       display: block;
       min-width: 0;
@@ -118,15 +337,27 @@
       border: 0;
     }
 
-    .ms-users__table td.ms-users__name {
+    .ms-users__table td.ms-users__check {
+      display: grid;
+      grid-area: sel;
+      place-items: center;
+      width: auto;
+      min-height: var(--touch-target);
+    }
+
+    .ms-users__checkbox {
+      width: 20px;
+      height: 20px;
+    }
+
+    .ms-users__table td.ms-users__name,
+    .ms-users__person {
       display: contents;
     }
 
     .ms-users__avatar {
-      grid-area: av;
       align-self: start;
       margin-top: 2px;
-      margin-right: 0;
     }
 
     .ms-users__pname {
@@ -138,6 +369,24 @@
       text-overflow: ellipsis;
     }
 
+    .ms-users__sub {
+      display: block;
+      grid-area: sub;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+      line-height: var(--leading-tight);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ms-users__table td.ms-users__title,
+    .ms-users__table td.ms-users__login,
+    .ms-users__email {
+      display: none;
+    }
+
     .ms-users__status {
       grid-area: status;
       justify-self: end;
@@ -146,16 +395,6 @@
     .ms-users__status .ms-status {
       padding: 0;
       background: none;
-    }
-
-    .ms-users__table td.ms-users__email {
-      grid-area: email;
-      overflow: hidden;
-      color: var(--text-tertiary);
-      font-size: var(--font-size-xs);
-      line-height: var(--leading-tight);
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .ms-users__role {
@@ -210,6 +449,46 @@
       overflow: hidden;
       clip-path: inset(50%);
       white-space: nowrap;
+    }
+
+    .ms-users__pager {
+      justify-content: space-between;
+    }
+
+    /* Above the bottom bar */
+    .ms-users__bulkbar {
+      bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+      display: grid;
+      grid-template-areas:
+        "count clear"
+        "actions actions";
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px var(--space-2);
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .ms-users__bulk-count {
+      grid-area: count;
+    }
+
+    .ms-users__bulk-clear {
+      grid-area: clear;
+    }
+
+    .ms-users__bulk-actions {
+      display: grid;
+      grid-area: actions;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      margin-right: 0;
+    }
+
+    .ms-users__bulk-actions .ms-btn {
+      width: 100%;
+    }
+
+    .ms-users__bulk-actions .ms-btn__face {
+      width: 100%;
     }
   }
 }
