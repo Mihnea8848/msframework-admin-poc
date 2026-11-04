@@ -66,6 +66,36 @@
   --cobalt-700: #1F5E94;
   --cobalt-750: #1C5F94;
 
+  /* Night sky and slate (the sign-in art, ui/brand/LogoArt.tsx), darkest first */
+  --navy-1000: #04070D;
+  --navy-950: #070C18;
+  --navy-900: #0B1528;
+  --navy-800: #102445;
+  --navy-700: #163A6E;
+  --slate-300: #9AA8B8;
+  --slate-450: #56626F;
+  --slate-500: #3D4650;
+  --slate-600: #2D343C;
+  --slate-700: #20262D;
+  --star-white: #EAF4FF;
+  --ice-200: #CFEFFF;
+
+  /* Pale sky (the sign-in art in light mode), lightest first */
+  --mist-50: #F2F6FA;
+  --mist-100: #E4EBF2;
+  --mist-200: #D2DCE7;
+  --mist-300: #BAC7D5;
+  --mist-400: #9DAEC0;
+  --mist-500: #7C8FA4;
+  --mist-700: #45566A;
+
+  /* Gunmetal: the official seal disc (ui/seal/OfficialSeal.tsx), from the brand artwork */
+  --black-950: #0A0A0A;
+  --charcoal-950: #141414;
+  --steel-600: #4A4E53;
+  --steel-400: #7F8489;
+  --grey-400: #ABABAB;
+
   /* Status hues */
   --green-400: #4CC38A;
   --green-800: #186C43;
@@ -108,6 +138,8 @@
   --snow-800: #3F3F3F;
   --gold-300: #EBC034;
   --gold-400: #D9AE2C;
+  --gold-500: #B8962A;
+  --blue-500: #3E8DD2;
   --gold-700: #846500;
   --gold-800: #735800;
 }

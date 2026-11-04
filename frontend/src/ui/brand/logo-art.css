@@ -1,20 +1,235 @@
+/*
+ * The sign-in art (ui/brand/LogoArt.tsx). Fills its positioned parent. Layers, back to front:
+ * sky, fine dust, stars, twinkling stars, the tile cluster (with the core's glow), and a veil in
+ * the page colour that fades everything toward the form on the left.
+ *
+ * Motion is transforms and opacity only, on their own layers, and runs only when the OS allows it
+ * and data-motion is "full".
+ */
 @layer components {
   .ms-logo-art {
-    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ms-logo-art > * {
+    position: absolute;
+  }
+
+  .ms-logo-art__sky {
+    inset: 0;
+    background:
+      radial-gradient(70% 65% at 38% 106%, var(--art-haze), transparent 72%),
+      linear-gradient(170deg, var(--art-sky-top), var(--art-sky-bottom));
+  }
+
+  /* Fine speckle: thresholded noise used as a mask over the star colour. The tile is 256px and
+     the layer drifts by exactly one tile, so the loop is seamless. */
+  .ms-logo-art__dust {
+    inset: -256px 0 0 -256px;
+    opacity: 0.55;
+    background: var(--art-star);
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='s' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='.85' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 14 0 0 0 -9.4'/></filter><rect width='256' height='256' filter='url(%23s)'/></svg>");
+    mask-size: 256px 256px;
+  }
+
+  .ms-logo-art__stars {
+    top: -512px;
+    left: -512px;
+    width: calc(100% + 512px);
+    height: calc(100% + 512px);
+    fill: var(--art-star);
+  }
+
+  .ms-logo-art__twinkle {
+    top: var(--y);
+    left: var(--x);
+    width: 3px;
+    height: 3px;
+    border-radius: var(--radius-round);
+    background: var(--art-star);
+    box-shadow: 0 0 6px 1px var(--art-star-glow);
+    opacity: 0.75;
+  }
+
+  /* The tile field, centred at about 76% of the viewport (the art area starts at 25vw) and
+     bleeding off the right, top and bottom edges */
+  .ms-logo-art__cluster {
+    --cluster-w: min(103vw, 165vh);
+
+    top: 50%;
+    left: calc(51vw - var(--cluster-w) / 2);
+    width: var(--cluster-w);
+    aspect-ratio: 2600 / 2200;
+    translate: 0 -50%;
+  }
+
+  .ms-logo-art__tiles,
+  .ms-logo-art__pulse {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     overflow: visible;
   }
 
-  .ms-logo-art__stop-upper {
-    stop-color: var(--logo-upper);
+  .ms-logo-art__tiles {
+    z-index: 1;
   }
 
-  .ms-logo-art__stop-lower {
-    stop-color: var(--logo-lower);
+  .ms-logo-art__stop-face-hi {
+    stop-color: var(--art-tile-face-hi);
   }
 
-  /* Grey noise blended into the gradient, so the fade breaks up like film grain */
-  .ms-logo-art__grain {
-    opacity: var(--grain-strength);
-    mix-blend-mode: var(--grain-blend);
+  .ms-logo-art__stop-face-lo {
+    stop-color: var(--art-tile-face-lo);
+  }
+
+  .ms-logo-art__rim {
+    fill: none;
+    stroke: var(--art-tile-glow);
+    stroke-width: 34;
+    opacity: 0.45;
+  }
+
+  .ms-logo-art__wall-top {
+    fill: var(--art-tile-top);
+    stroke: var(--art-tile-top);
+    stroke-width: 1.5;
+  }
+
+  .ms-logo-art__wall-side {
+    fill: var(--art-tile-side);
+    stroke: var(--art-tile-side);
+    stroke-width: 1.5;
+  }
+
+  .ms-logo-art__face {
+    stroke-width: 6;
+    stroke-linejoin: miter;
+  }
+
+  .ms-logo-art__face--upper {
+    stroke: var(--art-tile-edge-upper);
+  }
+
+  .ms-logo-art__face--lower {
+    stroke: var(--art-tile-edge-lower);
+  }
+
+  .ms-logo-art__core-wall-top {
+    fill: var(--art-core-top);
+  }
+
+  .ms-logo-art__core-wall-side {
+    fill: var(--art-core-side);
+  }
+
+  .ms-logo-art__core-face {
+    fill: var(--art-core-face);
+    stroke: var(--art-core-edge);
+    stroke-width: 5;
+  }
+
+  .ms-logo-art__core-glow {
+    fill: var(--art-core-glow);
+    stroke: var(--art-core-glow);
+    stroke-width: 24;
+  }
+
+  .ms-logo-art__pulse {
+    opacity: 0.32;
+  }
+
+  /*
+   * The veil: solid page colour up to 40% of the viewport, then a smoothstep fade to clear by 72%,
+   * so neither the start of the art (at 25vw, under the form) nor a tile edge is ever seen. The
+   * stops are viewport positions mapped onto the art area, which starts at 25vw: (p - 25) / 75.
+   */
+  .ms-logo-art__veil {
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      var(--canvas) 0 20%,
+      color-mix(in srgb, var(--canvas) 97%, transparent) 24.3%,
+      color-mix(in srgb, var(--canvas) 90%, transparent) 28.5%,
+      color-mix(in srgb, var(--canvas) 78%, transparent) 32.8%,
+      color-mix(in srgb, var(--canvas) 65%, transparent) 37.1%,
+      color-mix(in srgb, var(--canvas) 50%, transparent) 41.3%,
+      color-mix(in srgb, var(--canvas) 35%, transparent) 45.6%,
+      color-mix(in srgb, var(--canvas) 22%, transparent) 49.9%,
+      color-mix(in srgb, var(--canvas) 10%, transparent) 54.1%,
+      color-mix(in srgb, var(--canvas) 3%, transparent) 58.4%,
+      transparent 62.7%
+    );
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :root[data-motion="full"] .ms-logo-art__dust {
+      will-change: transform;
+      animation: ms-logo-art-dust 90s steps(256) infinite;
+    }
+
+    :root[data-motion="full"] .ms-logo-art__stars {
+      will-change: transform;
+      animation: ms-logo-art-stars 90s steps(512) infinite;
+    }
+
+    :root[data-motion="full"] .ms-logo-art__twinkle {
+      will-change: opacity;
+      animation: ms-logo-art-twinkle var(--d) steps(10) var(--delay) infinite;
+    }
+
+    :root[data-motion="full"] .ms-logo-art__pulse {
+      will-change: opacity;
+      animation: ms-logo-art-pulse 7s steps(28) infinite;
+    }
+
+    :root[data-motion="full"] .ms-logo-art__cluster {
+      will-change: transform;
+      animation: ms-logo-art-float 11s steps(4) infinite alternate;
+    }
+  }
+
+  @keyframes ms-logo-art-dust {
+    to {
+      transform: translate(256px, 256px);
+    }
+  }
+
+  @keyframes ms-logo-art-stars {
+    to {
+      transform: translate(512px, 0);
+    }
+  }
+
+  @keyframes ms-logo-art-twinkle {
+    0%,
+    100% {
+      opacity: 0.75;
+    }
+
+    50% {
+      opacity: 0.12;
+    }
+  }
+
+  @keyframes ms-logo-art-pulse {
+    0%,
+    100% {
+      opacity: 0.32;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes ms-logo-art-float {
+    to {
+      transform: translateY(-4px);
+    }
   }
 }

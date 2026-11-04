@@ -14,11 +14,10 @@ import {
     setMotion,
     setThemePreference,
     systemPrefersReducedMotion,
-} from "../theme/appearance";
-import type { AccentKey, Density, Motion, ThemePreference } from "../theme/appearance";
-import Button from "../ui/Button";
-import PageHeader from "../ui/PageHeader";
-import "../ui/surface.css";
+} from "../../theme/appearance";
+import type { AccentKey, Density, Motion, ThemePreference } from "../../theme/appearance";
+import Button from "../../ui/Button";
+import "../../ui/surface.css";
 import "./appearance.css";
 
 interface Option<T extends string> {
@@ -95,7 +94,8 @@ function Section({ id, title, sub, children }: { id: string; title: string; sub:
     );
 }
 
-export default function Appearance() {
+/** Settings > Appearance: theme, accent, density and motion, saved in this browser. */
+export default function AppearanceTab() {
     const [theme, setTheme] = useState(readThemePreference);
     const [accent, setAccentState] = useState(readAccent);
     const [density, setDensityState] = useState(readDensity);
@@ -123,13 +123,8 @@ export default function Appearance() {
     }
 
     return (
-        <section className="ms-appearance">
-            <PageHeader
-                eyebrow="General"
-                title="Appearance"
-                description="Personalise the look and feel. Changes apply at once and are saved in this browser."
-            />
-
+        <div className="ms-appearance">
+            <p className="ms-appearance__intro">Changes apply at once and are saved in this browser.</p>
             <div className="ms-appearance__grid">
                 <Section id="appearance-theme" title="Theme" sub="Dark is the default. System follows the light or dark setting of your device.">
                     <OptionGroup labelId="appearance-theme" options={THEME_OPTIONS} value={theme} onChange={handleTheme} />
@@ -179,6 +174,6 @@ export default function Appearance() {
                     </div>
                 </Section>
             </div>
-        </section>
+        </div>
     );
 }

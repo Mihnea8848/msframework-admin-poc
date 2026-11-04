@@ -10,6 +10,7 @@ import { getLastSeenAuditId, markAuditSeen } from "../utils/auditSeen";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import PageHeader from "../ui/PageHeader";
+import { useReveal } from "../ui/useReveal";
 import "../ui/list.css";
 import "../ui/surface.css";
 import "./notifications.css";
@@ -25,13 +26,32 @@ function toneOf(meta: AuditTypeMeta): Tone {
     return (match?.[1] as Tone | undefined) ?? "neutral";
 }
 
-export default function Notifications() {
+type FeedVariant = "activity" | "audit";
+
+const HEADERS: Record<FeedVariant, { eyebrow: string; title: string; lead: string }> = {
+    activity: { eyebrow: "Overview", title: "Activity", lead: "What is happening across the platform" },
+    audit: { eyebrow: "Security", title: "Audit log", lead: "The audit trail of every sign-in and change, with who made it" },
+};
+
+/** Activity (Overview): the latest events, with new ones highlighted. */
+export default function Activity() {
+    return <AuditFeed variant="activity" />;
+}
+
+/** Audit log (Security): the same feed for now, under its own title, until it gets its own page. */
+export function AuditLog() {
+    return <AuditFeed variant="audit" />;
+}
+
+function AuditFeed({ variant }: { variant: FeedVariant }) {
+    const header = HEADERS[variant];
     const { user } = useAuth();
     const [events, setEvents] = useState<AuditEventDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<(typeof AUDIT_FILTERS)[number]>("All");
     const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+    const reveal = useReveal(!loading);
     // Snapshot of what was already seen when the page opened, so new rows can be highlighted.
     const [seenBefore] = useState(() => getLastSeenAuditId(user));
 
@@ -62,10 +82,10 @@ export default function Notifications() {
     return (
         <section className="ms-notifications">
             <PageHeader
-                eyebrow="General"
-                title="Notifications"
+                eyebrow={header.eyebrow}
+                title={header.title}
                 count={events.length > 0 ? events.length : undefined}
-                description={`Audit trail of all activity across the platform (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
+                description={`${header.lead} (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
                 actions={
                     <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={() => load()}>Refresh</Button>
                 }
@@ -96,11 +116,11 @@ export default function Notifications() {
                 <div className="ms-empty"><p>No events in this category yet.</p></div>
             ) : (
                 <ol className="ms-panel ms-feed">
-                    {visible.map((ev) => {
+                    {visible.map((ev, i) => {
                         const meta = auditMeta(ev.eventType);
                         const isNew = ev.id > seenBefore;
                         return (
-                            <li key={ev.id} className={`ms-feed__item${isNew ? " ms-feed__item--new" : ""}`}>
+                            <li key={ev.id} {...reveal(i, `ms-feed__item${isNew ? " ms-feed__item--new" : ""}`)}>
                                 <span className={`ms-feed__icon ms-feed__icon--${toneOf(meta)}`} aria-hidden="true"><meta.Icon /></span>
                                 <div className="ms-feed__body">
                                     <p className="ms-feed__top">

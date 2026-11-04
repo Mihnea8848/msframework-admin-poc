@@ -203,8 +203,6 @@
 
   .ms-glance--link {
     --cut-fill: var(--surface-1);
-
-    transition: background-color var(--duration-fast) var(--ease-standard);
   }
 
   .ms-glance--link:hover {

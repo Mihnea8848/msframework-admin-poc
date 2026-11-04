@@ -27,7 +27,6 @@
     padding: var(--space-5);
     color: inherit;
     text-decoration: none;
-    transition: background-color var(--duration-fast) var(--ease-standard);
   }
 
   .ms-home__tile:hover {

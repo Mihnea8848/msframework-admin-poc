@@ -1,0 +1,92 @@
+/* Settings (pages/settings/Settings.tsx): the tab row under the header, then the tab's panels. */
+@layer pages {
+  .ms-settings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .ms-settings__tabs {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-5);
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border-subtle);
+    scrollbar-width: none;
+  }
+
+  .ms-settings__tab {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    color: var(--text-secondary);
+    font-family: var(--font-cap);
+    font-size: var(--font-size-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-settings__tab:hover {
+    background: var(--row-hover);
+    color: var(--text-primary);
+  }
+
+  .ms-settings__tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  /* The selected tab: the accent notch along the bottom edge */
+  .ms-settings__tab[aria-selected="true"] {
+    color: var(--text-primary);
+  }
+
+  .ms-settings__tab[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    right: var(--space-2);
+    bottom: -1px;
+    left: var(--space-2);
+    height: 2px;
+    background: var(--accent-line);
+  }
+
+  .ms-settings__tab-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .ms-settings__tab[aria-selected="true"] .ms-settings__tab-icon {
+    color: var(--accent-text);
+  }
+
+  .ms-settings__panel {
+    min-width: 0;
+  }
+
+  @media (width <= 767px) {
+    .ms-settings__tabs {
+      gap: 0;
+      margin-bottom: var(--space-4);
+    }
+
+    .ms-settings__tab {
+      flex: 1 0 auto;
+      justify-content: center;
+      padding: 0 6px;
+      font-size: var(--font-size-2xs);
+      letter-spacing: 0.02em;
+    }
+
+    .ms-settings__tab-icon {
+      display: none;
+    }
+  }
+}

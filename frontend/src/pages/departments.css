@@ -1,6 +1,6 @@
 /*
- * Departments (pages/Departments.tsx): seal cards in a grid, as in the concept. Below 768px the
- * cards become rows (badge, name and actions, member line) and the sample figures are hidden.
+ * Departments (pages/Departments.tsx): cards with the department's official seal, in a grid. Below
+ * 768px the cards become rows (seal, name and actions, member line) and the sample figures are hidden.
  */
 @layer pages {
   .ms-departments {
@@ -30,6 +30,16 @@
     align-items: center;
     padding: 22px 18px 16px;
     text-align: center;
+  }
+
+  .ms-departments__seal {
+    width: 140px;
+    height: 140px;
+  }
+
+  /* On phones the rows show the small seal instead: the official one is unreadable at 40px */
+  .ms-departments__mini {
+    display: none;
   }
 
   .ms-departments__info {
@@ -247,15 +257,23 @@
       border-top: 1px solid var(--border-faint);
     }
 
-    .ms-departments__card .ms-seal-badge {
-      grid-area: badge;
-      width: 40px;
-      height: 40px;
+    .ms-departments__seal {
+      display: none;
     }
 
-    .ms-departments__card .ms-seal-badge__icon {
-      width: 16px;
-      height: 16px;
+    .ms-departments__mini {
+      display: grid;
+      grid-area: badge;
+    }
+
+    .ms-departments__mini .ms-seal-mini {
+      width: 38px;
+      height: 38px;
+    }
+
+    .ms-departments__mini .ms-seal-mini > svg {
+      width: 19px;
+      height: 19px;
     }
 
     .ms-departments__info {

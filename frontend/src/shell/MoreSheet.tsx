@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import type { RefObject } from "react";
-import { LogOut, X } from "lucide-react";
-import { groupPages } from "../routes/navigation";
+import { LogOut, Settings, X } from "lucide-react";
+import { SETTINGS_PATH, groupPages } from "../routes/navigation";
 import type { PageEntry } from "../routes/navigation";
 import PageLink from "./PageLink";
 import "./more-sheet.css";
@@ -14,6 +14,8 @@ type MoreSheetProps = {
     pathname: string;
     badge: string | null;
     onLogout: () => void;
+    /** The current path is a Settings tab. */
+    inSettings?: boolean;
     /** Gets focus back when the sheet closes (the More button). Defaults to whatever had focus. */
     returnFocusRef?: RefObject<HTMLElement | null>;
 };
@@ -22,12 +24,12 @@ const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled]), [tabi
 
 /**
  * The phone "More" bottom sheet: every permitted page that is not a tab, grouped as in the
- * sidebar, plus Log out. A native modal <dialog> (focus stays inside, the page behind is inert);
+ * sidebar, plus Settings and Log out. A native modal <dialog> (focus stays inside, the page behind is inert);
  * Escape, the close button, the backdrop and choosing a page close it, and focus returns to
  * the button that opened it. Where showModal() is missing (jsdom) it falls back to the open
  * attribute with its own focus trap.
  */
-export default function MoreSheet({ open, onClose, pages, pathname, badge, onLogout, returnFocusRef }: MoreSheetProps) {
+export default function MoreSheet({ open, onClose, pages, pathname, badge, onLogout, inSettings = false, returnFocusRef }: MoreSheetProps) {
     const ref = useRef<HTMLDialogElement>(null);
     const onCloseRef = useRef(onClose);
     const titleId = useId();
@@ -115,7 +117,7 @@ export default function MoreSheet({ open, onClose, pages, pathname, badge, onLog
                             <ul className="ms-more-sheet__list">
                                 {items.map((page) => {
                                     const Icon = page.icon;
-                                    const itemBadge = page.key === "notifications" ? badge : null;
+                                    const itemBadge = page.key === "activity" ? badge : null;
                                     return (
                                         <li key={page.key}>
                                             <PageLink
@@ -142,6 +144,15 @@ export default function MoreSheet({ open, onClose, pages, pathname, badge, onLog
                 </div>
 
                 <div className="ms-more-sheet__foot">
+                    <PageLink
+                        page={{ key: "settings", path: SETTINGS_PATH }}
+                        current={inSettings}
+                        className="ms-more-sheet__settings"
+                        onNavigate={onClose}
+                    >
+                        <Settings aria-hidden="true" />
+                        <span>Settings</span>
+                    </PageLink>
                     <button type="button" className="ms-more-sheet__logout" onClick={() => { onClose(); onLogout(); }}>
                         <LogOut aria-hidden="true" />
                         <span>Log out</span>

@@ -13,36 +13,37 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 
 ## Features
 
-### Frontend (15 pages)
+### Frontend (15 pages, plus Settings)
 
 | Page | Route | Description |
 |---|---|---|
-| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left, the grain-and-gradient logo on the right (hidden on phones). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
+| Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left and, filling the rest of the screen, a night sky with a slowly drifting star field and a cluster of the mark as extruded tiles around a white core, fading in from the form (a pale variant in light mode; hidden on phones; still under reduced motion). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place |
 | Home | `/` | A card for every section your role can open, with live counts (a count that could not be loaded says so) |
 | Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
-| Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows its seal and live member count, plus performance and budget figures labelled as sample data |
-| Notifications | `/notifications` | Live audit log (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters) |
-| Appearance | `/appearance` | Dark, light or system theme; 6 brand accents (cyan, cobalt, violet, jade, gold, silver); comfortable or compact density; full or reduced motion (defaults to the device setting); live token preview. Saved per browser |
+| Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows the department's official seal (redrawn from the brand artwork) and live member count, plus performance and budget figures labelled as sample data |
+| Activity | `/activity` | Live audit feed (auto-refresh every 15 s, unread badge in the sidebar and phone bar, category filters). `/notifications` redirects here |
+| Audit log | `/audit` | The same feed under Security, until it gets a page of its own |
 | Database | `/database` | Live schema, row counts and sizes of every application table |
 | Documentation | `/docs` | In-app guide in collapsible sections with jump links, including the role/permission matrix |
-| Account & security | `/auth` | Change your own email (password-confirmed) and password; MFA / SSO marked as coming soon |
 | Security | `/security` | Security score and checks computed from live data + recent security events |
 | Payments | `/payments` | Proof-of-concept view: balance, spending chart, transactions and a simulated Quick Pay, all labelled as sample data or demo (no payment provider connected) |
 | Import Data | `/import` | CSV upload with preview; rows are validated and created by the backend, errors reported per row |
 | Export Data | `/export` | Column-selectable UTF-8 CSV of users, departments or the audit log |
 | Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted |
 | Timezones | `/timezones` | Live world clocks and org default timezone, saved organisation-wide |
+| Settings | `/settings/account`, `/security`, `/appearance`, `/organisation` | One page with a tab per link, opened from the top bar cog or your name. Account: profile and email change (password-confirmed). Security: password change; MFA and SSO marked as coming soon. Appearance: dark, light or system theme, 6 brand accents (cobalt by default, cyan, violet, jade, gold, silver), density and motion, saved per browser. Organisation: the organisation timezone and world clocks. `/auth` and `/appearance` redirect to their tabs |
 
 **Cross-cutting UI features:**
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
-- Quick Actions palette (⌘K / Ctrl+K or `/`): search and jump to any page you have access to with the arrow keys and Enter; Escape closes it and returns focus
+- Sidebar grouped as Overview, People, Finance, Operations, Security and Resources (Performance appears once it has pages)
+- Quick Actions palette (⌘K / Ctrl+K or `/`): search and jump to any page you have access to, or a Settings tab, with the arrow keys and Enter; Escape closes it and returns focus
 - Clear error messages from the server everywhere (no silent failures)
 - Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
 - Chevron visual identity (Multimedia Entertainment Hub) on every page: Manrope and Montserrat, self-hosted; clipped-corner buttons and cards; department seals; colours from design tokens, checked for WCAG AA contrast in tests
-- App shell mounted once (the sidebar, top bar and unread-notifications poll survive navigation): full sidebar from 1024 px, an icon rail from 768 px, and on phones a bottom tab bar (the first four pages your role may open) with a More sheet for the rest; no horizontal scrolling at 360 px
+- App shell mounted once (the sidebar, top bar and unread-activity poll survive navigation): full sidebar from 1024 px, an icon rail from 768 px, and on phones a bottom tab bar (the first four pages your role may open) with a More sheet for the rest; no horizontal scrolling at 360 px
 - Every page is a lazy-loaded chunk, prefetched on hover or focus and when the browser is idle; a bundle size budget fails the build when it grows
-- Short fade-and-rise page transitions (View Transitions API where supported), all off with reduced motion; a logo-trace splash while the session loads
+- Short fade-and-rise page transitions (View Transitions API where supported), a staggered reveal of cards and rows when a page first shows its data, a 2px lift on clickable cards and dashboard figures that count up once; all off with reduced motion; a logo-trace splash while the session loads
 - Skip link to the main content, visible focus everywhere, 44 px touch targets on phones
 
 ### Backend (REST API)

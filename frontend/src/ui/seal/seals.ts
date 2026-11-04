@@ -15,6 +15,8 @@ export type SealKey =
 export interface Seal {
     key: SealKey;
     name: string;
+    /** The title on the official seal's ring, as printed on the brand artwork. */
+    official: string;
     icon: LucideIcon;
     /**
      * The colour key saved for a department that picks this seal. Departments still store the
@@ -24,14 +26,14 @@ export interface Seal {
 }
 
 export const SEALS: readonly Seal[] = [
-    { key: "administration", name: "Administration", icon: Landmark, color: "avatar-rose" },
-    { key: "development", name: "Development", icon: Cpu, color: "avatar-violet" },
-    { key: "quality-control", name: "Quality Control", icon: Target, color: "avatar-azure" },
-    { key: "external-affairs", name: "External Affairs", icon: Globe, color: "avatar-jade" },
-    { key: "human-resources", name: "Human Resources", icon: UsersRound, color: "avatar-orange" },
-    { key: "ethics-regulations", name: "Ethics & Regulations", icon: Scale, color: "avatar-silver" },
-    { key: "engineering-innovation", name: "Engineering & Innovation", icon: Atom, color: "avatar-snow" },
-    { key: "director", name: "Director's office", icon: Compass, color: "avatar-gold" },
+    { key: "administration", name: "Administration", official: "Department of Administration", icon: Landmark, color: "avatar-rose" },
+    { key: "development", name: "Development", official: "Department of Development", icon: Cpu, color: "avatar-violet" },
+    { key: "quality-control", name: "Quality Control", official: "Department of Quality Control", icon: Target, color: "avatar-azure" },
+    { key: "external-affairs", name: "External Affairs", official: "Department of External Affairs", icon: Globe, color: "avatar-jade" },
+    { key: "human-resources", name: "Human Resources", official: "Department of Human Resources", icon: UsersRound, color: "avatar-orange" },
+    { key: "ethics-regulations", name: "Ethics & Regulations", official: "Department of Ethics & Regulations", icon: Scale, color: "avatar-silver" },
+    { key: "engineering-innovation", name: "Engineering & Innovation", official: "Department of Engineering & Innovation", icon: Atom, color: "avatar-snow" },
+    { key: "director", name: "Director's office", official: "Bureau of the Director of MSINC", icon: Compass, color: "avatar-gold" },
 ];
 
 /** Each seal's emblem, by key (a static lookup, so components can render it directly). */
@@ -62,4 +64,25 @@ export const DEFAULT_COLOR = "avatar-azure";
 export function sealForColor(color: string | null | undefined): Seal {
     const key = (color && LEGACY_TO_SEAL[color.trim()]) || "quality-control";
     return SEALS.find((s) => s.key === key) as Seal;
+}
+
+/** A name reduced to its letters, for a loose comparison ("Dept. of Ethics and Regulations"). */
+function simplify(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/&/g, " and ")
+        .replace(/\b(department|dept|of|the)\b/g, " ")
+        .replace(/[^a-z]+/g, "");
+}
+
+/**
+ * The title on the ring of a department's official seal. A department named after its seal
+ * ("Human Resources", "Department of Human Resources") gets its own name; any other department
+ * gets the seal's official title, so the HR seal never reads "Department of Marketing". The
+ * Director's seal always carries its official title.
+ */
+export function sealRingTitle(departmentName: string | null | undefined, seal: Seal): string {
+    const name = (departmentName ?? "").trim().replace(/\s+/g, " ");
+    if (!name || seal.key === "director" || simplify(name) !== simplify(seal.name)) return seal.official;
+    return /^department of /i.test(name) ? name : `Department of ${name}`;
 }

@@ -19,7 +19,7 @@ function Harness({ onLogout = () => {} }: { onLogout?: () => void }) {
                 open={open}
                 onClose={() => setOpen(false)}
                 pages={morePages(admin)}
-                pathname="/appearance"
+                pathname="/database"
                 badge="4"
                 onLogout={onLogout}
                 returnFocusRef={trigger}
@@ -48,10 +48,11 @@ describe("MoreSheet", () => {
         expect(dialog()).toContainElement(document.activeElement as HTMLElement);
 
         const sheet = within(dialog());
-        expect(sheet.getByRole("region", { name: "General" })).toBeInTheDocument();
-        expect(sheet.getByRole("link", { name: "Appearance" })).toHaveAttribute("aria-current", "page");
-        expect(sheet.getByRole("link", { name: "Notifications, 4 unread" })).toBeInTheDocument();
+        expect(sheet.getByRole("region", { name: "Operations" })).toBeInTheDocument();
+        expect(sheet.getByRole("link", { name: "Database" })).toHaveAttribute("aria-current", "page");
+        expect(sheet.getByRole("link", { name: "Activity, 4 unread" })).toBeInTheDocument();
         expect(sheet.queryByRole("link", { name: "Dashboard" })).toBeNull();
+        expect(sheet.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
     });
 
     it("closes with Escape and returns focus to the trigger", async () => {

@@ -9,7 +9,7 @@ import "./sidebar.css";
 type SidebarProps = {
     pages: readonly PageEntry[];
     pathname: string;
-    /** Unread notifications ("3", "50+") or null. */
+    /** Unread activity ("3", "50+") or null. */
     badge: string | null;
     onOpenQuickActions: () => void;
 };
@@ -50,7 +50,7 @@ export default function Sidebar({ pages, pathname, badge, onOpenQuickActions }: 
                         <ul className="ms-sidebar__list" aria-labelledby={`ms-nav-${group}`}>
                             {items.map((page) => {
                                 const Icon = page.icon;
-                                const itemBadge = page.key === "notifications" ? badge : null;
+                                const itemBadge = page.key === "activity" ? badge : null;
                                 return (
                                     <li key={page.key}>
                                         <PageLink

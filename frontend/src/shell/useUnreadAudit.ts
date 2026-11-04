@@ -8,7 +8,7 @@ export const AUDIT_POLL_MS = 30000;
 export const BADGE_LIMIT = 50;
 
 /**
- * The unread-notifications badge ("3", "50+", or null for none). Polls the newest audit events
+ * The unread-activity badge ("3", "50+", or null for none). Polls the newest audit events
  * every 30 s while the user may read the audit log. It lives in the shell, which is mounted once,
  * so navigating between pages does not restart the poll.
  */

@@ -1,7 +1,7 @@
 /*
  * The sign-in pages (pages/auth/AuthLayout.tsx and the four pages that use it). From the Chevron
- * concept: the form column on the left (minmax(440px, 46%)), the logo art on the right. The art
- * is smaller than in the concept: the whole mark stays visible, about 60% of the viewport high.
+ * concept: the form column on the left (minmax(440px, 46%)), the sign-in art (ui/brand/LogoArt.tsx)
+ * filling the rest of the screen behind it and fading in from the form's edge.
  */
 @layer pages {
   .ms-auth {
@@ -220,8 +220,11 @@
   .ms-auth__foot {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-2);
+    width: 100%;
     max-width: 420px;
+    text-align: center;
     color: var(--text-tertiary);
     font-size: var(--font-size-sm);
   }
@@ -232,7 +235,8 @@
     height: 15px;
   }
 
-  /* The art: fixed to the viewport so it stays centred while a long form scrolls */
+  /* The art: fixed to the viewport so it stays put while a long form scrolls. It starts at 25vw,
+     under the form panel, and its veil keeps it hidden up to 40% of the viewport (LogoArt). */
   .ms-auth__art-slot {
     grid-column: 2;
     grid-row: 1;
@@ -241,32 +245,9 @@
 
   .ms-auth__art {
     position: fixed;
-    inset: 0;
+    inset: 0 0 0 25vw;
     z-index: 0;
-    display: grid;
-    grid-template-columns: minmax(440px, 46%) 1fr;
-    align-items: center;
     overflow: hidden;
-    pointer-events: none;
-  }
-
-  .ms-auth__logo-art {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: center;
-    width: auto;
-    height: 60vh;
-    max-width: 72%;
-  }
-
-  /* A much fainter grain over the whole screen keeps the flat canvas from looking empty */
-  .ms-auth__wash {
-    position: absolute;
-    inset: 0;
-    opacity: var(--grain-wash);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
-    background-size: 180px 180px;
-    mix-blend-mode: var(--grain-blend);
     pointer-events: none;
   }
 

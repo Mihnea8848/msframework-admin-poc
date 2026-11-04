@@ -1,11 +1,12 @@
 import type { MouseEvent, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { prefetchPage } from "../app/pages";
+import type { LoaderKey } from "../app/pages";
 import { viewTransitionsEnabled } from "../app/transitions";
-import type { PageEntry } from "../routes/navigation";
 
 type PageLinkProps = {
-    page: PageEntry;
+    /** Where it goes, and which chunk to prefetch: a PageEntry, or Settings. */
+    page: { key: LoaderKey; path: string };
     current: boolean;
     className: string;
     children: ReactNode;

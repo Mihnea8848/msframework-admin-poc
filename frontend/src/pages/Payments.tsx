@@ -116,7 +116,7 @@ export default function Payments() {
     return (
         <section className="ms-payments">
             <PageHeader
-                eyebrow="Ventures"
+                eyebrow="Finance"
                 title="Payments"
                 description="Proof-of-concept payments dashboard. Balances and transactions are sample data; no payment provider is connected."
             />

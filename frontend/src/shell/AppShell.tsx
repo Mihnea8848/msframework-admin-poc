@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { prefetchWhenIdle } from "../app/pages";
 import { lastNavigationWasViewTransition } from "../app/transitions";
-import { mobileTabs, morePages, pageByPath, visiblePages } from "../routes/navigation";
+import { SETTINGS_PATH, crumbFor, mobileTabs, morePages, visiblePages } from "../routes/navigation";
 import QuickActions from "../ui/QuickActions";
 import BottomNav from "./BottomNav";
 import MoreSheet from "./MoreSheet";
@@ -20,7 +20,7 @@ const ENTER_CLASS = "ms-shell__main--enter";
  * The signed-in layout, mounted once as the layout route (src/app/routes.tsx): the sidebar or
  * rail, the top bar, <main> with the current page, and on phones the bottom bar and More sheet.
  * Because it stays mounted, navigating only swaps the <Outlet />: the sidebar keeps its scroll
- * position and the unread-notifications poll keeps running.
+ * position and the unread-activity poll keeps running.
  */
 export default function AppShell() {
     const { user, logout } = useAuth();
@@ -35,7 +35,8 @@ export default function AppShell() {
     const pages = useMemo(() => visiblePages(user), [user]);
     const tabs = useMemo(() => mobileTabs(user), [user]);
     const more = useMemo(() => morePages(user), [user]);
-    const page = pageByPath(location.pathname);
+    const crumb = crumbFor(location.pathname);
+    const inSettings = location.pathname.startsWith(SETTINGS_PATH);
 
     useEffect(() => {
         function onKey(e: KeyboardEvent) {
@@ -48,18 +49,19 @@ export default function AppShell() {
         return () => document.removeEventListener("keydown", onKey);
     }, []);
 
-    // Prefetch every page this user may open, one per idle period.
-    useEffect(() => prefetchWhenIdle(pages.map((p) => p.key)), [pages]);
+    // Prefetch every page this user may open, then Settings, one per idle period.
+    useEffect(() => prefetchWhenIdle([...pages.map((p) => p.key), "settings"]), [pages]);
 
-    // The page enter animation, for navigations that did not run as a view transition.
-    const firstRender = useRef(true);
+    // The page enter animation, for navigations that did not run as a view transition. Moving
+    // between Settings tabs stays on the same page, so only the tab's panel changes.
+    const previousPath = useRef<string | null>(null);
     useLayoutEffect(() => {
         const main = mainRef.current;
-        if (firstRender.current) {
-            firstRender.current = false;
-            return;
-        }
-        if (!main || lastNavigationWasViewTransition()) return;
+        const previous = previousPath.current;
+        previousPath.current = location.pathname;
+        if (previous === null) return;
+        const betweenTabs = previous.startsWith(SETTINGS_PATH) && location.pathname.startsWith(SETTINGS_PATH);
+        if (!main || betweenTabs || lastNavigationWasViewTransition()) return;
         main.classList.remove(ENTER_CLASS);
         void main.offsetWidth; // restart the animation
         main.classList.add(ENTER_CLASS);
@@ -85,7 +87,7 @@ export default function AppShell() {
             />
 
             <div className="ms-shell__column">
-                <Topbar user={user} page={page} onLogout={handleLogout} />
+                <Topbar user={user} crumb={crumb} inSettings={inSettings} onLogout={handleLogout} />
 
                 <main
                     id="main"
@@ -117,6 +119,7 @@ export default function AppShell() {
                 pathname={location.pathname}
                 badge={badge}
                 onLogout={handleLogout}
+                inSettings={inSettings}
                 returnFocusRef={moreButtonRef}
             />
             <QuickActions open={quickActionsOpen} onClose={() => setQuickActionsOpen(false)} />

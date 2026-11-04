@@ -14,6 +14,8 @@ import type { PageKey } from "../../routes/navigation";
 import Alert from "../../ui/Alert";
 import Button from "../../ui/Button";
 import PageHeader from "../../ui/PageHeader";
+import CountUp from "../../ui/CountUp";
+import { useReveal } from "../../ui/useReveal";
 import { getLastSeenAuditId } from "../../utils/auditSeen";
 import { auditMeta } from "../../utils/auditTypes";
 import { relTime } from "../../utils/format";
@@ -27,7 +29,7 @@ import "../../ui/surface.css";
 import "./dashboard.css";
 
 const RECENT_EVENTS = 8;
-const QUICK_LINK_KEYS: PageKey[] = ["notifications", "security", "database", "payments", "import", "export"];
+const QUICK_LINK_KEYS: PageKey[] = ["activity", "security", "database", "payments", "import", "export"];
 
 const CARD_ICONS: Record<CardKey, LucideIcon> = { api: Activity, database: Database, integrations: Cable, security: Shield };
 const BADGE_ICONS: Record<CardState, LucideIcon> = { ok: CircleCheck, warn: TriangleAlert, danger: CircleX, neutral: CircleDashed };
@@ -64,8 +66,8 @@ interface Snapshot {
 function quickLinkMeta(key: PageKey, snapshot: Snapshot | null, unread: number | null): string {
     const card = (k: CardKey) => snapshot?.cards.find((c) => c.key === k);
     switch (key) {
-        case "notifications":
-            if (unread === null) return "Audit trail of all activity";
+        case "activity":
+            if (unread === null) return "What is happening across the platform";
             return unread === 0 ? "All caught up" : `${unread} unread`;
         case "security": {
             const c = card("security");
@@ -101,6 +103,8 @@ export default function Dashboard() {
     const [version, setVersion] = useState(0);
     const [refreshing, setRefreshing] = useState(false);
     const [now, setNow] = useState(0);
+    // The status cards and figures show placeholders at once, so they reveal on mount.
+    const reveal = useReveal(true);
 
     useEffect(() => {
         let alive = true;
@@ -184,7 +188,7 @@ export default function Dashboard() {
     return (
         <section className="ms-dashboard">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Overview"
                 title="Dashboard"
                 description="Is everything working? A plain-language check of the Multimedia Entertainment Hub systems."
                 actions={
@@ -216,11 +220,11 @@ export default function Dashboard() {
                     </p>
                 </div>
                 <ul className="ms-status-grid">
-                    {(snapshot?.cards ?? PLACEHOLDER_CARDS).map((card) => {
+                    {(snapshot?.cards ?? PLACEHOLDER_CARDS).map((card, i) => {
                         const Icon = CARD_ICONS[card.key];
                         const BadgeIcon = BADGE_ICONS[card.state];
                         return (
-                            <li key={card.key} className={`ms-status-card ms-cut ms-status-card--${card.state}`}>
+                            <li key={card.key} {...reveal(i, `ms-status-card ms-cut ms-status-card--${card.state}`)}>
                                 <div className="ms-status-card__top">
                                     <span className="ms-status-card__icon" aria-hidden="true"><Icon /></span>
                                     <h3 className="ms-status-card__name">{card.name}</h3>
@@ -243,14 +247,14 @@ export default function Dashboard() {
                 {canReadUsers || canReadDepartments ? (
                     <ul className="ms-glance-grid">
                         {loading
-                            ? PLACEHOLDER_FIGURES.filter((f) => (f.key === "departments" ? canReadDepartments : canReadUsers)).map((f) => (
-                                <li key={f.key} className="ms-glance ms-cut">
+                            ? PLACEHOLDER_FIGURES.filter((f) => (f.key === "departments" ? canReadDepartments : canReadUsers)).map((f, i) => (
+                                <li key={f.key} {...reveal(4 + i, "ms-glance ms-cut")}>
                                     <GlanceBody figure={f} loading />
                                 </li>
                             ))
-                            : figures.map((f) => (
-                                <li key={f.key}>
-                                    <Link to={f.to} className="ms-glance ms-glance--link ms-cut">
+                            : figures.map((f, i) => (
+                                <li key={f.key} {...reveal(4 + i)}>
+                                    <Link to={f.to} className="ms-glance ms-glance--link ms-cut ms-lift">
                                         <GlanceBody figure={f} />
                                     </Link>
                                 </li>
@@ -270,7 +274,7 @@ export default function Dashboard() {
                         <section className="ms-panel" aria-labelledby="dash-activity">
                             <div className="ms-panel__head">
                                 <h2 className="ms-panel__title" id="dash-activity">Recent activity</h2>
-                                <Link className="ms-panel__meta ms-dashboard__more" to="/notifications">
+                                <Link className="ms-panel__meta ms-dashboard__more" to="/activity">
                                     Latest {RECENT_EVENTS} audit events
                                 </Link>
                             </div>
@@ -338,7 +342,7 @@ function GlanceBody({ figure, loading = false }: { figure: GlanceFigure; loading
     return (
         <>
             <p className="ms-glance__label"><Icon aria-hidden="true" />{figure.label}</p>
-            <p className="ms-glance__value">{loading ? "…" : figure.value}</p>
+            <p className="ms-glance__value">{loading ? "…" : <CountUp value={figure.value} />}</p>
             <p className="ms-glance__detail">{loading ? "Loading…" : figure.detail}</p>
         </>
     );

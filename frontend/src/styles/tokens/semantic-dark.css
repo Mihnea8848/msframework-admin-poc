@@ -67,15 +67,28 @@
   --trace: var(--white);
   --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 26%, transparent);
   --avatar-text: var(--white-a95);
-  --gear: var(--white-a20);
 
   /* The three-segment stripe under page headers (decoration, no text on it) */
   --stripe-1: var(--brand-cyan);
   --stripe-2: var(--brand-cobalt);
   --stripe-3: var(--brand-grey);
 
-  /* Film grain over the login art: blend mode, strength on the mark, and a faint wash */
-  --grain-blend: overlay;
-  --grain-strength: 0.6;
-  --grain-wash: 0.05;
+  /* The sign-in art (ui/brand/LogoArt.tsx): night sky, star field and the tile cluster */
+  --art-sky-top: var(--navy-900);
+  --art-sky-bottom: var(--navy-1000);
+  --art-haze: var(--navy-700);
+  --art-star: var(--star-white);
+  --art-star-glow: var(--ice-200);
+  --art-tile-face-hi: var(--slate-450);
+  --art-tile-face-lo: var(--slate-500);
+  --art-tile-top: var(--slate-600);
+  --art-tile-side: var(--slate-700);
+  --art-tile-edge-upper: var(--brand-cyan);
+  --art-tile-edge-lower: var(--brand-cobalt);
+  --art-tile-glow: var(--brand-cyan);
+  --art-core-face: var(--white);
+  --art-core-top: var(--slate-300);
+  --art-core-side: var(--mist-500);
+  --art-core-edge: var(--ice-200);
+  --art-core-glow: var(--ice-200);
 }

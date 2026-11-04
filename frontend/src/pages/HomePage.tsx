@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+    Activity,
     ArrowRight,
-    Bell,
     Building2,
     CreditCard,
     Database,
@@ -19,6 +19,7 @@ import { hasPermission, hasRole } from "../auth/permissions";
 import { pageByKey } from "../routes/navigation";
 import type { PageKey } from "../routes/navigation";
 import PageLink from "../shell/PageLink";
+import { useReveal } from "../ui/useReveal";
 import PageHeader from "../ui/PageHeader";
 import "../ui/surface.css";
 import "./home.css";
@@ -142,10 +143,10 @@ export default function HomePage() {
             allowed: canReadDepartments,
         },
         {
-            key: "notifications",
-            icon: Bell,
-            title: "Notifications",
-            desc: "Full audit log of every action taken across the platform.",
+            key: "activity",
+            icon: Activity,
+            title: "Activity",
+            desc: "Every sign-in and change across the platform, newest first.",
             metric: "Audit events",
             allowed: canReadAudit,
         },
@@ -195,11 +196,12 @@ export default function HomePage() {
 
     const visibleTiles = tiles.filter((tile) => tile.allowed);
     const loading = authLoading || loadingUsers || loadingDepartments;
+    const reveal = useReveal(!loading);
 
     return (
         <section className="ms-home">
             <PageHeader
-                eyebrow="General"
+                eyebrow="Overview"
                 title="Multimedia Entertainment Hub"
                 description="Everything at a glance. Open the sections your role can use."
             />
@@ -210,13 +212,13 @@ export default function HomePage() {
                 <p className="ms-home__empty">Your account does not have access to any workspace sections yet.</p>
             ) : (
                 <ul className="ms-home__grid">
-                    {visibleTiles.map((tile) => {
+                    {visibleTiles.map((tile, i) => {
                         const page = pageByKey(tile.key);
                         if (!page) return null;
                         const Icon = tile.icon;
                         return (
-                            <li key={tile.key}>
-                                <PageLink page={page} current={false} className="ms-cut ms-home__tile">
+                            <li key={tile.key} {...reveal(i)}>
+                                <PageLink page={page} current={false} className="ms-cut ms-home__tile ms-lift">
                                     <span className="ms-home__icon" aria-hidden="true"><Icon /></span>
                                     <span className="ms-home__title">{tile.title}</span>
                                     <span className="ms-home__desc">{tile.desc}</span>

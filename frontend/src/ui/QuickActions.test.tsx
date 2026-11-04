@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import QuickActions from "./QuickActions";
-import { PAGES } from "../routes/navigation";
+import { PAGES, SETTINGS_TABS } from "../routes/navigation";
 
 const admin = { roles: ["ADMIN"], permissions: [...new Set(PAGES.map((p) => p.permission).filter((p) => p !== null))] };
 
@@ -46,7 +46,7 @@ describe("QuickActions", () => {
         expect(dialog()).toHaveAccessibleName("Quick actions");
         const input = screen.getByRole("combobox", { name: "Search pages" });
         expect(input).toHaveFocus();
-        expect(within(dialog() as HTMLElement).getAllByRole("option")).toHaveLength(PAGES.length);
+        expect(within(dialog() as HTMLElement).getAllByRole("option")).toHaveLength(PAGES.length + SETTINGS_TABS.length);
         expect(screen.getByRole("option", { name: /Home/ })).toHaveAttribute("aria-selected", "true");
     });
 
@@ -55,17 +55,27 @@ describe("QuickActions", () => {
         await userEvent.keyboard("data");
         const options = screen.getAllByRole("option");
         expect(options.map((o) => o.textContent)).toEqual([
-            "Database/database",
             "Import data/import",
             "Export data/export",
+            "Database/database",
         ]);
         await userEvent.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}{ArrowUp}");
         const input = screen.getByRole("combobox");
-        expect(screen.getByRole("option", { name: /Import data/ })).toHaveAttribute("aria-selected", "true");
-        expect(input.getAttribute("aria-activedescendant")).toBe(screen.getByRole("option", { name: /Import data/ }).id);
+        expect(screen.getByRole("option", { name: /Export data/ })).toHaveAttribute("aria-selected", "true");
+        expect(input.getAttribute("aria-activedescendant")).toBe(screen.getByRole("option", { name: /Export data/ }).id);
         await userEvent.keyboard("{Enter}");
-        expect(screen.getByTestId("path")).toHaveTextContent("/import");
+        expect(screen.getByTestId("path")).toHaveTextContent("/export");
         expect(dialog()).toBeNull();
+    });
+
+    it("finds the Settings tabs, by name or by the word settings", async () => {
+        await userEvent.click(renderPalette());
+        await userEvent.keyboard("settings");
+        expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(SETTINGS_TABS.map((t) => `${t.label}${t.path}`));
+        await userEvent.clear(screen.getByRole("combobox"));
+        await userEvent.keyboard("appear");
+        await userEvent.keyboard("{Enter}");
+        expect(screen.getByTestId("path")).toHaveTextContent("/settings/appearance");
     });
 
     it("says when nothing matches and clears the query", async () => {
@@ -74,7 +84,7 @@ describe("QuickActions", () => {
         expect(screen.getByText("No pages match “zzz”")).toBeInTheDocument();
         await userEvent.click(screen.getByRole("button", { name: "Clear" }));
         expect(screen.getByRole("combobox")).toHaveValue("");
-        expect(screen.getAllByRole("option")).toHaveLength(PAGES.length);
+        expect(screen.getAllByRole("option")).toHaveLength(PAGES.length + SETTINGS_TABS.length);
     });
 
     it("closes with Escape and returns focus to the trigger", async () => {

@@ -46,6 +46,10 @@
     height: 18px;
   }
 
+  .ms-topbar__icon[aria-current="page"] {
+    color: var(--accent-text);
+  }
+
   .ms-topbar__logo {
     display: none;
     flex: none;
@@ -92,13 +96,21 @@
     color: var(--text-primary);
   }
 
+  /* The user chip opens Account settings */
   .ms-topbar__user {
     display: flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
+    height: 40px;
     margin-right: var(--space-1);
     padding: 0 10px 0 var(--space-1);
+    border-radius: var(--radius-2);
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-topbar__user:hover {
+    background: var(--row-hover);
   }
 
   .ms-topbar__avatar {
@@ -121,6 +133,7 @@
   }
 
   .ms-topbar__name {
+    display: block;
     max-width: 180px;
     margin: 0;
     overflow: hidden;
@@ -133,6 +146,7 @@
   }
 
   .ms-topbar__role {
+    display: block;
     margin: 2px 0 0;
     line-height: 1;
   }

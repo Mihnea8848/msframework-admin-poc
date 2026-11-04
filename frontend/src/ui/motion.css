@@ -1,0 +1,36 @@
+/*
+ * Page motion helpers. ms-reveal: the staggered entrance of cards and rows (ui/useReveal.ts sets
+ * the class and --i, the item's place in the stagger). ms-lift: the hover lift of a clickable
+ * card, whose outline turns to the accent line. Both stay still under reduced motion.
+ */
+@layer components {
+  .ms-reveal {
+    animation: ms-reveal var(--duration-slow) var(--ease-standard) both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+  }
+
+  @keyframes ms-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  .ms-lift {
+    transition:
+      transform var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .ms-lift:hover {
+    --cut-line: var(--accent-line);
+
+    border-color: var(--accent-line);
+    transform: translateY(-2px);
+  }
+
+  :root[data-motion="reduced"] .ms-lift:hover {
+    transform: none;
+  }
+}

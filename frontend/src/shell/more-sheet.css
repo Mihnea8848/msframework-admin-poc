@@ -205,11 +205,15 @@
   }
 
   .ms-more-sheet__foot {
+    display: grid;
     flex: none;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-2);
     padding: var(--space-2) var(--space-4) max(var(--space-3), env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--border-faint);
   }
 
+  .ms-more-sheet__settings,
   .ms-more-sheet__logout {
     display: flex;
     align-items: center;
@@ -229,10 +233,16 @@
     cursor: pointer;
   }
 
+  .ms-more-sheet__settings:hover,
   .ms-more-sheet__logout:hover {
     background: var(--surface-2);
   }
 
+  .ms-more-sheet__settings[aria-current="page"] {
+    border-color: var(--accent-line);
+  }
+
+  .ms-more-sheet__settings svg,
   .ms-more-sheet__logout svg {
     width: 16px;
     height: 16px;

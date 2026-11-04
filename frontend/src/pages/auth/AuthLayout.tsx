@@ -22,8 +22,8 @@ const session = { authShown: false, traced: false };
 /**
  * The art lives in its own small React root, created once and moved between auth pages. The
  * router renders each auth page as a separate element, so a layout rendered by the pages would
- * remount the art on every navigation; this keeps the same DOM node (and its decoded grain
- * filter) on screen instead.
+ * remount the art on every navigation; this keeps the same DOM node (with its rasterised filters
+ * and running animations) on screen instead.
  */
 let artHost: HTMLDivElement | null = null;
 
@@ -32,12 +32,7 @@ function acquireArtHost(): HTMLDivElement {
         artHost = document.createElement("div");
         artHost.className = "ms-auth__art";
         artHost.setAttribute("aria-hidden", "true");
-        createRoot(artHost).render(
-            <>
-                <LogoArt className="ms-auth__logo-art" />
-                <div className="ms-auth__wash" />
-            </>,
-        );
+        createRoot(artHost).render(<LogoArt />);
     }
     return artHost;
 }
@@ -87,7 +82,7 @@ type AuthLayoutProps = {
 
 /**
  * The split layout shared by Login, Register, Forgot password and Reset password: the form panel
- * on the left, the grain-and-gradient logo art on the right (hidden on phones), and the audit
+ * on the left, the night-sky tile art on the right (hidden on phones), and the audit
  * notice under the panel.
  *
  * Between auth pages only the panel content moves (a fade and a 6px rise); the art stays put.

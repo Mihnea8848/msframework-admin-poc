@@ -89,7 +89,7 @@ export default function Security() {
     return (
         <section className="ms-security">
             <PageHeader
-                eyebrow="Ventures"
+                eyebrow="Security"
                 title="Security"
                 description="Your organisation's security posture, computed from live data."
             />

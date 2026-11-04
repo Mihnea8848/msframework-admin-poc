@@ -11,6 +11,7 @@ import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import Dialog, { DialogBody, DialogFooter } from "../ui/Dialog";
 import PageHeader from "../ui/PageHeader";
+import { useReveal } from "../ui/useReveal";
 import { SealMini } from "../ui/seal/Seal";
 import { sealForColor } from "../ui/seal/seals";
 import "../ui/field.css";
@@ -64,6 +65,7 @@ export default function UserManagement() {
     const [members, setMembers] = useState<UserDto[]>([]);
     const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
     const [loading, setLoading] = useState(true);
+    const reveal = useReveal(!loading);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
     const [query, setQuery] = useState("");
@@ -226,7 +228,7 @@ export default function UserManagement() {
     return (
         <section className="ms-users">
             <PageHeader
-                eyebrow="Ventures"
+                eyebrow="People"
                 title="User management"
                 count={members.length}
                 description="Manage who can sign in, their role and their department."
@@ -291,7 +293,7 @@ export default function UserManagement() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((member) => {
+                            {filtered.map((member, i) => {
                                 const editable = canEditMember(member);
                                 const deletable = canDeleteMember(member);
                                 const status = member.status || "Active";
@@ -301,7 +303,7 @@ export default function UserManagement() {
                                     ? sealForColor(colorById.get(member.departmentId)).key
                                     : null;
                                 return (
-                                    <tr key={member.id}>
+                                    <tr key={member.id} {...reveal(i)}>
                                         <td className="ms-users__name">
                                             <span className="ms-users__avatar" aria-hidden="true">{initialsOf(member.fullName, "U")}</span>
                                             <span className="ms-users__pname">

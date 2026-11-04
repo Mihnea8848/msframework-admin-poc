@@ -77,22 +77,22 @@
   --accent-silver-line: var(--silver-600);
 }
 
-/* The selected accent. Cyan is the default when data-accent is missing. */
+/* The selected accent. Cobalt is the default when data-accent is missing. */
 :root,
-:root[data-accent="cyan"] {
-  --accent-solid: var(--accent-cyan-solid);
-  --accent-solid-hover: var(--accent-cyan-solid-hover);
-  --on-accent: var(--accent-cyan-on);
-  --accent-text: var(--accent-cyan-text);
-  --accent-line: var(--accent-cyan-line);
-}
-
 :root[data-accent="cobalt"] {
   --accent-solid: var(--accent-cobalt-solid);
   --accent-solid-hover: var(--accent-cobalt-solid-hover);
   --on-accent: var(--accent-cobalt-on);
   --accent-text: var(--accent-cobalt-text);
   --accent-line: var(--accent-cobalt-line);
+}
+
+:root[data-accent="cyan"] {
+  --accent-solid: var(--accent-cyan-solid);
+  --accent-solid-hover: var(--accent-cyan-solid-hover);
+  --on-accent: var(--accent-cyan-on);
+  --accent-text: var(--accent-cyan-text);
+  --accent-line: var(--accent-cyan-line);
 }
 
 :root[data-accent="violet"] {

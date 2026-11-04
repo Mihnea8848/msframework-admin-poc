@@ -148,7 +148,7 @@ export default function ImportData() {
     if (available.length === 0) {
         return (
             <section className="ms-transfer">
-                <PageHeader eyebrow="Ventures" title="Import Data" description="Your role cannot create users or departments, so there is nothing you can import." />
+                <PageHeader eyebrow="Operations" title="Import Data" description="Your role cannot create users or departments, so there is nothing you can import." />
             </section>
         );
     }
@@ -160,7 +160,7 @@ export default function ImportData() {
 
     return (
         <section className="ms-transfer">
-            <PageHeader eyebrow="Ventures" title="Import Data" description="Upload a CSV to create records in bulk. Every row is validated by the server." />
+            <PageHeader eyebrow="Operations" title="Import Data" description="Upload a CSV to create records in bulk. Every row is validated by the server." />
 
             <div className="ms-field ms-transfer__entity">
                 <label className="ms-field__label" htmlFor="import-entity">What would you like to import?</label>

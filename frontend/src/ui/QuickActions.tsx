@@ -2,9 +2,10 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
 import { hasPermission } from "../auth/permissions";
-import { PAGES, groupPages } from "../routes/navigation";
+import { PAGES, PAGE_GROUPS, SETTINGS_TABS } from "../routes/navigation";
 import "./quick-actions.css";
 
 type QuickActionsProps = {
@@ -14,9 +15,21 @@ type QuickActionsProps = {
 
 const FOCUSABLE = "button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
+type Entry = { key: string; label: string; path: string; icon: LucideIcon; group: string };
+
+/** The Settings tabs, listed after the pages under their own group. */
+const SETTINGS_ENTRIES: Entry[] = SETTINGS_TABS.map((t) => ({ key: `settings-${t.key}`, label: t.label, path: t.path, icon: t.icon, group: "Settings" }));
+const GROUP_ORDER: readonly string[] = [...PAGE_GROUPS, "Settings"];
+
+function groupEntries(entries: readonly Entry[]): { group: string; pages: Entry[] }[] {
+    return GROUP_ORDER
+        .map((group) => ({ group, pages: entries.filter((e) => e.group === group) }))
+        .filter((g) => g.pages.length > 0);
+}
+
 /**
  * The Quick Actions palette (Ctrl/Cmd+K or `/`, opened by AppShell): a search box over every page
- * the user may open. Arrow keys move the selection, Enter opens it, Escape or the backdrop
+ * the user may open and the Settings tabs. Arrow keys move the selection, Enter opens it, Escape or the backdrop
  * closes the palette, and focus returns to whatever had it before. A native modal <dialog>;
  * where showModal() is missing (jsdom) it uses the open attribute with its own focus trap.
  * It is mounted only while open, so the query starts empty every time.
@@ -40,13 +53,16 @@ function Palette({ onClose }: { onClose: () => void }) {
         onCloseRef.current = onClose;
     }, [onClose]);
 
-    const allowed = useMemo(() => PAGES.filter((p) => hasPermission(user, p.permission)), [user]);
+    const allowed = useMemo<Entry[]>(
+        () => [...PAGES.filter((p) => hasPermission(user, p.permission)), ...SETTINGS_ENTRIES],
+        [user],
+    );
 
     const q = query.trim().toLowerCase();
     const filtered = q
-        ? allowed.filter((r) => r.label.toLowerCase().includes(q) || r.path.toLowerCase().includes(q))
+        ? allowed.filter((r) => [r.label, r.path, r.group].some((text) => text.toLowerCase().includes(q)))
         : allowed;
-    const groups = groupPages(filtered);
+    const groups = groupEntries(filtered);
     // The options in display order (grouped), so the arrow keys follow what is on screen.
     const ordered = groups.flatMap((g) => g.pages);
     const active = ordered[focusedIdx];

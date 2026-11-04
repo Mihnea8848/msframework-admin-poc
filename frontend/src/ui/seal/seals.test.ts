@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SEALS, sealForColor } from "./seals";
+import { SEALS, sealForColor, sealRingTitle } from "./seals";
+import type { Seal, SealKey } from "./seals";
 
 describe("sealForColor", () => {
     it("maps the legacy colour keys to the nearest seal", () => {
@@ -23,5 +24,25 @@ describe("sealForColor", () => {
             expect(seal.color).toMatch(/^avatar-[a-z]{2,20}$/);
             expect(sealForColor(seal.color).key).toBe(seal.key);
         }
+    });
+});
+
+describe("sealRingTitle", () => {
+    const seal = (key: SealKey) => SEALS.find((s) => s.key === key) as Seal;
+
+    it("uses the department's own name when it is named after its seal", () => {
+        expect(sealRingTitle("Human Resources", seal("human-resources"))).toBe("Department of Human Resources");
+        expect(sealRingTitle("Ethics and Regulations", seal("ethics-regulations"))).toBe("Department of Ethics and Regulations");
+        expect(sealRingTitle("Department of Development", seal("development"))).toBe("Department of Development");
+    });
+
+    it("uses the seal's official title for any other department", () => {
+        expect(sealRingTitle("Marketing", seal("human-resources"))).toBe("Department of Human Resources");
+        expect(sealRingTitle("", seal("quality-control"))).toBe("Department of Quality Control");
+        expect(sealRingTitle(null, seal("administration"))).toBe("Department of Administration");
+    });
+
+    it("always gives the Director's seal its official title", () => {
+        expect(sealRingTitle("Director's office", seal("director"))).toBe("Bureau of the Director of MSINC");
     });
 });

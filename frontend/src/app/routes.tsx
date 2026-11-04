@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
-import { PAGES } from "../routes/navigation";
+import { LEGACY_PATHS, PAGES, SETTINGS_PATH } from "../routes/navigation";
 import { PAGE_LOADERS } from "./pages";
 import { RedirectIfAuthed, RequireAuth, RequirePermission } from "./guards";
 import RootLayout from "./RootLayout";
@@ -14,6 +14,8 @@ import AppShell from "../shell/AppShell";
  *     /forgot-password, /reset-password   outside the shell, open to everyone
  *     (layout)              RequireAuth + AppShell, mounted once for every page below
  *       one route per PAGES entry, lazy-loaded, behind RequirePermission
+ *       /settings/:tab      Settings, with a tab per path; /settings opens the first tab
+ *       /notifications, /auth, /appearance   old paths, redirected (LEGACY_PATHS)
  *     *                     back to /
  *
  * Every page is its own chunk (`lazy`). The router loads it before it commits the navigation,
@@ -51,15 +53,28 @@ export const routes: RouteObject[] = [
             {
                 id: "shell",
                 element: <RequireAuth><AppShell /></RequireAuth>,
-                children: PAGES.map((page): RouteObject => ({
-                    id: page.key,
-                    path: page.path,
-                    handle: { pageKey: page.key },
-                    lazy: async () => {
-                        const { default: Page } = await PAGE_LOADERS[page.key]();
-                        return { element: <RequirePermission permission={page.permission}><Page /></RequirePermission> };
+                children: [
+                    ...PAGES.map((page): RouteObject => ({
+                        id: page.key,
+                        path: page.path,
+                        handle: { pageKey: page.key },
+                        lazy: async () => {
+                            const { default: Page } = await PAGE_LOADERS[page.key]();
+                            return { element: <RequirePermission permission={page.permission}><Page /></RequirePermission> };
+                        },
+                    })),
+                    {
+                        id: "settings",
+                        // The tab is optional: without it (or with an unknown one) Settings opens Account.
+                        path: `${SETTINGS_PATH}/:tab?`,
+                        handle: { pageKey: "settings" },
+                        lazy: async () => ({ Component: (await PAGE_LOADERS.settings()).default }),
                     },
-                })),
+                    ...Object.entries(LEGACY_PATHS).map(([from, to]): RouteObject => ({
+                        path: from,
+                        element: <Navigate to={to} replace />,
+                    })),
+                ],
             },
             { path: "*", element: <Navigate to="/" replace /> },
         ],
