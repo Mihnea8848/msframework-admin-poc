@@ -1,6 +1,84 @@
 {
   "components": {
     "schemas": {
+      "AccessRequestApproveRequest": {
+        "properties": {
+          "departmentId": {
+            "description": "Department of the new account; defaults to the one requested",
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "description": "Role of the new account; defaults to MEMBER",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AccessRequestDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedBy": {
+            "description": "Email of the administrator who decided",
+            "type": "string"
+          },
+          "departmentId": {
+            "description": "The department the person asked to join",
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "note": {
+            "description": "The reason given when the request was rejected",
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "description": "The account created on approval",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AccessRequestRejectRequest": {
+        "properties": {
+          "note": {
+            "description": "Optional reason, at most 500 characters",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApiKeyCreateRequest": {
         "properties": {
           "name": {
@@ -57,6 +135,101 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "subjectDepartmentId": {
+            "description": "The department the event is about, if any",
+            "format": "int64",
+            "type": "integer"
+          },
+          "subjectUserId": {
+            "description": "The user the event is about, if any",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AuditPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEventDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "description": "Pass as `cursor` to get the next (older) page; null on the last page",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BulkUserRequest": {
+        "properties": {
+          "action": {
+            "enum": [
+              "ACTIVATE",
+              "DEACTIVATE",
+              "SET_ROLE",
+              "SET_DEPARTMENT"
+            ],
+            "type": "string"
+          },
+          "departmentId": {
+            "description": "For SET_DEPARTMENT; null removes the users from their department",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ids": {
+            "description": "User ids, 1 to 200",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "role": {
+            "description": "Required for SET_ROLE",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BulkUserResult": {
+        "properties": {
+          "failed": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BulkUserResultItem"
+            },
+            "type": "array"
+          },
+          "succeeded": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "BulkUserResultItem": {
+        "properties": {
+          "error": {
+            "description": "Why this user was not changed (written for the end user); null when ok",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto",
+            "description": "The user after the change; null when not ok"
           }
         },
         "type": "object"
@@ -164,7 +337,9 @@
                 "WORKSPACE_UPDATE",
                 "API_KEY_READ",
                 "API_KEY_CREATE",
-                "API_KEY_DELETE"
+                "API_KEY_DELETE",
+                "ACCESS_REQUESTS_MANAGE",
+                "ROLES_READ"
               ],
               "type": "string"
             },
@@ -181,6 +356,42 @@
             "type": "array"
           },
           "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DepartmentDetailsDto": {
+        "properties": {
+          "activeMemberCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "color": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "managerId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "managerName": {
+            "type": "string"
+          },
+          "memberCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/UserDto"
+            },
+            "type": "array"
+          },
+          "name": {
             "type": "string"
           }
         },
@@ -208,6 +419,16 @@
         },
         "type": "object"
       },
+      "DepartmentManagerRequest": {
+        "properties": {
+          "userId": {
+            "description": "An active member of the department with the MANAGER or ADMIN role; null clears it",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "DepartmentRequest": {
         "properties": {
           "color": {
@@ -227,6 +448,14 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "managerId": {
+            "description": "The head of the department; null when it has none, or for anonymous callers",
+            "format": "int64",
+            "type": "integer"
+          },
+          "managerName": {
+            "type": "string"
           },
           "memberCount": {
             "format": "int64",
@@ -342,6 +571,19 @@
         },
         "type": "object"
       },
+      "PasswordResetLinkDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "link": {
+            "description": "Single-use link to the reset page; give it to the user",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RegisterRequest": {
         "properties": {
           "departmentId": {
@@ -374,6 +616,15 @@
         ],
         "type": "object"
       },
+      "RegisterResponse": {
+        "properties": {
+          "message": {
+            "description": "Message to show to the person who registered",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ResetPasswordRequest": {
         "properties": {
           "newPassword": {
@@ -389,6 +640,72 @@
           "newPassword",
           "token"
         ],
+        "type": "object"
+      },
+      "RoleDto": {
+        "properties": {
+          "activeMemberCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "builtIn": {
+            "description": "Whether the role is defined in SystemRoles (reset on every start-up)",
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "memberCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "enum": [
+                "DASHBOARD_READ",
+                "USER_READ",
+                "USER_CREATE",
+                "USER_UPDATE",
+                "USER_DELETE",
+                "DEPARTMENT_READ",
+                "DEPARTMENT_CREATE",
+                "DEPARTMENT_UPDATE",
+                "DEPARTMENT_DELETE",
+                "AUDIT_READ",
+                "APPEARANCE_READ",
+                "APPEARANCE_UPDATE",
+                "DATABASE_READ",
+                "DATABASE_UPDATE",
+                "DOCUMENTATION_READ",
+                "AUTH_SETTINGS_READ",
+                "AUTH_SETTINGS_UPDATE",
+                "SECURITY_READ",
+                "SECURITY_UPDATE",
+                "PAYMENTS_READ",
+                "PAYMENTS_UPDATE",
+                "IMPORT_DATA",
+                "EXPORT_DATA",
+                "CONNECTIONS_READ",
+                "CONNECTIONS_UPDATE",
+                "TIMEZONES_READ",
+                "TIMEZONES_UPDATE",
+                "WORKSPACE_READ",
+                "WORKSPACE_UPDATE",
+                "API_KEY_READ",
+                "API_KEY_CREATE",
+                "API_KEY_DELETE",
+                "ACCESS_REQUESTS_MANAGE",
+                "ROLES_READ"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
         "type": "object"
       },
       "ServiceConnection": {
@@ -480,6 +797,125 @@
           },
           "status": {
             "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserDetailsDto": {
+        "properties": {
+          "canEdit": {
+            "description": "Whether the caller may edit this user (USER_UPDATE and the manager scope rules)",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "departmentColor": {
+            "type": "string"
+          },
+          "departmentId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentManagerId": {
+            "description": "The head of the user's department, if it has one",
+            "format": "int64",
+            "type": "integer"
+          },
+          "departmentManagerName": {
+            "type": "string"
+          },
+          "departmentName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "managerOf": {
+            "description": "The department this user is the head of, or null",
+            "format": "int64",
+            "type": "integer"
+          },
+          "managerOfName": {
+            "type": "string"
+          },
+          "passwordChangedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "permissions": {
+            "description": "Everything the user's roles allow",
+            "items": {
+              "enum": [
+                "DASHBOARD_READ",
+                "USER_READ",
+                "USER_CREATE",
+                "USER_UPDATE",
+                "USER_DELETE",
+                "DEPARTMENT_READ",
+                "DEPARTMENT_CREATE",
+                "DEPARTMENT_UPDATE",
+                "DEPARTMENT_DELETE",
+                "AUDIT_READ",
+                "APPEARANCE_READ",
+                "APPEARANCE_UPDATE",
+                "DATABASE_READ",
+                "DATABASE_UPDATE",
+                "DOCUMENTATION_READ",
+                "AUTH_SETTINGS_READ",
+                "AUTH_SETTINGS_UPDATE",
+                "SECURITY_READ",
+                "SECURITY_UPDATE",
+                "PAYMENTS_READ",
+                "PAYMENTS_UPDATE",
+                "IMPORT_DATA",
+                "EXPORT_DATA",
+                "CONNECTIONS_READ",
+                "CONNECTIONS_UPDATE",
+                "TIMEZONES_READ",
+                "TIMEZONES_UPDATE",
+                "WORKSPACE_READ",
+                "WORKSPACE_UPDATE",
+                "API_KEY_READ",
+                "API_KEY_CREATE",
+                "API_KEY_DELETE",
+                "ACCESS_REQUESTS_MANAGE",
+                "ROLES_READ"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "phone": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -507,6 +943,16 @@
             "format": "int64",
             "type": "integer"
           },
+          "lastLoginAt": {
+            "description": "Last successful sign-in; null if the user never signed in",
+            "format": "date-time",
+            "type": "string"
+          },
+          "managerOf": {
+            "description": "The id of the department this user is the manager (head) of, or null",
+            "format": "int64",
+            "type": "integer"
+          },
           "phone": {
             "type": "string"
           },
@@ -517,6 +963,10 @@
             "type": "array"
           },
           "status": {
+            "type": "string"
+          },
+          "title": {
+            "description": "Job title, e.g. \"Senior Producer\"",
             "type": "string"
           }
         },
@@ -556,6 +1006,35 @@
         },
         "type": "object"
       },
+      "UserPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "description": "Zero-based page number",
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Users matching the filters, on all pages",
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "UserUpdateRequest": {
         "properties": {
           "departmentId": {
@@ -575,6 +1054,9 @@
             "type": "string"
           },
           "status": {
+            "type": "string"
+          },
+          "title": {
             "type": "string"
           }
         },
@@ -636,6 +1118,190 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/access-requests": {
+      "get": {
+        "description": "Without status, every request (decided ones are kept as history).",
+        "operationId": "listAccessRequests",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccessRequestDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "List access requests, newest first",
+        "tags": [
+          "Access requests"
+        ]
+      }
+    },
+    "/api/access-requests/{id}/approve": {
+      "post": {
+        "description": "The account gets the password the person chose when registering. Role defaults to MEMBER and department to the one requested.",
+        "operationId": "approveAccessRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessRequestApproveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRequestDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Approve a request and create the account",
+        "tags": [
+          "Access requests"
+        ]
+      }
+    },
+    "/api/access-requests/{id}/reject": {
+      "post": {
+        "description": "The request is kept as history with the note; the stored password is discarded.",
+        "operationId": "rejectAccessRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessRequestRejectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRequestDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Reject a request",
+        "tags": [
+          "Access requests"
+        ]
+      }
+    },
     "/api/audit": {
       "get": {
         "operationId": "listAuditEvents",
@@ -1009,6 +1675,7 @@
     },
     "/api/auth/register": {
       "post": {
+        "description": "Creates an access request, not an account: an administrator approves it (the account then gets this password) or rejects it. Signing in before approval answers 403 with a message saying the request is still waiting.",
         "operationId": "register",
         "requestBody": {
           "content": {
@@ -1021,15 +1688,15 @@
           "required": true
         },
         "responses": {
-          "201": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserDto"
+                  "$ref": "#/components/schemas/RegisterResponse"
                 }
               }
             },
-            "description": "Created"
+            "description": "Request recorded; show the message"
           },
           "4XX": {
             "content": {
@@ -1052,7 +1719,7 @@
             "description": "Unexpected server error"
           }
         },
-        "summary": "Create an account with the MEMBER role",
+        "summary": "Ask for an account",
         "tags": [
           "Auth"
         ]
@@ -1345,7 +2012,7 @@
     },
     "/api/departments": {
       "get": {
-        "description": "Public, because the registration form needs it.",
+        "description": "Public, because the registration form needs it. The manager is only included for signed-in callers.",
         "operationId": "listDepartments",
         "responses": {
           "200": {
@@ -1482,6 +2149,56 @@
           "Departments"
         ]
       },
+      "get": {
+        "operationId": "getDepartment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentDetailsDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "One department with its members",
+        "tags": [
+          "Departments"
+        ]
+      },
       "put": {
         "description": "Managers can only edit their own department.",
         "operationId": "updateDepartment",
@@ -1539,6 +2256,256 @@
           }
         },
         "summary": "Rename or recolour a department",
+        "tags": [
+          "Departments"
+        ]
+      }
+    },
+    "/api/departments/{id}/activity": {
+      "get": {
+        "description": "Keyset paged: pass nextCursor back as cursor to get older events.",
+        "operationId": "getDepartmentActivity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Events per page, 1 to 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Audit events about a department, newest first",
+        "tags": [
+          "Departments"
+        ]
+      }
+    },
+    "/api/departments/{id}/manager": {
+      "put": {
+        "description": "Admins only. The manager must be an active member of the department with the MANAGER or ADMIN role. The manager is cleared automatically when that user leaves the department, is deactivated, loses the role or is deleted.",
+        "operationId": "setDepartmentManager",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepartmentManagerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Choose or clear a department's manager",
+        "tags": [
+          "Departments"
+        ]
+      }
+    },
+    "/api/departments/{id}/members/{userId}": {
+      "delete": {
+        "description": "The user is kept, without a department. Same rules as updateUser.",
+        "operationId": "removeDepartmentMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Remove a user from the department",
+        "tags": [
+          "Departments"
+        ]
+      },
+      "post": {
+        "description": "Changes the user's department, with the same rules as updateUser: admins can move anyone; managers cannot move users between departments.",
+        "operationId": "addDepartmentMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Move a user into the department",
         "tags": [
           "Departments"
         ]
@@ -1787,6 +2754,51 @@
         ]
       }
     },
+    "/api/roles": {
+      "get": {
+        "description": "Built-in roles come first, from the most to the least privileged. Their permissions are defined in code and reset on every start-up.",
+        "operationId": "listRoles",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "List roles with their permissions and member counts",
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
     "/api/settings/{key}": {
       "get": {
         "operationId": "getSetting",
@@ -1910,6 +2922,7 @@
     },
     "/api/users": {
       "get": {
+        "description": "Unpaged, ordered by id. Prefer /api/users/search for large organisations.",
         "operationId": "listUsers",
         "responses": {
           "200": {
@@ -2002,6 +3015,191 @@
         ]
       }
     },
+    "/api/users/bulk": {
+      "post": {
+        "description": "Each user is checked and saved on its own with the same rules as updateUser (last active admin, no self-deactivation, manager scope), so some may fail while others succeed. Answers 200 with one result per id.",
+        "operationId": "bulkUpdateUsers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUserResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Apply one action to several users",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/search": {
+      "get": {
+        "description": "q matches name, email, job title and phone. sort is one of name, email, department, status, createdAt, lastLoginAt, with a leading \"-\" for descending (default name). Users without a value for the sort key come last.",
+        "operationId": "searchUsers",
+        "parameters": [
+          {
+            "description": "Free text, case-insensitive",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ADMIN",
+                "MANAGER",
+                "MEMBER",
+                "VIEWER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "Active",
+                "Inactive"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departmentId",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "name",
+              "enum": [
+                "name",
+                "-name",
+                "email",
+                "-email",
+                "department",
+                "-department",
+                "status",
+                "-status",
+                "createdAt",
+                "-createdAt",
+                "lastLoginAt",
+                "-lastLoginAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Zero-based page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size, 1 to 100",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Search users, one page at a time",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/api/users/{id}": {
       "delete": {
         "operationId": "deleteUser",
@@ -2042,6 +3240,57 @@
           }
         },
         "summary": "Delete a user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "get": {
+        "description": "Includes their permissions, their department's manager and whether the caller may edit them.",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetailsDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "One user's profile",
         "tags": [
           "Users"
         ]
@@ -2103,6 +3352,131 @@
           }
         },
         "summary": "Update a user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/activity": {
+      "get": {
+        "description": "Events the user did (by their current email) or that were about them. Keyset paged: pass nextCursor back as cursor to get older events.",
+        "operationId": "getUserActivity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Events per page, 1 to 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Audit events by or about a user, newest first",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/password-reset": {
+      "post": {
+        "description": "Until email exists the link is returned here, once, for the caller to hand over. It is single-use, expires after 30 minutes and replaces any earlier link. Managers can do this for the members and viewers of their own department.",
+        "operationId": "createPasswordResetLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetLinkDto"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request was rejected: invalid input (400), not signed in (401), missing permission (403), not found (404) or a conflict (409). The message is written for the end user."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          }
+        },
+        "summary": "Make a password reset link for a user",
         "tags": [
           "Users"
         ]
@@ -2310,6 +3684,10 @@
       "name": "API keys"
     },
     {
+      "description": "Self-registrations waiting for an administrator",
+      "name": "Access requests"
+    },
+    {
       "description": "The audit log",
       "name": "Audit"
     },
@@ -2326,12 +3704,16 @@
       "name": "Database"
     },
     {
-      "description": "Departments and their member counts",
+      "description": "Departments, their managers and members",
       "name": "Departments"
     },
     {
       "description": "Bulk import from CSV rows",
       "name": "Import"
+    },
+    {
+      "description": "The roles, what they allow and how many users have them",
+      "name": "Roles"
     },
     {
       "description": "Organisation-wide settings",
