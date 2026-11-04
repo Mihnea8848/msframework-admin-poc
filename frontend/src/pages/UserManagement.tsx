@@ -329,7 +329,7 @@ export default function UserManagement() {
                                                     </Button>
                                                 )}
                                                 {deletable && (
-                                                    <Button size="sm" variant="ghost" className="ms-users__btn ms-users__btn--danger" icon={<Trash2 aria-hidden="true" />} onClick={() => openDelete(member)}>
+                                                    <Button size="sm" variant="ghost-danger" className="ms-users__btn" icon={<Trash2 aria-hidden="true" />} onClick={() => openDelete(member)}>
                                                         <span className="ms-users__btn-label">Delete</span>
                                                         <span className="ms-visually-hidden"> {member.fullName}</span>
                                                     </Button>

@@ -240,7 +240,7 @@ export default function Departments() {
                                             <span className="ms-departments__locked">Locked</span>
                                         )}
                                         {canDeleteThisDepartment && (
-                                            <Button size="sm" variant="ghost" className="ms-departments__btn ms-departments__btn--danger" icon={<Trash2 aria-hidden="true" />} onClick={() => openDeleteModal(dept)}>
+                                            <Button size="sm" variant="ghost-danger" className="ms-departments__btn" icon={<Trash2 aria-hidden="true" />} onClick={() => openDeleteModal(dept)}>
                                                 <span className="ms-departments__btn-label">Delete</span>
                                                 <span className="ms-visually-hidden"> {dept.name}</span>
                                             </Button>

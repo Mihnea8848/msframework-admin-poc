@@ -139,10 +139,6 @@
     border-top: 1px solid var(--border-faint);
   }
 
-  .ms-departments__btn--danger .ms-btn__face {
-    color: var(--status-danger-fg);
-  }
-
   .ms-departments__locked {
     color: var(--text-tertiary);
     font-size: var(--font-size-xs);
