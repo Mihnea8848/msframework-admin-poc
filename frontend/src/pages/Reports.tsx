@@ -78,18 +78,9 @@ export default function Reports() {
                 eyebrow="Performance"
                 title="Reports"
                 description="Spending, budgets, performance and headcount for a period, from the live records."
-                actions={
-                    <div className="ms-reports__exports">
-                        {exports.map((e) => (
-                            <a key={e.type} className="ms-btn ms-btn--secondary ms-btn--sm" href={`/api/reports/export.csv?type=${e.type}&${exportQuery}`} download>
-                                <span className="ms-btn__face"><Download aria-hidden="true" />{e.label}</span>
-                            </a>
-                        ))}
-                    </div>
-                }
             />
 
-            <div className="ms-filters" role="group" aria-label="Period">
+            <div className="ms-filters">
                 <div className="ms-chips">
                     {RANGE_PRESETS.map((p) => (
                         <button key={p.key} type="button" className="ms-chip" aria-pressed={preset === p.key} onClick={() => choose(p.key)}>
@@ -104,6 +95,13 @@ export default function Reports() {
                 <div className="ms-field">
                     <label className="ms-field__label" htmlFor="rep-to">To</label>
                     <input id="rep-to" className="ms-input" type="date" value={range.to} min={range.from} onChange={(e) => setCustom("to", e.target.value)} />
+                </div>
+                <div className="ms-reports__exports ms-filters__end" role="group" aria-label="Download as CSV">
+                    {exports.map((e) => (
+                        <a key={e.type} className="ms-btn ms-btn--secondary ms-btn--sm" href={`/api/reports/export.csv?type=${e.type}&${exportQuery}`} download>
+                            <span className="ms-btn__face"><Download aria-hidden="true" />{e.label}</span>
+                        </a>
+                    ))}
                 </div>
             </div>
 

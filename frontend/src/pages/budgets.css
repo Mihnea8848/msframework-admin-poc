@@ -97,7 +97,19 @@
     }
   }
 
+  .ms-budgets__btn-sr {
+    display: none;
+  }
+
   @media (width <= 767px) {
+    .ms-budgets__btn-label {
+      display: none;
+    }
+
+    .ms-budgets__btn-sr {
+      display: inline;
+    }
+
     .ms-budgets__line {
       grid-template-columns: minmax(0, 1fr);
       padding: var(--space-3);

@@ -92,7 +92,10 @@ export default function Budgets() {
                 description="Each department's budget per category and quarter, against what has been spent and committed."
                 actions={canManage && (
                     <>
-                        <Button icon={<Tags aria-hidden="true" />} onClick={() => setMode({ kind: "categories" })}>Categories</Button>
+                        <Button icon={<Tags aria-hidden="true" />} onClick={() => setMode({ kind: "categories" })} title="Expense categories">
+                            <span className="ms-budgets__btn-label">Categories</span>
+                            <span className="ms-visually-hidden ms-budgets__btn-sr">Expense categories</span>
+                        </Button>
                         <Button variant="primary" icon={<Plus aria-hidden="true" />} onClick={() => setMode({ kind: "line", line: null })}>Add budget line</Button>
                     </>
                 )}

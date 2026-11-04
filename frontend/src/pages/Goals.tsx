@@ -217,7 +217,7 @@ export default function Goals() {
                     onDeleted={(text) => { setMode(null); setNotice(text); reload(); }} />
             )}
             {mode?.kind === "detail" && (
-                <GoalDetail goal={mode.goal} now={now} onClose={() => setMode(null)} onChanged={reload} />
+                <GoalDetail goal={goals?.find((g) => g.id === mode.goal.id) ?? mode.goal} now={now} onClose={() => setMode(null)} onChanged={reload} />
             )}
         </section>
     );

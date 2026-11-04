@@ -19,8 +19,9 @@ const BUDGETS = {
     entry: 130 * KB,
     // Every stylesheet together, including each page's own lazy CSS, so a single page view
     // loads less than this. Raised from 25 kB when every page got its own Chevron stylesheet,
-    // and from 30 kB for the Settings page, the sign-in art and the official seals (wave 1).
-    css: 34 * KB,
+    // from 30 kB for the Settings page, the sign-in art and the official seals (wave 1), and
+    // from 34 kB for the business pages and their charts (Goals, Reports, Budgets, Expenses).
+    css: 40 * KB,
     page: 40 * KB,
     fonts: 70 * KB,
 };
