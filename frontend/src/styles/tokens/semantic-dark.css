@@ -42,8 +42,7 @@
   --primary-hover: var(--accent-solid-hover);
   --on-primary: var(--on-accent);
 
-  /* Destructive action: maple red, never an accent. "-solid" because the legacy bridge still
-     uses the plain --danger name for danger text. */
+  /* Destructive action: maple red, never an accent. Danger text uses --status-danger-fg. */
   --danger-solid: var(--maple-red);
   --danger-solid-hover: var(--maple-red-700);
   --on-danger: var(--white);

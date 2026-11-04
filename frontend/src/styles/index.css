@@ -3,7 +3,6 @@
  *
  * Cascade layers, lowest priority first. A later layer always wins over an earlier one,
  * whatever the selector specificity:
- *   legacy      the pre-Chevron stylesheet, kept working through tokens/legacy-aliases.css
  *   reset       a minimal reset
  *   tokens      primitives, semantic roles, accents, seals, scale, density, motion
  *   base        fonts and page-wide typography
@@ -12,10 +11,8 @@
  *   pages       page-specific styles
  *   utilities   single-purpose helpers (utilities.css)
  */
-@layer legacy, reset, tokens, base, components, shell, pages, utilities;
+@layer reset, tokens, base, components, shell, pages, utilities;
 
-@import url("./legacy/root.css") layer(legacy);
-@import url("./legacy/theme.css") layer(legacy);
 @import url("./base/reset.css") layer(reset);
 @import url("./tokens/primitives.css") layer(tokens);
 @import url("./tokens/semantic-dark.css") layer(tokens);
@@ -25,7 +22,6 @@
 @import url("./tokens/scale.css") layer(tokens);
 @import url("./tokens/density.css") layer(tokens);
 @import url("./tokens/motion.css") layer(tokens);
-@import url("./tokens/legacy-aliases.css") layer(tokens);
 @import url("./base/fonts.css") layer(base);
 @import url("./base/typography.css") layer(base);
 @import url("./utilities.css") layer(utilities);

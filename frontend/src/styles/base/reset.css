@@ -1,6 +1,7 @@
 /*
- * A deliberately small reset. It sits above the legacy layer, so anything set here beats the
- * legacy stylesheet: only properties the legacy CSS never relies on belong in this file.
+ * A small reset, the lowest layer: every component, shell and page style beats it. Links and
+ * buttons carry no browser decoration, and form controls use the surrounding font, so each
+ * component only sets what it needs.
  */
 *,
 *::before,
@@ -12,16 +13,50 @@ html {
   text-size-adjust: 100%;
 }
 
+html,
+body {
+  height: 100%;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
+}
+
+#root {
+  width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 [hidden] {
   display: none !important;
 }
 
-/* Reduced motion: the motion tokens drop to 0, and this stops the legacy stylesheet's
-   hard-coded animations and transitions as well. */
+/* Reduced motion: the motion tokens drop to 0, and this also stops any hard-coded animation
+   or transition. */
 :root[data-motion="reduced"] *,
 :root[data-motion="reduced"] *::before,
 :root[data-motion="reduced"] *::after {

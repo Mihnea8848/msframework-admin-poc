@@ -1,7 +1,7 @@
 /*
  * Motion. Four durations, the logo trace and two easings. data-motion="reduced" on <html>
  * (the OS setting, or the user's choice on the Appearance page) sets every duration to 0.
- * base/reset.css also stops hard-coded transitions in the legacy stylesheet.
+ * base/reset.css also stops any hard-coded animation or transition.
  */
 :root {
   --duration-instant: 80ms;

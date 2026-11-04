@@ -17,9 +17,8 @@ import { gzipSync } from "node:zlib";
 const KB = 1024;
 const BUDGETS = {
     entry: 130 * KB,
-    // Every stylesheet together, including each page's own lazy CSS (only one page's loads at a
-    // time). Raised from 25 kB while pages move to the Chevron design: the legacy stylesheet
-    // still ships alongside the rebuilt pages until the last one is converted.
+    // Every stylesheet together, including each page's own lazy CSS, so a single page view
+    // loads less than this. Raised from 25 kB when every page got its own Chevron stylesheet.
     css: 30 * KB,
     page: 40 * KB,
     fonts: 70 * KB,

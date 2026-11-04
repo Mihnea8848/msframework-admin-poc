@@ -6,15 +6,6 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// jsx-a11y's recommended rules, reported as warnings for now: the existing pages have legacy
-// accessibility issues. A later cleanup PR fixes them and turns these back into errors.
-const a11yAsWarnings = Object.fromEntries(
-  Object.entries(jsxA11y.flatConfigs.recommended.rules).map(([rule, setting]) => [
-    rule,
-    Array.isArray(setting) ? ['warn', ...setting.slice(1)] : setting === 'off' || setting === 0 ? setting : 'warn',
-  ]),
-)
-
 const browserLanguageOptions = {
   ecmaVersion: 2022,
   globals: globals.browser,
@@ -57,7 +48,7 @@ export default defineConfig([
     files: ['src/**/*.{jsx,tsx}'],
     plugins: { 'jsx-a11y': jsxA11y },
     languageOptions: jsxA11y.flatConfigs.recommended.languageOptions,
-    rules: a11yAsWarnings,
+    rules: jsxA11y.flatConfigs.recommended.rules,
   },
   {
     files: ['src/**/*.test.{ts,tsx}', 'src/test/**'],
