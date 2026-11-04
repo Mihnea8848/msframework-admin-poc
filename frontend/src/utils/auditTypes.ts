@@ -1,6 +1,6 @@
 import {
-    Building2, Cable, Clock3, Download, Key, Lock, LogIn, LogOut, RefreshCw, Settings, Shield, ShieldAlert,
-    UserCheck, UserMinus, UserPlus, UserCog, Webhook,
+    Building2, Cable, Clock3, Crown, Download, Hourglass, Key, Link2, Lock, LogIn, LogOut, RefreshCw, Settings, Shield,
+    ShieldAlert, UserCheck, UserMinus, UserPlus, UserCog, UserX, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -53,6 +53,14 @@ export const AUDIT_TYPES = {
     session_revoked: { label: "Session ended", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
     org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
+    // People: access requests, department managers and reset links (PEOPLE-UI).
+    // export_generated and password_reset_completed are listed above.
+    access_requested: { label: "Access requested", pill: "created", Icon: UserPlus, color: "var(--status-info-fg)", category: "Users" },
+    access_approved: { label: "Access approved", pill: "created", Icon: UserCheck, color: "var(--status-ok-fg)", category: "Users" },
+    access_rejected: { label: "Access rejected", pill: "security", Icon: UserX, color: "var(--status-danger-fg)", category: "Users" },
+    login_pending: { label: "Awaiting approval", pill: "login", Icon: Hourglass, color: "var(--status-warn-fg)", category: "Login", alert: "info" },
+    dept_manager_changed: { label: "Dept Manager", pill: "changed", Icon: Crown, color: "var(--status-warn-fg)", category: "Departments" },
+    password_reset_link_created: { label: "Reset link", pill: "security", Icon: Link2, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
 } as const satisfies Record<string, AuditTypeMeta>;
 
 /** Every event type the backend emits that has display metadata. */

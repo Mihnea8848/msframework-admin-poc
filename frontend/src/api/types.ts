@@ -88,6 +88,12 @@ export interface UserDto {
     departmentName: string | null;
     roles: string[];
     createdAt: IsoDateTime | null;
+    /** Job title, e.g. "Senior Producer". */
+    title?: string | null;
+    /** Last successful sign-in; null if the user never signed in. */
+    lastLoginAt?: IsoDateTime | null;
+    /** The id of the department this user is the manager (head) of, or null. */
+    managerOf?: number | null;
 }
 
 /** dto/DepartmentResponse */
@@ -96,6 +102,9 @@ export interface DepartmentResponse {
     name: string;
     color: string | null;
     memberCount: number;
+    /** The head of the department; null when it has none. */
+    managerId?: number | null;
+    managerName?: string | null;
 }
 
 /** dto/AuditEventDto */
@@ -105,6 +114,10 @@ export interface AuditEventDto {
     actorEmail: string | null;
     description: string;
     createdAt: IsoDateTime;
+    /** The user the event is about, if any. */
+    subjectUserId?: number | null;
+    /** The department the event is about, if any. */
+    subjectDepartmentId?: number | null;
 }
 
 /** dto/ApiKeyDto. Null fields are omitted (`@JsonInclude(NON_NULL)`). */
