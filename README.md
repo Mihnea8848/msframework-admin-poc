@@ -19,7 +19,7 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 |---|---|---|
 | Sign in, Register, Forgot / Reset password | `/login`, `/register`, `/forgot-password`, `/reset-password` | Split layout from the Chevron concept: the form on the left and, filling the rest of the screen, a night sky with a slowly drifting star field and a cluster of the mark as extruded tiles around a white core, fading in from the form (a pale variant in light mode; hidden on phones; still under reduced motion). The logo outline is traced once on the first sign-in screen; moving between these pages fades the form in and leaves the art in place. Sign-in shows a rate limit or an account lock as its own notice with "Try again in N minutes" (from `Retry-After`), and a request still waiting for approval as information. "Request access" is hidden while registration is closed, and `/register` then says so. Register checks passwords against the organisation's minimum length |
 | Home | `/` | A card for every section your role can open, with live counts (a count that could not be loaded says so) |
-| Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
+| Dashboard | `/dashboard` | "Is everything working?": System status cards for the API, database, integrations and security score (live checks, with a summary line and *Refresh status*), Studio at a glance figures (users, active, admins, departments), department performance (score and six-month trend sparkline per department, with `GOALS_READ` or `REPORTS_READ`), spending this quarter against budget (`FINANCE_READ`), the 8 latest audit events and quick links. Cards the role may not read say "Not checked" |
 | User Management | `/users` | Search, create, edit (role / status / department / phone) and delete users |
 | Departments | `/departments` | Create, rename, re-seal and delete departments; each card shows the department's official seal (redrawn from the brand artwork) and live member count, plus performance and budget figures labelled as sample data |
 | Activity | `/activity` | Everyone: your own events, the ones you did and the ones about you (`GET /api/audit/me`), with category filters, "Load older events" and a background refresh every 30 s. The unread badge in the sidebar and phone bar counts what others did to your account and sign-in warnings, never your own actions. `/notifications` redirects here |
@@ -28,16 +28,21 @@ A modern, full-stack company administration dashboard. Centralizes user manageme
 | Database | `/database` | Live schema, row counts and sizes of every application table |
 | Documentation | `/docs` | In-app guide in collapsible sections with jump links, including the role/permission matrix |
 | Security | `/security` | Security score and checks computed from live data + recent security events |
-| Payments | `/payments` | Proof-of-concept view: balance, spending chart, transactions and a simulated Quick Pay, all labelled as sample data or demo (no payment provider connected) |
-| Import Data | `/import` | CSV upload with preview; rows are validated and created by the backend, errors reported per row |
+| Goals | `/goals` | `GOALS_READ`: each department's KPIs for a quarter (quarter and department filters) with its score ring, and per goal the unit, baseline, current against target, an attainment bar with a status label, the last check-in, the owner and which way is better. A goal opens a detail dialog with the check-in history (list and line) and *Record check-in* (a date inside the quarter, value, note) where allowed; managers create, edit and delete their department's goals (admins any), with the target checked against the direction |
+| Reports | `/reports` | `REPORTS_READ`: a period (this quarter, last 6 months, year to date or custom), totals (budget, spent, committed, remaining, active people), monthly spend (spent and committed), spend by department and by category, budget vs spend per department, performance by department, headcount, and CSV exports (the expenses export needs `FINANCE_READ` too) |
+| Budgets | `/budgets` | `FINANCE_READ`: totals and budget lines per department and category for a quarter, each with a budget-vs-spend bar (spent, committed, budget); spending without a budget line is flagged as unbudgeted. `FINANCE_MANAGE` adds, edits and removes lines and manages the expense categories (add, rename, deactivate; a category in use cannot be deleted) |
+| Expenses | `/expenses` | `EXPENSE_SUBMIT`, `EXPENSE_APPROVE` or `FINANCE_READ`: tabs Mine, To approve (approvers) and All (finance), filters (status, department, category, dates, search), a paged table that becomes cards on phones, status pills and an over-budget flag. New expense saves a draft or submits; each row offers only what the API allows (edit, submit, approve, reject with a reason, mark paid with date and reference, delete a draft) |
+| Payments | `/payments` | `FINANCE_READ`: the ledger of paid expenses by payment date, with a date range and department filter, totals, a monthly bar chart and a paged list. The provider panel says plainly that no payment provider is connected: MSFramework records payments, it does not move money |
+| Import Data | `/import` | CSV upload with a template per type, column check, preview and per-row errors from the backend: users, departments, expenses, budgets and goal check-ins, each shown only to roles that may import it (managers get check-ins for their department) |
 | Export Data | `/export` | Column-selectable UTF-8 CSV of users, departments or the audit log |
-| Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted |
+| Connections | `/connections` | Integrations (12 services), webhooks and API keys — all DB-persisted. A new key gets its scopes in a dialog (`ingest:checkins` lets an integration push KPI check-ins), key rows list them, and a help panel shows the `curl` call for `POST /api/ingest/checkins` |
 | Timezones | `/timezones` | Live world clocks and org default timezone, saved organisation-wide |
 | Settings | `/settings/account`, `/security`, `/appearance`, `/organisation` | One page with a tab per link, opened from the top bar cog or your name. Account: profile and email change (password-confirmed). Security: password change checked against the organisation's minimum length, with the rules and the common-password hint, a sessions summary with "Sign out other sessions"; MFA and SSO marked as coming soon. Appearance: dark, light or system theme, 6 brand accents (cobalt by default, cyan, violet, jade, gold, silver), density and motion, saved per browser. Organisation: company name, open registration, minimum password length (8 to 64), default timezone (searchable) and the session timeout (read only, set by the server), editable with `ORG_SETTINGS_MANAGE` and read only for everyone else, plus the world clocks. `/auth` and `/appearance` redirect to their tabs |
 
 **Cross-cutting UI features:**
 - Every page, sidebar entry and button is shown only to roles that may use it (the backend enforces the same rules)
-- Sidebar grouped as Overview, People, Finance, Operations, Security and Resources (Performance appears once it has pages)
+- Sidebar grouped as Overview, People, Performance, Finance, Operations, Security and Resources
+- Charts are small SVG components (no chart library): token colours, department seal colours, hover and keyboard tooltips and a hidden table for screen readers
 - Quick Actions palette (⌘K / Ctrl+K or `/`): search and jump to any page you have access to, or a Settings tab, with the arrow keys and Enter; Escape closes it and returns focus
 - Clear error messages from the server everywhere (no silent failures)
 - Persistent theme, accent, density and motion, restored before the first paint (no flash of the wrong theme)
@@ -222,7 +227,7 @@ With `SEED_DEMO_DATA=true` (the default), `DemoBusinessSeeder` then adds demo bu
 - [x] Database-backed sessions, CSRF tokens, sign-in throttling and account lockout
 - [ ] Email delivery (reset links are printed to the backend log for now)
 - [ ] Real webhook delivery
-- [x] Budgets, expenses with approvals, goals and KPIs, reports (backend)
+- [x] Budgets, expenses with approvals, goals and KPIs, reports (backend and screens)
 - [x] API-key ingest of goal check-ins (`/api/ingest/checkins`)
 - [ ] API-key authentication for the rest of the REST API
 - [ ] MFA (two-factor authentication)
