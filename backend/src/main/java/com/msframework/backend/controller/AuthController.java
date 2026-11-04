@@ -14,7 +14,10 @@ import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AccessRequestService;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.AuthSessionService;
+import com.msframework.backend.service.AuthThrottleService;
+import com.msframework.backend.service.AuthThrottleService.Action;
 import com.msframework.backend.service.CurrentUserService;
+import com.msframework.backend.service.OrgSettingsService;
 import com.msframework.backend.service.PasswordResetService;
 import com.msframework.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,6 +52,8 @@ public class AuthController {
     private final UserService userService;
     private final PasswordResetService passwordResetService;
     private final AuditService auditService;
+    private final AuthThrottleService throttle;
+    private final OrgSettingsService orgSettingsService;
     private final AccessRequestService accessRequestService;
 
     @Operation(operationId = "login", summary = "Sign in and start a session",
@@ -58,6 +63,7 @@ public class AuthController {
                                 HttpServletRequest httpRequest,
                                 HttpServletResponse httpResponse) {
         String email = UserService.normalizeEmail(request.email());
+        throttle.beforeLogin(email); // per-IP limit and account lock, before the password check
 
         Authentication authentication;
         try {
@@ -70,8 +76,10 @@ public class AuthController {
                 throw ApiException.forbidden(pending.get());
             }
             auditService.log("login_failed", email, "Failed sign-in attempt for " + email);
+            throttle.loginFailed(email);
             throw ApiException.unauthorized("Invalid email or password");
         }
+        throttle.loginSucceeded(email);
 
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> ApiException.unauthorized("Invalid email or password"));
@@ -111,6 +119,8 @@ public class AuthController {
     @ApiResponse(responseCode = "202", description = "Request recorded; show the message")
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        orgSettingsService.requireRegistrationOpen();
+        throttle.check(Action.REGISTER, request.email());
         accessRequestService.submit(request);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new RegisterResponse(AccessRequestService.SUBMITTED_MESSAGE));
     }
@@ -159,6 +169,7 @@ public class AuthController {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("Email is required");
         }
+        throttle.check(Action.FORGOT_PASSWORD, email);
         passwordResetService.requestReset(email);
         return ResponseEntity.noContent().build();
     }
@@ -167,6 +178,7 @@ public class AuthController {
     @ApiResponse(responseCode = "204", description = "Password changed")
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest body) {
+        throttle.check(Action.RESET_PASSWORD, null);
         passwordResetService.resetPassword(body.token(), body.newPassword());
         return ResponseEntity.noContent().build();
     }

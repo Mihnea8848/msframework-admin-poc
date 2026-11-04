@@ -41,6 +41,7 @@ public class AccessRequestService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicy passwordPolicy;
     private final AuditService auditService;
 
     @Transactional
@@ -48,7 +49,7 @@ public class AccessRequestService {
         String fullName = UserService.requireFullName(request.fullName());
         String email = UserService.requireValidEmail(request.email());
         String phone = UserService.normalizePhone(request.phone(), true);
-        UserService.validatePassword(request.password());
+        passwordPolicy.validate(request.password());
         Department department = userService.findDepartment(request.departmentId());
 
         if (userRepository.existsByEmailIgnoreCase(email)) {

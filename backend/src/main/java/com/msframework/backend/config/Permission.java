@@ -61,5 +61,9 @@ public enum Permission {
     EXPENSE_APPROVE,
     GOALS_READ,
     GOALS_MANAGE,
-    REPORTS_READ
+    REPORTS_READ,
+
+    // Sessions and organisation settings (sessions-security)
+    SESSIONS_MANAGE,
+    ORG_SETTINGS_MANAGE
 }

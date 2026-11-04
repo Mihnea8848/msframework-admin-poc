@@ -1,4 +1,6 @@
-// Keep in sync with backend UserService validation.
+// Keep in sync with backend UserService and PasswordPolicy validation.
+
+import { COMMON_PASSWORDS } from "./commonPasswords";
 
 /** Result of a validator: `ok` plus each individual rule, for live checklists in forms. */
 export interface ValidationResult<K extends string> {
@@ -42,15 +44,27 @@ export function validatePhone(value: Input): ValidationResult<"nonEmpty" | "form
     return { ok: nonEmpty && formatOk && minDigits, checks: { nonEmpty, formatOk, minDigits } };
 }
 
-export type PasswordRule = "minLen" | "hasNumber" | "hasSymbol" | "maxLen";
+export type PasswordRule = "minLen" | "hasNumber" | "hasSymbol" | "maxLen" | "notCommon";
 
-export function validatePassword(value: Input): ValidationResult<PasswordRule> {
+/** The default minimum length; the organisation can raise it (passwordMinLength in the org settings). */
+export const DEFAULT_PASSWORD_MIN_LENGTH = 8;
+
+/** True when the password is on the common-password blocklist (case-insensitive). */
+export function isCommonPassword(value: Input): boolean {
+    return COMMON_PASSWORDS.has((value || "").toLowerCase());
+}
+
+export function validatePassword(value: Input, minLength = DEFAULT_PASSWORD_MIN_LENGTH): ValidationResult<PasswordRule> {
     const v = value || "";
-    const minLen = v.length >= 8;
+    const minLen = v.length >= minLength;
     const hasNumber = /\d/.test(v);
     const hasSymbol = /[^A-Za-z0-9]/.test(v);
     const maxLen = new TextEncoder().encode(v).length <= 72;
-    return { ok: minLen && hasNumber && hasSymbol && maxLen, checks: { minLen, hasNumber, hasSymbol, maxLen } };
+    const notCommon = !isCommonPassword(v);
+    return {
+        ok: minLen && hasNumber && hasSymbol && maxLen && notCommon,
+        checks: { minLen, hasNumber, hasSymbol, maxLen, notCommon },
+    };
 }
 
 export const PASSWORD_LABELS: Record<PasswordRule, string> = {
@@ -58,11 +72,17 @@ export const PASSWORD_LABELS: Record<PasswordRule, string> = {
     hasNumber: "Include a number",
     hasSymbol: "Include a symbol",
     maxLen: "At most 72 bytes",
+    notCommon: "Not a common password",
 };
 
+/** The rule labels for a given minimum length. */
+export function passwordLabels(minLength = DEFAULT_PASSWORD_MIN_LENGTH): Record<PasswordRule, string> {
+    return { ...PASSWORD_LABELS, minLen: `At least ${minLength} characters` };
+}
+
 /** First unmet password rule as a sentence, or null when the password is valid. */
-export function passwordProblem(value: Input): string | null {
-    const { checks } = validatePassword(value);
+export function passwordProblem(value: Input, minLength = DEFAULT_PASSWORD_MIN_LENGTH): string | null {
+    const { checks } = validatePassword(value, minLength);
     const failed = (Object.keys(checks) as PasswordRule[]).find((rule) => !checks[rule]);
-    return failed ? PASSWORD_LABELS[failed] : null;
+    return failed ? passwordLabels(minLength)[failed] : null;
 }

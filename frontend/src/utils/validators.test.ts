@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-    onlyDigits, passwordProblem, validateEmail, validateFullName, validatePassword, validatePhone,
+    isCommonPassword, onlyDigits, passwordProblem, validateEmail, validateFullName, validatePassword, validatePhone,
 } from "./validators";
 
 describe("validateFullName", () => {
@@ -128,5 +128,24 @@ describe("passwordProblem", () => {
         expect(passwordProblem("abcdefgh")).toBe("Include a number");
         expect(passwordProblem("abcdefg1")).toBe("Include a symbol");
         expect(passwordProblem(`${"a".repeat(80)}1!`)).toBe("At most 72 bytes");
+    });
+});
+
+describe("common passwords", () => {
+    it("rejects blocklisted passwords whatever their case", () => {
+        expect(isCommonPassword("P@ssw0rd")).toBe(true);
+        expect(isCommonPassword("WELCOME@123")).toBe(true);
+        expect(isCommonPassword("s3cure!pw")).toBe(false);
+        expect(validatePassword("Password1!").ok).toBe(false);
+        expect(validatePassword("Password1!").checks.notCommon).toBe(false);
+        expect(passwordProblem("Qwerty123!")).toBe("Not a common password");
+    });
+});
+
+describe("organisation minimum length", () => {
+    it("raises the minimum and names it in the message", () => {
+        expect(validatePassword("s3cure!pw", 12).checks.minLen).toBe(false);
+        expect(validatePassword("s3cure!pw-long", 12).ok).toBe(true);
+        expect(passwordProblem("s3cure!pw", 12)).toBe("At least 12 characters");
     });
 });

@@ -1,5 +1,5 @@
 import {
-    Building2, Cable, Clock3, Download, Key, LogIn, LogOut, RefreshCw, Shield, ShieldAlert,
+    Building2, Cable, Clock3, Download, Key, Lock, LogIn, LogOut, RefreshCw, Settings, Shield, ShieldAlert,
     UserCheck, UserMinus, UserPlus, UserCog, Webhook,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -48,6 +48,11 @@ export const AUDIT_TYPES = {
     setting_changed: { label: "Setting", pill: "changed", Icon: Clock3, color: "var(--status-warn-fg)", category: "Settings" },
     export_generated: { label: "Export", pill: "export", Icon: Download, color: "var(--text-secondary)", category: "Data" },
     import_completed: { label: "Import", pill: "export", Icon: RefreshCw, color: "var(--text-secondary)", category: "Data" },
+    rate_limited: { label: "Rate limited", pill: "security", Icon: ShieldAlert, color: "var(--status-danger-fg)", category: "Login", alert: "warn" },
+    account_locked: { label: "Account locked", pill: "security", Icon: Lock, color: "var(--status-danger-fg)", category: "Login", alert: "fail" },
+    session_revoked: { label: "Session ended", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
+    sessions_revoked: { label: "Signed out everywhere", pill: "security", Icon: LogOut, color: "var(--status-warn-fg)", category: "Auth", alert: "info" },
+    org_settings_changed: { label: "Organisation", pill: "changed", Icon: Settings, color: "var(--status-warn-fg)", category: "Settings" },
 } as const satisfies Record<string, AuditTypeMeta>;
 
 /** Every event type the backend emits that has display metadata. */

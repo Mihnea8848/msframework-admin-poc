@@ -55,9 +55,10 @@ function AuditFeed({ variant }: { variant: FeedVariant }) {
     // Snapshot of what was already seen when the page opened, so new rows can be highlighted.
     const [seenBefore] = useState(() => getLastSeenAuditId(user));
 
-    const load = useCallback(async () => {
+    /** `background` marks the timed refresh, which must not keep an idle session alive. */
+    const load = useCallback(async (background = false) => {
         try {
-            const data = await get<AuditEventDto[]>(`/api/audit?limit=${LIMIT}`);
+            const data = await get<AuditEventDto[]>(`/api/audit?limit=${LIMIT}`, { background });
             const list = Array.isArray(data) ? data : [];
             setEvents(list);
             setError(null);
@@ -72,7 +73,7 @@ function AuditFeed({ variant }: { variant: FeedVariant }) {
 
     useEffect(() => {
         load();
-        const id = setInterval(load, POLL_MS);
+        const id = setInterval(() => load(true), POLL_MS);
         return () => clearInterval(id);
     }, [load]);
 
@@ -86,7 +87,7 @@ function AuditFeed({ variant }: { variant: FeedVariant }) {
                 count={events.length > 0 ? events.length : undefined}
                 description={`${header.lead} (latest ${LIMIT}). Refreshes every ${POLL_MS / 1000}s${updatedAt ? ` · updated ${updatedAt.toLocaleTimeString()}` : ""}.`}
                 actions={
-                    <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={load}>Refresh</Button>
+                    <Button size="sm" icon={<RefreshCw aria-hidden="true" />} onClick={() => load()}>Refresh</Button>
                 }
             />
 
