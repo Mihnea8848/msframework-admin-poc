@@ -17,8 +17,8 @@ describe("mobileTabs", () => {
     });
 
     it("skips pages the user may not open and fills up by mobilePriority", () => {
-        // A viewer cannot open Users, Departments or Activity, so Documentation (6) moves up.
-        expect(keys(mobileTabs(viewer))).toEqual(["home", "dashboard", "docs"]);
+        // A viewer cannot open Users or Departments, so Activity (5) and Documentation (6) move up.
+        expect(keys(mobileTabs(viewer))).toEqual(["home", "dashboard", "activity", "docs"]);
     });
 
     it("orders by mobilePriority, not by sidebar order", () => {
@@ -35,7 +35,7 @@ describe("mobileTabs", () => {
     });
 
     it("works with fewer permitted pages than tabs", () => {
-        expect(keys(mobileTabs(nobody))).toEqual(["home"]);
+        expect(keys(mobileTabs(nobody))).toEqual(["home", "activity"]);
     });
 });
 
@@ -48,9 +48,24 @@ describe("morePages", () => {
     });
 
     it("leaves out pages the user may not open", () => {
-        expect(morePages(viewer)).toEqual([]);
-        expect(keys(morePages(member))).toEqual(["timezones", "docs"]);
-        expect(morePages(nobody)).toEqual([]);
+        expect(keys(morePages(viewer))).toEqual(["sessions"]);
+        expect(keys(morePages(member))).toEqual(["activity", "sessions", "timezones", "docs"]);
+        expect(keys(morePages(nobody))).toEqual(["sessions"]);
+    });
+});
+
+describe("Activity, Audit log and Sessions", () => {
+    it("gives everyone their own Activity and Sessions, and keeps the Audit log for AUDIT_READ", () => {
+        for (const user of [admin, member, viewer, nobody]) {
+            expect(keys(visiblePages(user))).toEqual(expect.arrayContaining(["activity", "sessions"]));
+        }
+        expect(keys(visiblePages(admin))).toContain("audit");
+        expect(keys(visiblePages(member))).not.toContain("audit");
+    });
+
+    it("shows members the Security group with Sessions only", () => {
+        const security = groupPages(visiblePages(member)).find((g) => g.group === "Security");
+        expect(keys(security?.pages ?? [])).toEqual(["sessions"]);
     });
 });
 

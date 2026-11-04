@@ -12,8 +12,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -468,6 +472,36 @@ class ApiIntegrationTests {
         mvc.perform(get("/api/audit").param("limit", "1").with(admin))
                 .andExpect(jsonPath("$[0].eventType").value("export_generated"))
                 .andExpect(jsonPath("$[0].description").value("Exported data"));
+    }
+
+    @Test
+    void everyoneReadsTheirOwnActivityButOnlyAuditorsReadTheFullLog() throws Exception {
+        TestSession admin = admin();
+        long dept = createDepartment(admin, unique("Mine"));
+        String email = unique("mine") + "@example.com";
+        long id = createUser(admin, email, "MEMBER", dept);
+        TestSession member = login(email, PASSWORD);
+        // An event about someone else, after the member's sign-in: it must not reach their feed.
+        createUser(admin, unique("other") + "@example.com", "MEMBER", dept);
+
+        mvc.perform(get("/api/audit").with(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/audit/me")).andExpect(status().isUnauthorized());
+
+        String first = mvc.perform(get("/api/audit/me").param("limit", "1").with(member))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(1)))
+                .andExpect(jsonPath("$.items[0].eventType").value("user_login"))
+                .andExpect(jsonPath("$.items[0].actorEmail").value(email))
+                .andExpect(jsonPath("$.nextCursor").value(notNullValue()))
+                .andReturn().getResponse().getContentAsString();
+        String cursor = JsonPath.read(first, "$.nextCursor");
+        mvc.perform(get("/api/audit/me").param("cursor", cursor).with(member))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[*].eventType").value(contains("user_created")))
+                .andExpect(jsonPath("$.items[0].subjectUserId").value(id))
+                .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+        mvc.perform(get("/api/audit/me").param("cursor", "not-a-cursor").with(member))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
