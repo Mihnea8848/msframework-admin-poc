@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -59,109 +58,106 @@ class BusinessApiTests {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
+    /** A JSON request with a CSRF token; {@code .with(session)} afterwards adds the session. */
     private static MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder builder, String body) {
-        return builder.contentType(MediaType.APPLICATION_JSON).content(body);
+        return builder.contentType(MediaType.APPLICATION_JSON).content(body).with(TestSession.ANONYMOUS);
     }
 
     private static long id(MvcResult result) throws Exception {
         return ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
     }
 
-    private MockHttpSession login(String email, String password) throws Exception {
-        MvcResult result = mvc.perform(json(post("/api/auth/login"),
-                        "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
-                .andExpect(status().isOk())
-                .andReturn();
-        return (MockHttpSession) result.getRequest().getSession(false);
+    private TestSession login(String email, String password) throws Exception {
+        return TestSession.login(mvc, email, password);
     }
 
-    private MockHttpSession admin() throws Exception {
+    private TestSession admin() throws Exception {
         return login("admin@test.com", "password123");
     }
 
-    private long department(MockHttpSession admin) throws Exception {
-        return id(mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Biz") + "\"}").session(admin))
+    private long department(TestSession admin) throws Exception {
+        return id(mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Biz") + "\"}").with(admin))
                 .andExpect(status().isCreated()).andReturn());
     }
 
     /** Creates a user and returns a signed-in session for them. */
-    private MockHttpSession user(MockHttpSession admin, String role, long departmentId) throws Exception {
+    private TestSession user(TestSession admin, String role, long departmentId) throws Exception {
         String email = unique(role.toLowerCase()) + "@example.com";
         mvc.perform(json(post("/api/users"), "{\"fullName\":\"Biz " + role + "\",\"email\":\"" + email + "\",\"role\":\""
                         + role + "\",\"status\":\"Active\",\"password\":\"" + PASSWORD + "\",\"departmentId\":"
-                        + departmentId + "}").session(admin))
+                        + departmentId + "}").with(admin))
                 .andExpect(status().isCreated());
         return login(email, PASSWORD);
     }
 
-    private long category(MockHttpSession session, String name) throws Exception {
-        String body = mvc.perform(get("/api/finance/categories").session(session))
+    private long category(TestSession session, String name) throws Exception {
+        String body = mvc.perform(get("/api/finance/categories").with(session))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         List<Number> ids = JsonPath.read(body, "$[?(@.name == '" + name + "')].id");
         return ids.getFirst().longValue();
     }
 
-    private void budget(MockHttpSession admin, long departmentId, long categoryId, String amount) throws Exception {
+    private void budget(TestSession admin, long departmentId, long categoryId, String amount) throws Exception {
         mvc.perform(json(post("/api/budgets"), "{\"departmentId\":" + departmentId + ",\"categoryId\":" + categoryId
                         + ",\"year\":" + quarter.year() + ",\"quarter\":" + quarter.quarter() + ",\"amount\":" + amount + "}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isCreated());
     }
 
-    private ResultActions expense(MockHttpSession session, Long departmentId, long categoryId, String amount,
+    private ResultActions expense(TestSession session, Long departmentId, long categoryId, String amount,
                                   boolean submit) throws Exception {
         return mvc.perform(json(post("/api/expenses"), "{" + (departmentId == null ? "" : "\"departmentId\":" + departmentId + ",")
                 + "\"categoryId\":" + categoryId + ",\"amount\":" + amount + ",\"date\":\"" + day + "\","
-                + "\"vendor\":\"JetBrains\",\"description\":\"Licences\",\"submit\":" + submit + "}").session(session));
+                + "\"vendor\":\"JetBrains\",\"description\":\"Licences\",\"submit\":" + submit + "}").with(session));
     }
 
-    private long submitted(MockHttpSession session, long departmentId, long categoryId, String amount) throws Exception {
+    private long submitted(TestSession session, long departmentId, long categoryId, String amount) throws Exception {
         return id(expense(session, departmentId, categoryId, amount, true)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SUBMITTED"))
                 .andReturn());
     }
 
-    private long goal(MockHttpSession session, long departmentId, String direction, String baseline, String target,
+    private long goal(TestSession session, long departmentId, String direction, String baseline, String target,
                       int weight) throws Exception {
         return id(mvc.perform(json(post("/api/goals"), "{\"departmentId\":" + departmentId + ",\"name\":\"" + unique("KPI")
                         + "\",\"unit\":\"%\",\"direction\":\"" + direction + "\",\"baseline\":" + baseline + ",\"target\":"
                         + target + ",\"weight\":" + weight + ",\"year\":" + quarter.year() + ",\"quarter\":"
-                        + quarter.quarter() + "}").session(session))
+                        + quarter.quarter() + "}").with(session))
                 .andExpect(status().isCreated()).andReturn());
     }
 
-    private ResultActions checkin(MockHttpSession session, long goalId, String value) throws Exception {
+    private ResultActions checkin(TestSession session, long goalId, String value) throws Exception {
         return mvc.perform(json(post("/api/goals/" + goalId + "/checkins"),
-                "{\"date\":\"" + day + "\",\"value\":" + value + "}").session(session));
+                "{\"date\":\"" + day + "\",\"value\":" + value + "}").with(session));
     }
 
     // ------------------------------------------------------------------ budgets
 
     @Test
     void budgetRemainingIsBudgetMinusSpentAndCommitted() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long travel = category(admin, "Travel");
         budget(admin, dept, travel, "1000.00");
-        MockHttpSession member = user(admin, "MEMBER", dept);
-        MockHttpSession manager = user(admin, "MANAGER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
+        TestSession manager = user(admin, "MANAGER", dept);
 
         submitted(member, dept, travel, "200.00");                       // committed
         long approved = submitted(member, dept, travel, "300.00");       // spent
-        mvc.perform(post("/api/expenses/" + approved + "/approve").session(manager)).andExpect(status().isOk());
+        mvc.perform(post("/api/expenses/" + approved + "/approve").with(manager)).andExpect(status().isOk());
         long paid = submitted(member, dept, travel, "100.00");           // spent
-        mvc.perform(post("/api/expenses/" + paid + "/approve").session(manager)).andExpect(status().isOk());
-        mvc.perform(json(post("/api/expenses/" + paid + "/pay"), "{\"paymentReference\":\"TRF-1\"}").session(admin))
+        mvc.perform(post("/api/expenses/" + paid + "/approve").with(manager)).andExpect(status().isOk());
+        mvc.perform(json(post("/api/expenses/" + paid + "/pay"), "{\"paymentReference\":\"TRF-1\"}").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PAID"));
         expense(member, dept, travel, "50.00", false).andExpect(status().isCreated());   // draft: not counted
         long rejected = submitted(member, dept, travel, "70.00");        // rejected: not counted
-        mvc.perform(json(post("/api/expenses/" + rejected + "/reject"), "{\"note\":\"Not planned\"}").session(manager))
+        mvc.perform(json(post("/api/expenses/" + rejected + "/reject"), "{\"note\":\"Not planned\"}").with(manager))
                 .andExpect(status().isOk());
 
         mvc.perform(get("/api/budgets").param("year", "" + quarter.year()).param("quarter", "" + quarter.quarter())
-                        .param("departmentId", "" + dept).session(manager))
+                        .param("departmentId", "" + dept).with(manager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currency").value("EUR"))
                 .andExpect(jsonPath("$.lines", hasSize(1)))
@@ -172,29 +168,29 @@ class BusinessApiTests {
                 .andExpect(jsonPath("$.totals.remaining").value(400.0));
 
         // Members cannot read budgets, and nobody but finance can set them.
-        mvc.perform(get("/api/budgets").session(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/budgets").with(member)).andExpect(status().isForbidden());
         mvc.perform(json(post("/api/budgets"), "{\"departmentId\":" + dept + ",\"categoryId\":" + travel
                         + ",\"year\":" + quarter.year() + ",\"quarter\":" + quarter.quarter() + ",\"amount\":5}")
-                        .session(manager))
+                        .with(manager))
                 .andExpect(status().isForbidden());
         // One line per department, category and quarter.
         mvc.perform(json(post("/api/budgets"), "{\"departmentId\":" + dept + ",\"categoryId\":" + travel
                         + ",\"year\":" + quarter.year() + ",\"quarter\":" + quarter.quarter() + ",\"amount\":5}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void spendingWithoutABudgetLineShowsUpWithAZeroBudget() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long hardware = category(admin, "Hardware");
-        MockHttpSession member = user(admin, "MEMBER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
         expense(member, dept, hardware, "80.00", true)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.overBudget").value(true));
 
-        mvc.perform(get("/api/budgets").param("departmentId", "" + dept).session(admin))
+        mvc.perform(get("/api/budgets").param("departmentId", "" + dept).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lines[0].id").doesNotExist())
                 .andExpect(jsonPath("$.lines[0].amount").value(0.0))
@@ -204,11 +200,11 @@ class BusinessApiTests {
 
     @Test
     void submittingOverTheRemainingBudgetIsAllowedButFlagged() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long software = category(admin, "Software & licences");
         budget(admin, dept, software, "100.00");
-        MockHttpSession member = user(admin, "MEMBER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
 
         expense(member, dept, software, "60.00", true)
                 .andExpect(status().isCreated())
@@ -221,7 +217,7 @@ class BusinessApiTests {
                 .andReturn());
         // Editing it down to what is left clears the flag.
         mvc.perform(json(put("/api/expenses/" + over), "{\"departmentId\":" + dept + ",\"categoryId\":" + software
-                        + ",\"amount\":40,\"date\":\"" + day + "\",\"vendor\":\"JetBrains\"}").session(member))
+                        + ",\"amount\":40,\"date\":\"" + day + "\",\"vendor\":\"JetBrains\"}").with(member))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUBMITTED"))
                 .andExpect(jsonPath("$.overBudget").value(false));
@@ -231,14 +227,14 @@ class BusinessApiTests {
 
     @Test
     void expenseWorkflowEnforcesScopeAndForbidsSelfApproval() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long otherDept = department(admin);
         long training = category(admin, "Training");
-        MockHttpSession member = user(admin, "MEMBER", dept);
-        MockHttpSession manager = user(admin, "MANAGER", dept);
-        MockHttpSession otherManager = user(admin, "MANAGER", otherDept);
-        MockHttpSession otherMember = user(admin, "MEMBER", otherDept);
+        TestSession member = user(admin, "MEMBER", dept);
+        TestSession manager = user(admin, "MANAGER", dept);
+        TestSession otherManager = user(admin, "MANAGER", otherDept);
+        TestSession otherMember = user(admin, "MEMBER", otherDept);
 
         // Members submit for their own department only; the department defaults to their own.
         expense(member, otherDept, training, "10.00", true).andExpect(status().isForbidden());
@@ -248,68 +244,68 @@ class BusinessApiTests {
                 .andExpect(jsonPath("$.departmentId").value(dept))
                 .andExpect(jsonPath("$.actions.submit").value(true))
                 .andReturn());
-        mvc.perform(post("/api/expenses/" + draft + "/submit").session(otherMember)).andExpect(status().isNotFound());
-        mvc.perform(post("/api/expenses/" + draft + "/submit").session(member))
+        mvc.perform(post("/api/expenses/" + draft + "/submit").with(otherMember)).andExpect(status().isNotFound());
+        mvc.perform(post("/api/expenses/" + draft + "/submit").with(member))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUBMITTED"));
 
         // Members cannot approve; the manager of another department cannot either.
-        mvc.perform(post("/api/expenses/" + draft + "/approve").session(member)).andExpect(status().isForbidden());
-        mvc.perform(post("/api/expenses/" + draft + "/approve").session(otherManager)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/expenses/" + draft + "/approve").with(member)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/expenses/" + draft + "/approve").with(otherManager)).andExpect(status().isForbidden());
         // Rejecting needs a reason.
-        mvc.perform(json(post("/api/expenses/" + draft + "/reject"), "{}").session(manager)).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/expenses/" + draft).session(manager))
+        mvc.perform(json(post("/api/expenses/" + draft + "/reject"), "{}").with(manager)).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/expenses/" + draft).with(manager))
                 .andExpect(jsonPath("$.actions.approve").value(true))
                 .andExpect(jsonPath("$.actions.pay").value(false));
-        mvc.perform(json(post("/api/expenses/" + draft + "/approve"), "{\"note\":\"OK\"}").session(manager))
+        mvc.perform(json(post("/api/expenses/" + draft + "/approve"), "{\"note\":\"OK\"}").with(manager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"))
                 .andExpect(jsonPath("$.decisionNote").value("OK"));
-        mvc.perform(post("/api/expenses/" + draft + "/approve").session(manager)).andExpect(status().isConflict());
+        mvc.perform(post("/api/expenses/" + draft + "/approve").with(manager)).andExpect(status().isConflict());
         // Only finance pays.
-        mvc.perform(post("/api/expenses/" + draft + "/pay").session(manager)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/expenses/" + draft + "/pay").with(manager)).andExpect(status().isForbidden());
         mvc.perform(json(post("/api/expenses/" + draft + "/pay"), "{\"paidOn\":\"" + LocalDate.now().plusDays(1) + "\"}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isBadRequest());
-        mvc.perform(post("/api/expenses/" + draft + "/pay").session(admin))
+        mvc.perform(post("/api/expenses/" + draft + "/pay").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PAID"))
                 .andExpect(jsonPath("$.paidOn").value(LocalDate.now().toString()));
         // Paid expenses are no longer editable or deletable.
         mvc.perform(json(put("/api/expenses/" + draft), "{\"categoryId\":" + training + ",\"amount\":1,\"date\":\""
-                + day + "\",\"vendor\":\"X\"}").session(member)).andExpect(status().isConflict());
-        mvc.perform(delete("/api/expenses/" + draft).session(member)).andExpect(status().isConflict());
+                + day + "\",\"vendor\":\"X\"}").with(member)).andExpect(status().isConflict());
+        mvc.perform(delete("/api/expenses/" + draft).with(member)).andExpect(status().isConflict());
 
         // Nobody approves their own expense: not a manager, not an admin with FINANCE_MANAGE.
         long managersOwn = submitted(manager, dept, training, "30.00");
-        mvc.perform(post("/api/expenses/" + managersOwn + "/approve").session(manager))
+        mvc.perform(post("/api/expenses/" + managersOwn + "/approve").with(manager))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You cannot approve or reject your own expense"));
-        mvc.perform(post("/api/expenses/" + managersOwn + "/approve").session(admin)).andExpect(status().isOk());
+        mvc.perform(post("/api/expenses/" + managersOwn + "/approve").with(admin)).andExpect(status().isOk());
         long adminsOwn = submitted(admin, dept, training, "40.00");
-        mvc.perform(post("/api/expenses/" + adminsOwn + "/approve").session(admin)).andExpect(status().isForbidden());
-        mvc.perform(post("/api/expenses/" + adminsOwn + "/approve").session(manager)).andExpect(status().isOk());
+        mvc.perform(post("/api/expenses/" + adminsOwn + "/approve").with(admin)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/expenses/" + adminsOwn + "/approve").with(manager)).andExpect(status().isOk());
 
         // Drafts can be deleted by their author.
         long toDelete = id(expense(member, dept, training, "5.00", false).andReturn());
-        mvc.perform(delete("/api/expenses/" + toDelete).session(otherMember)).andExpect(status().isNotFound());
-        mvc.perform(delete("/api/expenses/" + toDelete).session(member)).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/expenses/" + toDelete).with(otherMember)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/expenses/" + toDelete).with(member)).andExpect(status().isNoContent());
 
         // Members only see their own expenses; finance readers see the department's.
-        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).session(member))
+        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).with(member))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(1))
                 .andExpect(jsonPath("$.totalAmount").value(25.0));
-        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("size", "10").session(manager))
+        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("size", "10").with(manager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(3))
                 .andExpect(jsonPath("$.totalAmount").value(95.0));
-        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("status", "PAID").session(admin))
+        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("status", "PAID").with(admin))
                 .andExpect(jsonPath("$.totalItems").value(1));
-        mvc.perform(get("/api/expenses").param("status", "nope").session(admin)).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/expenses").param("status", "nope").with(admin)).andExpect(status().isBadRequest());
 
         // Every transition is audited.
-        mvc.perform(get("/api/audit").param("limit", "100").session(admin))
+        mvc.perform(get("/api/audit").param("limit", "100").with(admin))
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("expense_submitted")))
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("expense_approved")))
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("expense_paid")))
@@ -318,19 +314,19 @@ class BusinessApiTests {
 
     @Test
     void paymentsLedgerListsPaidExpensesWithMonthlyTotals() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long office = category(admin, "Office");
-        MockHttpSession member = user(admin, "MEMBER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
         long first = submitted(member, dept, office, "120.50");
         long second = submitted(member, dept, office, "79.50");
         for (long id : new long[]{first, second}) {
-            mvc.perform(post("/api/expenses/" + id + "/approve").session(admin)).andExpect(status().isOk());
-            mvc.perform(post("/api/expenses/" + id + "/pay").session(admin)).andExpect(status().isOk());
+            mvc.perform(post("/api/expenses/" + id + "/approve").with(admin)).andExpect(status().isOk());
+            mvc.perform(post("/api/expenses/" + id + "/pay").with(admin)).andExpect(status().isOk());
         }
 
         String month = LocalDate.now().toString().substring(0, 7);
-        mvc.perform(get("/api/payments").param("departmentId", "" + dept).session(admin))
+        mvc.perform(get("/api/payments").param("departmentId", "" + dept).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.count").value(2))
                 .andExpect(jsonPath("$.totalAmount").value(200.0))
@@ -339,7 +335,7 @@ class BusinessApiTests {
                 .andExpect(jsonPath("$.months[5].total").value(200.0))
                 .andExpect(jsonPath("$.items[0].vendor").value("JetBrains"))
                 .andExpect(jsonPath("$.provider.connected").value(false));
-        mvc.perform(get("/api/payments").session(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/payments").with(member)).andExpect(status().isForbidden());
     }
 
     // ------------------------------------------------------------------ goals and performance
@@ -367,24 +363,24 @@ class BusinessApiTests {
 
     @Test
     void goalsAreScopedAndPerformanceIsTheWeightedAttainment() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long otherDept = department(admin);
-        MockHttpSession manager = user(admin, "MANAGER", dept);
-        MockHttpSession member = user(admin, "MEMBER", dept);
-        MockHttpSession otherManager = user(admin, "MANAGER", otherDept);
-        MockHttpSession viewer = user(admin, "VIEWER", otherDept);
+        TestSession manager = user(admin, "MANAGER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
+        TestSession otherManager = user(admin, "MANAGER", otherDept);
+        TestSession viewer = user(admin, "VIEWER", otherDept);
 
         // Direction and target must agree.
         mvc.perform(json(post("/api/goals"), "{\"departmentId\":" + dept + ",\"name\":\"Bad\",\"unit\":\"%\","
-                        + "\"direction\":\"LOWER_IS_BETTER\",\"baseline\":4,\"target\":8}").session(manager))
+                        + "\"direction\":\"LOWER_IS_BETTER\",\"baseline\":4,\"target\":8}").with(manager))
                 .andExpect(status().isBadRequest());
         // Managers manage their own department's goals only; members not at all.
         mvc.perform(json(post("/api/goals"), "{\"departmentId\":" + dept + ",\"name\":\"X\",\"unit\":\"%\","
-                        + "\"direction\":\"HIGHER_IS_BETTER\",\"baseline\":1,\"target\":2}").session(otherManager))
+                        + "\"direction\":\"HIGHER_IS_BETTER\",\"baseline\":1,\"target\":2}").with(otherManager))
                 .andExpect(status().isForbidden());
         mvc.perform(json(post("/api/goals"), "{\"departmentId\":" + dept + ",\"name\":\"X\",\"unit\":\"%\","
-                        + "\"direction\":\"HIGHER_IS_BETTER\",\"baseline\":1,\"target\":2}").session(member))
+                        + "\"direction\":\"HIGHER_IS_BETTER\",\"baseline\":1,\"target\":2}").with(member))
                 .andExpect(status().isForbidden());
 
         long higher = goal(manager, dept, "HIGHER_IS_BETTER", "40", "60", 3);   // 50 -> 50 %
@@ -396,11 +392,11 @@ class BusinessApiTests {
         checkin(otherManager, higher, "60").andExpect(status().isForbidden());
         checkin(viewer, higher, "60").andExpect(status().isForbidden());
         mvc.perform(json(post("/api/goals/" + higher + "/checkins"), "{\"date\":\"" + LocalDate.now().plusDays(1)
-                + "\",\"value\":1}").session(member)).andExpect(status().isBadRequest());
+                + "\",\"value\":1}").with(member)).andExpect(status().isBadRequest());
         mvc.perform(json(post("/api/goals/" + higher + "/checkins"), "{\"date\":\"" + quarter.start().minusDays(1)
-                + "\",\"value\":1}").session(member)).andExpect(status().isBadRequest());
+                + "\",\"value\":1}").with(member)).andExpect(status().isBadRequest());
 
-        mvc.perform(get("/api/goals").param("departmentId", "" + dept).session(member))
+        mvc.perform(get("/api/goals").param("departmentId", "" + dept).with(member))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[?(@.id == " + higher + ")].attainment").value(hasItem(50.0)))
@@ -410,7 +406,7 @@ class BusinessApiTests {
 
         // (50 * 3 + 120 * 1) / 4 = 67.5
         String body = mvc.perform(get("/api/performance").param("year", "" + quarter.year())
-                        .param("quarter", "" + quarter.quarter()).session(viewer))
+                        .param("quarter", "" + quarter.quarter()).with(viewer))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         String base = "$.departments[?(@.departmentId == " + dept + ")]";
@@ -422,34 +418,34 @@ class BusinessApiTests {
         assertThat(trend.getLast()).isEqualTo(67.5);
 
         // The person who recorded a check-in can delete it; others in the department cannot.
-        String checkins = mvc.perform(get("/api/goals/" + lower + "/checkins").session(member))
+        String checkins = mvc.perform(get("/api/goals/" + lower + "/checkins").with(member))
                 .andExpect(jsonPath("$[0].canDelete").value(false))
                 .andReturn().getResponse().getContentAsString();
         long checkinId = ((Number) JsonPath.read(checkins, "$[0].id")).longValue();
-        mvc.perform(delete("/api/goals/" + lower + "/checkins/" + checkinId).session(member)).andExpect(status().isForbidden());
-        mvc.perform(delete("/api/goals/" + lower + "/checkins/" + checkinId).session(manager)).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/goals/" + lower + "/checkins/" + checkinId).with(member)).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/goals/" + lower + "/checkins/" + checkinId).with(manager)).andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/performance").session(user(admin, "MEMBER", otherDept))).andExpect(status().isOk());
+        mvc.perform(get("/api/performance").with(user(admin, "MEMBER", otherDept))).andExpect(status().isOk());
     }
 
     // ------------------------------------------------------------------ reports
 
     @Test
     void reportsOverviewCombinesSpendBudgetPerformanceAndHeadcount() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long marketing = category(admin, "Marketing");
         budget(admin, dept, marketing, "1000.00");
-        MockHttpSession manager = user(admin, "MANAGER", dept);
-        MockHttpSession member = user(admin, "MEMBER", dept);
+        TestSession manager = user(admin, "MANAGER", dept);
+        TestSession member = user(admin, "MEMBER", dept);
         long approved = submitted(member, dept, marketing, "250.00");
-        mvc.perform(post("/api/expenses/" + approved + "/approve").session(manager)).andExpect(status().isOk());
+        mvc.perform(post("/api/expenses/" + approved + "/approve").with(manager)).andExpect(status().isOk());
         submitted(member, dept, marketing, "100.00");
         long kpi = goal(manager, dept, "HIGHER_IS_BETTER", "0", "10", 1);
         checkin(member, kpi, "8").andExpect(status().isCreated());
 
         String body = mvc.perform(get("/api/reports/overview").param("from", quarter.start().toString())
-                        .param("to", quarter.end().toString()).session(user(admin, "VIEWER", dept)))
+                        .param("to", quarter.end().toString()).with(user(admin, "VIEWER", dept)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.performanceQuarter").value(quarter.quarter()))
                 .andExpect(jsonPath("$.monthlySpend", hasSize(3)))
@@ -464,25 +460,25 @@ class BusinessApiTests {
         assertThat(JsonPath.<List<Integer>>read(body, "$.headcount" + byDept + ".active")).containsExactly(3);
         assertThat(JsonPath.<List<String>>read(body, "$.spendByCategory[*].categoryName")).contains("Marketing");
 
-        mvc.perform(get("/api/reports/overview").session(member)).andExpect(status().isForbidden());
-        mvc.perform(get("/api/reports/overview").param("from", "2026-05-01").param("to", "2026-04-01").session(admin))
+        mvc.perform(get("/api/reports/overview").with(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/reports/overview").param("from", "2026-05-01").param("to", "2026-04-01").with(admin))
                 .andExpect(status().isBadRequest());
 
         // CSV exports.
         mvc.perform(get("/api/reports/export.csv").param("type", "budgets").param("from", quarter.start().toString())
-                        .param("to", quarter.end().toString()).session(admin))
+                        .param("to", quarter.end().toString()).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", containsString("attachment")))
                 .andExpect(content().contentTypeCompatibleWith("text/csv"))
                 .andExpect(content().string(containsString("year,quarter,department,category,budget,spent")))
                 .andExpect(content().string(containsString(",Marketing,1000.00,250.00,100.00,650.00,EUR")));
-        mvc.perform(get("/api/reports/export.csv").param("type", "expenses").session(admin))
+        mvc.perform(get("/api/reports/export.csv").param("type", "expenses").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("id,date,department,category,vendor")));
-        mvc.perform(get("/api/reports/export.csv").param("type", "performance").session(admin)).andExpect(status().isOk());
-        mvc.perform(get("/api/reports/export.csv").param("type", "salaries").session(admin)).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/reports/export.csv").param("type", "performance").with(admin)).andExpect(status().isOk());
+        mvc.perform(get("/api/reports/export.csv").param("type", "salaries").with(admin)).andExpect(status().isBadRequest());
         // Viewers read reports but not individual expenses.
-        mvc.perform(get("/api/reports/export.csv").param("type", "expenses").session(user(admin, "VIEWER", dept)))
+        mvc.perform(get("/api/reports/export.csv").param("type", "expenses").with(user(admin, "VIEWER", dept)))
                 .andExpect(status().isForbidden());
     }
 
@@ -490,7 +486,7 @@ class BusinessApiTests {
 
     @Test
     void businessImportsReportErrorsPerRow() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         String deptName = JsonPath.read(mvc.perform(get("/api/departments")).andReturn().getResponse().getContentAsString(),
                 "$[?(@.id == " + dept + ")].name").toString().replaceAll("[\\[\\]\"]", "");
@@ -501,7 +497,7 @@ class BusinessApiTests {
                         + "{\"department\":\"Nowhere\",\"category\":\"Travel\",\"year\":\"" + year + "\",\"quarter\":\"1\",\"amount\":\"10\"},"
                         + "{\"department\":\"" + deptName + "\",\"category\":\"Travel\",\"year\":\"" + year + "\",\"quarter\":\"5\",\"amount\":\"10\"},"
                         + "{\"department\":\"" + deptName + "\",\"category\":\"Travel\",\"year\":\"" + year + "\",\"quarter\":\"" + quarter.quarter() + "\",\"amount\":\"20\"}"
-                        + "]}").session(admin))
+                        + "]}").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(1))
                 .andExpect(jsonPath("$.skipped").value(3))
@@ -517,44 +513,44 @@ class BusinessApiTests {
                         + "{\"department\":\"" + deptName + "\",\"category\":\"Travel\",\"amount\":\"10\",\"date\":\"" + LocalDate.now().plusDays(3) + "\",\"vendor\":\"Lufthansa\"},"
                         + "{\"department\":\"" + deptName + "\",\"category\":\"Travel\",\"amount\":\"10\",\"date\":\"" + day + "\",\"vendor\":\"\"},"
                         + "{\"department\":\"" + deptName + "\",\"category\":\"Travel\",\"amount\":\"10\",\"date\":\"" + day + "\",\"vendor\":\"Uber\",\"status\":\"SUBMITTED\"}"
-                        + "]}").session(admin))
+                        + "]}").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(2))
                 .andExpect(jsonPath("$.skipped").value(3))
                 .andExpect(jsonPath("$.errors[*].row").value(org.hamcrest.Matchers.contains(2, 3, 4)));
         // The imported, paid 1600 overspent the 1500 budget, so the submitted 10 is flagged.
-        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("status", "SUBMITTED").session(admin))
+        mvc.perform(get("/api/expenses").param("departmentId", "" + dept).param("status", "SUBMITTED").with(admin))
                 .andExpect(jsonPath("$.items[0].overBudget").value(true));
-        mvc.perform(get("/api/budgets").param("departmentId", "" + dept).session(admin))
+        mvc.perform(get("/api/budgets").param("departmentId", "" + dept).with(admin))
                 .andExpect(jsonPath("$.lines[0].spent").value(1600.0))
                 .andExpect(jsonPath("$.lines[0].remaining").value(-110.0));
 
-        MockHttpSession manager = user(admin, "MANAGER", dept);
+        TestSession manager = user(admin, "MANAGER", dept);
         long kpi = goal(manager, dept, "HIGHER_IS_BETTER", "0", "10", 1);
-        String kpiName = JsonPath.read(mvc.perform(get("/api/goals/" + kpi).session(admin)).andReturn().getResponse()
+        String kpiName = JsonPath.read(mvc.perform(get("/api/goals/" + kpi).with(admin)).andReturn().getResponse()
                 .getContentAsString(), "$.name");
         mvc.perform(json(post("/api/import/checkins"), "{\"rows\":["
                         + "{\"goalId\":\"" + kpi + "\",\"date\":\"" + day + "\",\"value\":\"4\"},"
                         + "{\"department\":\"" + deptName + "\",\"goal\":\"" + kpiName + "\",\"date\":\"" + day + "\",\"value\":\"5\",\"note\":\"From CSV\"},"
                         + "{\"department\":\"" + deptName + "\",\"goal\":\"No such goal\",\"date\":\"" + day + "\",\"value\":\"5\"},"
                         + "{\"goalId\":\"" + kpi + "\",\"date\":\"" + day + "\",\"value\":\"lots\"}"
-                        + "]}").session(manager))
+                        + "]}").with(manager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(2))
                 .andExpect(jsonPath("$.errors[*].row").value(org.hamcrest.Matchers.contains(3, 4)));
-        mvc.perform(get("/api/goals/" + kpi + "/checkins").session(admin))
+        mvc.perform(get("/api/goals/" + kpi + "/checkins").with(admin))
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].source").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.is("CSV"))));
 
         // Expense and budget imports are for finance.
-        mvc.perform(json(post("/api/import/budgets"), "{\"rows\":[{}]}").session(manager)).andExpect(status().isForbidden());
+        mvc.perform(json(post("/api/import/budgets"), "{\"rows\":[{}]}").with(manager)).andExpect(status().isForbidden());
     }
 
     // ------------------------------------------------------------------ API-key ingest
 
-    private String apiKey(MockHttpSession admin, String scopes) throws Exception {
+    private String apiKey(TestSession admin, String scopes) throws Exception {
         String body = mvc.perform(json(post("/api/keys"), "{\"name\":\"" + unique("Ingest") + "\",\"scopes\":" + scopes + "}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(body, "$.secret");
@@ -562,7 +558,7 @@ class BusinessApiTests {
 
     @Test
     void ingestAcceptsScopedApiKeysWithoutASession() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = department(admin);
         long kpi = goal(admin, dept, "HIGHER_IS_BETTER", "90", "99", 1);
         String scoped = apiKey(admin, "[\"ingest:checkins\"]");
@@ -582,10 +578,10 @@ class BusinessApiTests {
         assertThat(result.getRequest().getSession(false)).isNull();
         assertThat(result.getResponse().getHeader("Set-Cookie")).isNull();
 
-        mvc.perform(get("/api/goals/" + kpi + "/checkins").session(admin))
+        mvc.perform(get("/api/goals/" + kpi + "/checkins").with(admin))
                 .andExpect(jsonPath("$[0].source").value("API"))
                 .andExpect(jsonPath("$[0].recordedBy", containsString("API key: Ingest-")));
-        mvc.perform(get("/api/goals/" + kpi).session(admin)).andExpect(jsonPath("$.attainment").value(83.3));
+        mvc.perform(get("/api/goals/" + kpi).with(admin)).andExpect(jsonPath("$.attainment").value(83.3));
 
         // A key without the scope: 403. A wrong or missing key: 401. A session is not enough.
         mvc.perform(json(post("/api/ingest/checkins"), payload).header("Authorization", "Bearer " + unscoped))
@@ -594,14 +590,14 @@ class BusinessApiTests {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid API key"));
         mvc.perform(json(post("/api/ingest/checkins"), payload)).andExpect(status().isUnauthorized());
-        mvc.perform(json(post("/api/ingest/checkins"), payload).session(admin)).andExpect(status().isUnauthorized());
+        mvc.perform(json(post("/api/ingest/checkins"), payload).with(admin)).andExpect(status().isUnauthorized());
 
         // Keys can only get known scopes, and the list shows them.
-        mvc.perform(json(post("/api/keys"), "{\"scopes\":[\"admin:everything\"]}").session(admin))
+        mvc.perform(json(post("/api/keys"), "{\"scopes\":[\"admin:everything\"]}").with(admin))
                 .andExpect(status().isBadRequest());
-        mvc.perform(get("/api/keys").session(admin))
+        mvc.perform(get("/api/keys").with(admin))
                 .andExpect(jsonPath("$[*].scopes[*]").value(hasItem("ingest:checkins")));
-        mvc.perform(get("/api/audit").param("limit", "50").session(admin))
+        mvc.perform(get("/api/audit").param("limit", "50").with(admin))
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("checkins_ingested")));
     }
 

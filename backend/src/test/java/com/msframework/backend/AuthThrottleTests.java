@@ -184,7 +184,7 @@ class AuthThrottleTests {
             mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Jane Doe\",\"phone\":\"0712345678\","
                             + "\"email\":\"" + unique("reg") + "\",\"departmentId\":1,\"password\":\"" + PASSWORD + "\"}")
                             .with(from(ip)))
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isAccepted());
         }
         mvc.perform(json(post("/api/auth/register"), "{\"fullName\":\"Jane Doe\",\"phone\":\"0712345678\","
                         + "\"email\":\"" + unique("reg") + "\",\"departmentId\":1,\"password\":\"" + PASSWORD + "\"}")

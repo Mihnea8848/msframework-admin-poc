@@ -453,7 +453,7 @@ class SessionSecurityTests {
         }
         mvc.perform(get("/api/auth/registration")).andExpect(jsonPath("$.open").value(true));
         mvc.perform(json(post("/api/auth/register"), register).with(TestSession.ANONYMOUS))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
         mvc.perform(get("/api/audit").param("limit", "10").with(admin))
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("org_settings_changed")));
     }
