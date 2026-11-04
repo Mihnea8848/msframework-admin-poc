@@ -59,6 +59,13 @@ Open http://localhost:5173 and sign in as `admin@test.com` / `password123`. This
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@test.com` / `password123` | First admin account, created on an empty database only |
 | `SHOW_SQL` | `false` | Log Hibernate SQL |
 | `API_DOCS_ENABLED` | `true` | Serve the OpenAPI description at `/v3/api-docs` without login. Set it to `false` in production |
+| `SESSION_TIMEOUT` | `30m` | Idle time after which a session ends (a duration: `30m`, `2h`). Requests marked `X-Background-Request: 1` do not count as activity |
+| `TRUSTED_PROXY` | `false` | Set `true` only when the backend is reachable solely through one reverse proxy: the client IP (throttling, sessions list) is then the last address in `X-Forwarded-For`. Otherwise the header is ignored, because any client can forge it |
+| `APP_THROTTLE_LOGIN_LIMIT` / `_WINDOW` | `20` / `1m` | Sign-in attempts per client IP per window |
+| `APP_THROTTLE_FORGOT_PASSWORD_LIMIT` / `_WINDOW` | `5` / `15m` | Password-reset requests per IP |
+| `APP_THROTTLE_RESET_PASSWORD_LIMIT` / `_WINDOW` | `10` / `15m` | Password-reset submissions per IP |
+| `APP_THROTTLE_REGISTER_LIMIT` / `_WINDOW` | `10` / `1h` | Registrations per IP |
+| `APP_THROTTLE_LOCKOUT_MAX_FAILURES` / `_WINDOW` / `_DURATION` | `5` / `15m` / `15m` | Failed sign-ins for one account within the window lock it for the duration |
 
 ## Roles and permissions
 
@@ -76,7 +83,8 @@ Everyone can use **Account & security** (their own email and password) and **App
 Additional rules, enforced in `UserService`:
 - At least one active admin must always exist.
 - You cannot delete or deactivate yourself.
-- Deactivating a user ends their session on their next request.
+- Deactivating or deleting a user, or resetting their password, deletes all their sessions at once (and a deactivated user's request is refused anyway).
+- Sessions (`SessionController`): everyone can list and sign out their own (`/api/sessions/me`); `SESSIONS_MANAGE` (ADMIN) lists any user's and signs them out everywhere. Organisation settings (`/api/org/settings`): any signed-in user reads them, `ORG_SETTINGS_MANAGE` (ADMIN) changes them.
 
 ## Data, seeding and migrations
 
@@ -91,6 +99,7 @@ Additional rules, enforced in `UserService`:
 - `DatabaseSeeder` is idempotent and runs on every start, after the migrations, under a PostgreSQL advisory lock (so several instances can start at once). It:
   - syncs role permissions;
   - seeds departments, the admin and the integrations only when their tables are empty.
+- **Sessions are in PostgreSQL** (Spring Session JDBC, tables `spring_session` and `spring_session_attributes`, created by `V4__sessions_security.sql`; Spring Session's own initializer is off). They survive restarts. The cookie is `SESSION`. `V4` also creates `auth_throttle`, the sign-in throttle counters.
 - **Password reset doesn't send email yet.** The link is written to the backend log (`Password reset link for ...`). Tokens are stored hashed in `password_reset_tokens`, are single-use, last 30 minutes and survive restarts.
 - To wipe everything and start fresh: `docker compose down -v`. This deletes all local data.
 - Connect to the database directly: `psql -h localhost -p 5433 -U msframework msframework` (password `msframework`).
@@ -125,6 +134,7 @@ Frontend scripts (in `frontend/`):
     ```
     `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` default to `msframework`. The tests build the schema with the real Flyway migrations, and run Flyway `clean` first so a database left over from an earlier run starts empty. That wipes everything in it, so never use your dev database. `clean` is allowed only in the test profile (`spring.flyway.clean-disabled=false` in `application-test.properties`, strategy in `TestcontainersConfiguration`); it stays disabled in the app.
   - `MigrationTests` creates and drops extra databases (`msf_mig_*`) on the same server, so the test user needs the `CREATEDB` right. It loads the legacy fixtures in `src/test/resources/db/legacy` (a pre-RBAC database from commit `371775c`, the same database after it was started by the last pre-Flyway `main`, and a database created by that `main`), migrates them, and requires the same columns, constraints and indexes as a database migrated from empty.
+- Sessions and CSRF in tests: use `TestSession` (`TestSession.login(mvc, email, password)`, then `.with(session)`), which sends the `SESSION` cookie and the CSRF cookie and header. `.session(MockHttpSession)` does not work with Spring Session. Anonymous POSTs need `.with(TestSession.ANONYMOUS)`. The test profile sets the throttle limits very high; `AuthThrottleTests` lowers them for itself and uses its own client IPs.
 - Every test class is annotated `@IntegrationTest` (`IntegrationTest.java`), so they all share one Spring context and one container. Don't add `@SpringBootTest` directly, or you'll start a second context and database.
 - When you change behaviour, add or adjust a test in `ApiIntegrationTests`. Use unique emails and names, because the tests share one database.
 - ESLint runs the React Compiler rules (`eslint-plugin-react-hooks` v7). Two common failures:
@@ -158,6 +168,9 @@ Frontend scripts (in `frontend/`):
 | UI says "The backend is not reachable" | The backend isn't running or failed at start-up. Check its console. |
 | Login works but pages show "permission" errors | That's expected for limited roles. Check the user's role on the User management page. |
 | `docker compose up` complains about the name `msframework_db` | A container with that name exists from another checkout: `docker rm -f msframework_db` (the data volume is kept). |
+| A POST/PUT/PATCH/DELETE answers 403 "Your security token (CSRF) is missing or out of date" | The request did not send `X-XSRF-TOKEN` matching the `XSRF-TOKEN` cookie. Use `api/client.ts` (it adds the header and retries once after priming `GET /api/auth/csrf`); in curl, call `/api/auth/csrf` first with a cookie jar and send the header. |
+| Sign-in answers 429 "This account is locked" | 5 failed sign-ins within 15 minutes. Wait for `Retry-After`, or in development: `DELETE FROM auth_throttle WHERE key = 'login-fail:<email>';` |
+| Everyone shares one rate limit behind a proxy | All requests come from the proxy's address. Set `TRUSTED_PROXY=true` if (and only if) the backend is reachable only through that proxy. |
 | `OpenApiContractTest` fails with "The API no longer matches api/openapi.json" | The API changed. If that was intended, regenerate the file (see API contract) and commit it with the change. |
 | Start-up fails with "does not look like an MSFramework schema" | `DB_URL` points at a database that has other tables and no Flyway history. Use an empty database, or this app's own database. |
 | Start-up fails with `Schema-validation: missing column` (or table) | An entity changed without a migration. Add a `V<n>__...sql` that makes the same change. |
@@ -232,11 +245,15 @@ The full rules are in `.claude/skills/git-workflow/SKILL.md`; read it before any
 ```
 backend/src/main/java/com/msframework/backend/
   config/      SecurityConfig (session auth, public routes), SystemRoles, Permission, Integrations,
-               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses)
+               FlywayConfig (guarded baseline), DatabaseSeeder, OpenApiConfig (title, server, error responses),
+               SessionConfig + BackgroundRequests (Spring Session, idle time ignores background polls),
+               ThrottleProperties (app.throttle.*)
 resources/db/migration/  Flyway migrations V1, V2, ... (the only place the schema changes)
   controller/  REST controllers under /api/* (thin: authorize, then delegate)
   service/     CurrentUserService (who is calling + permission checks), UserService (validation + rules),
-               PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService
+               PasswordResetService, ImportService, AuditService, AuthSessionService, DatabaseInfoService,
+               AuthThrottleService (429s and lockout), PasswordPolicy, UserSessionService (sessions by user),
+               OrgSettingsService, AccountDetailsService (sign-in lookup + BCrypt re-hash), ClientIpResolver
   dto/         records for every request/response (request bodies are never a Map). Entities are never serialized.
   exception/   ApiException(status, message) + GlobalExceptionHandler -> {"status","error","message"}
 api/openapi.json       the committed API contract, regenerated with -Dopenapi.write=true (see API contract)
@@ -281,6 +298,9 @@ Conventions:
 - **New page:** add an entry to `routes/navigation.ts` (and its key to `PageKey`; set `mobilePriority` if it should be able to appear in the phone bottom bar) and a loader to `PAGE_LOADERS` in `app/pages.ts` (`() => import("../pages/MyPage")`, default export). `app/routes.tsx` turns every entry into a lazy route inside the shell behind `RequirePermission`, and the sidebar, bottom bar, More sheet and Quick Actions pick it up. Keep each page chunk under the 40 kB budget; never import a page statically, or it lands in the entry bundle. A page outside the shell (like `/login`) is added to `app/routes.tsx` directly.
 - **Request bodies** are records in `dto/` named after what they carry (`ChangePasswordRequest`), never `Map<String, ...>`, so the contract describes them. Keep field names stable: the frontend sends them as-is.
 - **API changes** go with a regenerated `api/openapi.json` in the same pull request.
-- **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly.
+- **API calls:** use `get`/`post`/`put`/`patch`/`del` from `api/client.ts` with relative `/api/...` paths. Don't call `fetch` directly: the client adds the CSRF header to unsafe requests.
+- **Polling:** a request the app makes on its own (a timer, an auto-refresh) passes `{ background: true }`, which sends `X-Background-Request: 1`, so it does not keep an idle session alive. User actions never pass it.
+- **CSRF:** the only exemptions are listed in `SecurityConfig.CSRF_EXEMPT` (empty). Add an endpoint there only when it is authenticated by something other than the session cookie (the planned API-key ingest under `/api/ingest/**`).
+- **Passwords:** new passwords go through `PasswordPolicy` (organisation minimum length, 72 bytes, a number, a symbol, not in `security/common-passwords.txt`). The frontend mirror is `utils/validators.ts` with `utils/commonPasswords.ts`; `PasswordPolicyTests` fails when the two blocklists disagree.
 - **Validation rules** exist in two places: backend `UserService` / `DepartmentRules` and frontend `utils/validators.ts`. Keep them in sync, and cover a changed rule in `utils/validators.test.ts`.
 - Pages labelled as demo or sample data (Payments, department performance and budget, MFA, SSO) are intentionally not backed by real services. Keep them clearly labelled until they are.
