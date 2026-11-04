@@ -23,7 +23,8 @@ public class DatabaseInfoService {
     private static final List<String> TABLES = List.of(
             "users", "departments", "role", "role_permissions", "user_roles",
             "audit_events", "service_connections", "webhooks", "api_keys",
-            "org_settings", "password_reset_tokens"
+            "org_settings", "password_reset_tokens",
+            "access_requests"
     );
 
     private final DataSource dataSource;
