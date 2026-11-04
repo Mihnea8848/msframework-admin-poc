@@ -50,5 +50,16 @@ public enum Permission {
 
     // People: access requests (self-registration review) and the roles overview
     ACCESS_REQUESTS_MANAGE,
-    ROLES_READ
+    ROLES_READ,
+
+    // Business: budgets, expenses with approvals, goals and KPIs, reports (BUSINESS-API).
+    // Department scoping (managers and members act on their own department) is enforced in
+    // BusinessAccess, not by the permission itself.
+    FINANCE_READ,
+    FINANCE_MANAGE,
+    EXPENSE_SUBMIT,
+    EXPENSE_APPROVE,
+    GOALS_READ,
+    GOALS_MANAGE,
+    REPORTS_READ
 }

@@ -80,7 +80,8 @@ class MigrationTests {
         DataSource db = createDatabase("empty");
         FlywayConfig.migrate(flyway(db));
 
-        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema", "3 SQL people");
+        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema", "3 SQL people")
+                .contains("5 SQL business");
         assertThat(tables(db)).containsAll(Set.of("users", "role", "user_roles", "departments", "audit_events",
                 "password_reset_tokens", "access_requests", "flyway_schema_history"));
         assertThat(new JdbcTemplate(db).queryForObject("SELECT COUNT(*) FROM role", Integer.class))
@@ -142,7 +143,7 @@ class MigrationTests {
         // (a) same schema as a database migrated from empty
         assertThat(schema(db)).isEqualTo(freshSchema);
         assertThat(history(db)).startsWith("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema",
-                "3 SQL people");
+                "3 SQL people").contains("5 SQL business");
 
         // (b) the data survived, and every user has exactly the expected role and a status
         assertThat(rows(db, legacyColumns)).isEqualTo(legacyRows);
@@ -159,10 +160,11 @@ class MigrationTests {
                 .isZero();
 
         // (c) running the migrations again changes nothing
+        List<String> migrated = history(db);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         int applied = history(db).size();
         FlywayConfig.migrate(flyway);
-        assertThat(history(db)).hasSize(applied);
+        assertThat(history(db)).isEqualTo(migrated);
         assertThat(schema(db)).isEqualTo(freshSchema);
     }
 

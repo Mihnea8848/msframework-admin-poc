@@ -45,7 +45,14 @@ export type Permission =
     | "API_KEY_DELETE"
     // People: access requests and the roles overview
     | "ACCESS_REQUESTS_MANAGE"
-    | "ROLES_READ";
+    | "ROLES_READ"
+    | "FINANCE_READ"
+    | "FINANCE_MANAGE"
+    | "EXPENSE_SUBMIT"
+    | "EXPENSE_APPROVE"
+    | "GOALS_READ"
+    | "GOALS_MANAGE"
+    | "REPORTS_READ";
 
 /** The built-in roles in config/SystemRoles.java. */
 export type RoleName = "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";

@@ -38,7 +38,9 @@ public final class SystemRoles {
                 AUDIT_READ,
                 DOCUMENTATION_READ,
                 TIMEZONES_READ,
-                ROLES_READ
+                ROLES_READ,
+                // Business: approvals and goals are limited to their own department (BusinessAccess).
+                FINANCE_READ, EXPENSE_SUBMIT, EXPENSE_APPROVE, GOALS_READ, GOALS_MANAGE, REPORTS_READ
         ));
 
         defs.put(MEMBER, EnumSet.of(
@@ -46,12 +48,16 @@ public final class SystemRoles {
                 USER_READ,
                 DEPARTMENT_READ,
                 DOCUMENTATION_READ,
-                TIMEZONES_READ
+                TIMEZONES_READ,
+                // Business: own expenses, and check-ins for their own department's goals.
+                EXPENSE_SUBMIT, GOALS_READ
         ));
 
         defs.put(VIEWER, EnumSet.of(
                 DASHBOARD_READ,
-                DOCUMENTATION_READ
+                DOCUMENTATION_READ,
+                // Business
+                REPORTS_READ, GOALS_READ
         ));
 
         DEFINITIONS = Collections.unmodifiableMap(defs);

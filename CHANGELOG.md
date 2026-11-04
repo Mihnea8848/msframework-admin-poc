@@ -14,6 +14,16 @@ section into a version (see `AGENTS.md`, Git workflow).
 - API keys and password reset tokens are stored only as hashes.
 
 ### Added
+- Business backend (migration V5): budgets per department, quarter and
+  category; expenses with an approval workflow (no self-approval, over-budget
+  flag, finance marks them paid) that also form the payments ledger; goals
+  and KPIs with check-ins and weighted department performance scores; a
+  reports overview and CSV exports; CSV import of expenses, budgets and
+  check-ins; and `POST /api/ingest/checkins` for integrations, authenticated
+  with a scoped API key on its own stateless filter chain. New permissions
+  FINANCE_READ, FINANCE_MANAGE, EXPENSE_SUBMIT, EXPENSE_APPROVE, GOALS_READ,
+  GOALS_MANAGE and REPORTS_READ. Demo business data is seeded once per
+  database when `SEED_DEMO_DATA` is true.
 - Create and delete users, user search, and the missing status field.
 - Real CSV import with per-row errors, live database schema page, real
   dashboard activity feed and security checks.
