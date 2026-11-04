@@ -159,6 +159,10 @@
   }
 
   .ms-account__account-icon > svg {
+    /* The MS:AUTH mark in the icon colour, like the other providers */
+    --logo-upper: currentcolor;
+    --logo-lower: currentcolor;
+
     width: 16px;
     height: 16px;
   }
