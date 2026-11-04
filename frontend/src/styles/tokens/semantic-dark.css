@@ -67,7 +67,6 @@
   --trace: var(--white);
   --avatar-bg: color-mix(in srgb, var(--brand-cobalt) 26%, transparent);
   --avatar-text: var(--white-a95);
-  --gear: var(--white-a20);
 
   /* The three-segment stripe under page headers (decoration, no text on it) */
   --stripe-1: var(--brand-cyan);

@@ -6,10 +6,29 @@
  *   --seal-X-text    seal-coloured text on surfaces (4.5:1)
  *   --seal-X-border  the outline of the seal against a surface (3:1). Silver and white get a
  *                    darker border in light mode, because their fill would vanish on white.
+ *   --seal-X-official  the official seal colour, used on the dark disc of the official seal
+ *                    (ui/seal/OfficialSeal.tsx), which looks the same in both themes
  * An element picks one with data-seal="X", which sets the generic --seal, --seal-fg,
- * --seal-text and --seal-border for everything inside it.
+ * --seal-text, --seal-border and --seal-official for everything inside it.
  */
 :root {
+  /* The official seal disc, from the brand artwork; it stays dark in light mode, like the real seal */
+  --seal-disc: var(--charcoal-800);
+  --seal-disc-inner: var(--ink);
+  --seal-disc-rim: var(--black-950);
+  --seal-disc-rivet: var(--charcoal-950);
+  --seal-disc-line: var(--steel-600);
+  --seal-disc-gear: var(--steel-400);
+  --seal-disc-text: var(--grey-400);
+  --seal-administration-official: var(--crimson-700);
+  --seal-development-official: var(--purple-700);
+  --seal-quality-control-official: var(--blue-500);
+  --seal-external-affairs-official: var(--jade-700);
+  --seal-human-resources-official: var(--orange-700);
+  --seal-ethics-regulations-official: var(--silver-300);
+  --seal-engineering-innovation-official: var(--snow-200);
+  --seal-director-official: var(--gold-300);
+  --seal-director-official-dim: var(--gold-500);
   --seal-administration: var(--crimson-300);
   --seal-administration-fg: var(--charcoal-900);
   --seal-administration-text: var(--crimson-250);
@@ -84,6 +103,7 @@
   --seal-fg: var(--seal-administration-fg);
   --seal-text: var(--seal-administration-text);
   --seal-border: var(--seal-administration-border);
+  --seal-official: var(--seal-administration-official);
 }
 
 [data-seal="development"] {
@@ -91,6 +111,7 @@
   --seal-fg: var(--seal-development-fg);
   --seal-text: var(--seal-development-text);
   --seal-border: var(--seal-development-border);
+  --seal-official: var(--seal-development-official);
 }
 
 [data-seal="quality-control"] {
@@ -98,6 +119,7 @@
   --seal-fg: var(--seal-quality-control-fg);
   --seal-text: var(--seal-quality-control-text);
   --seal-border: var(--seal-quality-control-border);
+  --seal-official: var(--seal-quality-control-official);
 }
 
 [data-seal="external-affairs"] {
@@ -105,6 +127,7 @@
   --seal-fg: var(--seal-external-affairs-fg);
   --seal-text: var(--seal-external-affairs-text);
   --seal-border: var(--seal-external-affairs-border);
+  --seal-official: var(--seal-external-affairs-official);
 }
 
 [data-seal="human-resources"] {
@@ -112,6 +135,7 @@
   --seal-fg: var(--seal-human-resources-fg);
   --seal-text: var(--seal-human-resources-text);
   --seal-border: var(--seal-human-resources-border);
+  --seal-official: var(--seal-human-resources-official);
 }
 
 [data-seal="ethics-regulations"] {
@@ -119,6 +143,7 @@
   --seal-fg: var(--seal-ethics-regulations-fg);
   --seal-text: var(--seal-ethics-regulations-text);
   --seal-border: var(--seal-ethics-regulations-border);
+  --seal-official: var(--seal-ethics-regulations-official);
 }
 
 [data-seal="engineering-innovation"] {
@@ -126,6 +151,7 @@
   --seal-fg: var(--seal-engineering-innovation-fg);
   --seal-text: var(--seal-engineering-innovation-text);
   --seal-border: var(--seal-engineering-innovation-border);
+  --seal-official: var(--seal-engineering-innovation-official);
 }
 
 [data-seal="director"] {
@@ -133,4 +159,5 @@
   --seal-fg: var(--seal-director-fg);
   --seal-text: var(--seal-director-text);
   --seal-border: var(--seal-director-border);
+  --seal-official: var(--seal-director-official);
 }

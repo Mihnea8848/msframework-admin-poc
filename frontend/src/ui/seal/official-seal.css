@@ -1,0 +1,131 @@
+/* The official department seal (ui/seal/OfficialSeal.tsx). Set its size with width and height. */
+@layer components {
+  .ms-official-seal {
+    display: block;
+    flex: none;
+    overflow: visible;
+  }
+
+  .ms-official-seal__disc {
+    fill: var(--seal-disc);
+    stroke: var(--seal-disc-rim);
+  }
+
+  .ms-official-seal__hairline {
+    fill: none;
+    stroke: var(--seal-disc-line);
+    opacity: 0.7;
+  }
+
+  .ms-official-seal__rivet {
+    fill: var(--seal-disc-rivet);
+  }
+
+  .ms-official-seal__rivet-head {
+    fill: var(--seal-disc-line);
+  }
+
+  .ms-official-seal__band {
+    fill: var(--seal-disc-inner);
+    stroke: var(--seal-disc-line);
+  }
+
+  .ms-official-seal__ring {
+    fill: none;
+    stroke: var(--seal-official);
+  }
+
+  .ms-official-seal__vent {
+    fill: var(--seal-disc);
+    stroke: var(--seal-disc-line);
+  }
+
+  .ms-official-seal__vent-line {
+    stroke: var(--seal-disc-gear);
+  }
+
+  .ms-official-seal__gear {
+    fill: var(--seal-disc-gear);
+  }
+
+  .ms-official-seal__inner {
+    fill: var(--seal-disc-inner);
+    stroke: var(--seal-official);
+  }
+
+  .ms-official-seal__title,
+  .ms-official-seal__foot {
+    font-family: var(--font-cap);
+    text-anchor: middle;
+  }
+
+  .ms-official-seal__title {
+    fill: var(--seal-disc-text);
+    font-weight: var(--weight-semibold);
+  }
+
+  .ms-official-seal__foot {
+    fill: var(--seal-official);
+    font-weight: var(--weight-bold);
+  }
+
+  /* Emblem paint */
+  .ms-official-seal__fill {
+    fill: var(--seal-official);
+  }
+
+  .ms-official-seal__edge {
+    stroke: var(--seal-official);
+  }
+
+  .ms-official-seal__line {
+    fill: none;
+    stroke: var(--seal-official);
+  }
+
+  .ms-official-seal__dim {
+    opacity: 0.35;
+  }
+
+  .ms-official-seal__cut {
+    fill: var(--seal-disc-inner);
+  }
+
+  .ms-official-seal__groove {
+    stroke: var(--seal-disc-rim);
+  }
+
+  .ms-official-seal__outline {
+    stroke: var(--seal-disc-inner);
+  }
+
+  .ms-official-seal__orbit {
+    fill: none;
+    stroke: var(--seal-disc-gear);
+  }
+
+  .ms-official-seal__orbit-gap {
+    fill: none;
+    stroke: var(--seal-disc-inner);
+  }
+
+  .ms-official-seal__orbit-head {
+    fill: var(--seal-disc-gear);
+    stroke: var(--seal-disc-inner);
+    stroke-width: 6;
+    paint-order: stroke;
+  }
+
+  .ms-official-seal__spot {
+    fill: var(--seal-disc-gear);
+  }
+
+  .ms-official-seal__dim-line {
+    fill: none;
+    stroke: var(--seal-director-official-dim);
+  }
+
+  .ms-official-seal__dim-fill {
+    fill: var(--seal-director-official-dim);
+  }
+}

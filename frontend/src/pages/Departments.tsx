@@ -9,8 +9,9 @@ import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import Dialog, { DialogBody, DialogFooter } from "../ui/Dialog";
 import PageHeader from "../ui/PageHeader";
-import { SealBadge, SealMini } from "../ui/seal/Seal";
-import { DEFAULT_COLOR, SEALS, sealForColor } from "../ui/seal/seals";
+import OfficialSeal from "../ui/seal/OfficialSeal";
+import { SealMini } from "../ui/seal/Seal";
+import { DEFAULT_COLOR, SEALS, sealForColor, sealRingTitle } from "../ui/seal/seals";
 import "../ui/field.css";
 import "../ui/list.css";
 import "../ui/surface.css";
@@ -220,7 +221,8 @@ export default function Departments() {
                         const canDeleteThisDepartment = canDeleteDepartments;
                         return (
                             <li key={dept.id} className="ms-cut ms-departments__card">
-                                <SealBadge seal={seal.key} />
+                                <OfficialSeal className="ms-departments__seal" seal={seal.key} title={sealRingTitle(dept.name, seal)} />
+                                <span className="ms-departments__mini"><SealMini seal={seal.key} /></span>
                                 <div className="ms-departments__info">
                                     <h2 className="ms-departments__name">{dept.name}</h2>
                                     <p className="ms-departments__meta">

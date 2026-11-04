@@ -89,6 +89,13 @@
   --mist-500: #7C8FA4;
   --mist-700: #45566A;
 
+  /* Gunmetal: the official seal disc (ui/seal/OfficialSeal.tsx), from the brand artwork */
+  --black-950: #0A0A0A;
+  --charcoal-950: #141414;
+  --steel-600: #4A4E53;
+  --steel-400: #7F8489;
+  --grey-400: #ABABAB;
+
   /* Status hues */
   --green-400: #4CC38A;
   --green-800: #186C43;
@@ -131,6 +138,8 @@
   --snow-800: #3F3F3F;
   --gold-300: #EBC034;
   --gold-400: #D9AE2C;
+  --gold-500: #B8962A;
+  --blue-500: #3E8DD2;
   --gold-700: #846500;
   --gold-800: #735800;
 }
