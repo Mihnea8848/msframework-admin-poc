@@ -13,7 +13,10 @@ import com.msframework.backend.exception.ApiException;
 import com.msframework.backend.repository.UserRepository;
 import com.msframework.backend.service.AuditService;
 import com.msframework.backend.service.AuthSessionService;
+import com.msframework.backend.service.AuthThrottleService;
+import com.msframework.backend.service.AuthThrottleService.Action;
 import com.msframework.backend.service.CurrentUserService;
+import com.msframework.backend.service.OrgSettingsService;
 import com.msframework.backend.service.PasswordResetService;
 import com.msframework.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,6 +50,8 @@ public class AuthController {
     private final UserService userService;
     private final PasswordResetService passwordResetService;
     private final AuditService auditService;
+    private final AuthThrottleService throttle;
+    private final OrgSettingsService orgSettingsService;
 
     @Operation(operationId = "login", summary = "Sign in and start a session",
             description = "Sets the session cookie. An inactive account gets 403.")
@@ -55,6 +60,7 @@ public class AuthController {
                                 HttpServletRequest httpRequest,
                                 HttpServletResponse httpResponse) {
         String email = UserService.normalizeEmail(request.email());
+        throttle.beforeLogin(email); // per-IP limit and account lock, before the password check
 
         Authentication authentication;
         try {
@@ -62,8 +68,10 @@ public class AuthController {
                     UsernamePasswordAuthenticationToken.unauthenticated(email, request.password()));
         } catch (AuthenticationException e) {
             auditService.log("login_failed", email, "Failed sign-in attempt for " + email);
+            throttle.loginFailed(email);
             throw ApiException.unauthorized("Invalid email or password");
         }
+        throttle.loginSucceeded(email);
 
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> ApiException.unauthorized("Invalid email or password"));
@@ -98,6 +106,8 @@ public class AuthController {
     @ApiResponse(responseCode = "201", description = "Created")
     @PostMapping("/register")
     public ResponseEntity<UserDto> register(@Valid @RequestBody RegisterRequest request) {
+        orgSettingsService.requireRegistrationOpen();
+        throttle.check(Action.REGISTER, request.email());
         User saved = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.toDto(saved));
     }
@@ -146,6 +156,7 @@ public class AuthController {
         if (email == null || email.isBlank()) {
             throw ApiException.badRequest("Email is required");
         }
+        throttle.check(Action.FORGOT_PASSWORD, email);
         passwordResetService.requestReset(email);
         return ResponseEntity.noContent().build();
     }
@@ -154,6 +165,7 @@ public class AuthController {
     @ApiResponse(responseCode = "204", description = "Password changed")
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest body) {
+        throttle.check(Action.RESET_PASSWORD, null);
         passwordResetService.resetPassword(body.token(), body.newPassword());
         return ResponseEntity.noContent().build();
     }

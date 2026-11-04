@@ -80,9 +80,11 @@ class MigrationTests {
         DataSource db = createDatabase("empty");
         FlywayConfig.migrate(flyway(db));
 
-        assertThat(history(db)).containsExactly("1 SQL baseline", "2 SQL converge legacy schema");
+        assertThat(history(db)).startsWith("1 SQL baseline", "2 SQL converge legacy schema")
+                .contains("4 SQL sessions security");
         assertThat(tables(db)).containsAll(Set.of("users", "role", "user_roles", "departments", "audit_events",
-                "password_reset_tokens", "flyway_schema_history"));
+                "password_reset_tokens", "spring_session", "spring_session_attributes", "auth_throttle",
+                "flyway_schema_history"));
         assertThat(new JdbcTemplate(db).queryForObject("SELECT COUNT(*) FROM role", Integer.class))
                 .as("V2 inserts no data on a fresh database").isZero();
     }
@@ -94,7 +96,8 @@ class MigrationTests {
         Flyway.configure().configuration(flyway.getConfiguration()).target("1").load().migrate();
         Map<String, List<String>> afterV1 = schema(db);
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+        Flyway toV2 = Flyway.configure().configuration(flyway.getConfiguration()).target("2").load();
+        assertThat(toV2.migrate().migrationsExecuted).isEqualTo(1);
         assertThat(schema(db)).isEqualTo(afterV1);
     }
 
@@ -140,7 +143,8 @@ class MigrationTests {
 
         // (a) same schema as a database migrated from empty
         assertThat(schema(db)).isEqualTo(freshSchema);
-        assertThat(history(db)).containsExactly("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema");
+        assertThat(history(db)).startsWith("1 BASELINE << Flyway Baseline >>", "2 SQL converge legacy schema");
+        List<String> applied = history(db);
 
         // (b) the data survived, and every user has exactly the expected role and a status
         assertThat(rows(db, legacyColumns)).isEqualTo(legacyRows);
@@ -159,7 +163,7 @@ class MigrationTests {
         // (c) running the migrations again changes nothing
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         FlywayConfig.migrate(flyway);
-        assertThat(history(db)).hasSize(2);
+        assertThat(history(db)).isEqualTo(applied);
         assertThat(schema(db)).isEqualTo(freshSchema);
     }
 

@@ -5,7 +5,6 @@ import com.msframework.backend.service.PasswordResetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -43,33 +42,30 @@ class ApiIntegrationTests {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
+    /** A JSON request with a CSRF token; {@code .with(session)} afterwards adds the session. */
     private static MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder builder, String body) {
-        return builder.contentType(MediaType.APPLICATION_JSON).content(body);
+        return builder.contentType(MediaType.APPLICATION_JSON).content(body).with(TestSession.ANONYMOUS);
     }
 
-    private MockHttpSession login(String email, String password) throws Exception {
-        MvcResult result = mvc.perform(json(post("/api/auth/login"),
-                        "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
-                .andExpect(status().isOk())
-                .andReturn();
-        return (MockHttpSession) result.getRequest().getSession(false);
+    private TestSession login(String email, String password) throws Exception {
+        return TestSession.login(mvc, email, password);
     }
 
-    private MockHttpSession admin() throws Exception {
+    private TestSession admin() throws Exception {
         return login(ADMIN_EMAIL, ADMIN_PASSWORD);
     }
 
-    private long createDepartment(MockHttpSession admin, String name) throws Exception {
-        MvcResult result = mvc.perform(json(post("/api/departments"), "{\"name\":\"" + name + "\"}").session(admin))
+    private long createDepartment(TestSession admin, String name) throws Exception {
+        MvcResult result = mvc.perform(json(post("/api/departments"), "{\"name\":\"" + name + "\"}").with(admin))
                 .andExpect(status().isCreated())
                 .andReturn();
         return ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
     }
 
-    private long createUser(MockHttpSession admin, String email, String role, Long departmentId) throws Exception {
+    private long createUser(TestSession admin, String email, String role, Long departmentId) throws Exception {
         String body = "{\"fullName\":\"Test User\",\"email\":\"" + email + "\",\"role\":\"" + role + "\","
                 + "\"status\":\"Active\",\"password\":\"" + PASSWORD + "\",\"departmentId\":" + departmentId + "}";
-        MvcResult result = mvc.perform(json(post("/api/users"), body).session(admin))
+        MvcResult result = mvc.perform(json(post("/api/users"), body).with(admin))
                 .andExpect(status().isCreated())
                 .andReturn();
         return ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
@@ -99,7 +95,7 @@ class ApiIntegrationTests {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
 
-        mvc.perform(get("/api/audit").param("limit", "20").session(admin()))
+        mvc.perform(get("/api/audit").param("limit", "20").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("login_failed")));
     }
@@ -114,15 +110,15 @@ class ApiIntegrationTests {
 
     @Test
     void errorsKeepTheirRealStatusCode() throws Exception {
-        MockHttpSession admin = admin();
-        mvc.perform(get("/api/does-not-exist").session(admin)).andExpect(status().isNotFound());
-        mvc.perform(json(post("/api/departments"), "{not json").session(admin)).andExpect(status().isBadRequest());
-        mvc.perform(delete("/api/users/999999").session(admin)).andExpect(status().isNotFound());
+        TestSession admin = admin();
+        mvc.perform(get("/api/does-not-exist").with(admin)).andExpect(status().isNotFound());
+        mvc.perform(json(post("/api/departments"), "{not json").with(admin)).andExpect(status().isBadRequest());
+        mvc.perform(delete("/api/users/999999").with(admin)).andExpect(status().isNotFound());
     }
 
     @Test
     void userListNeverContainsPasswordHashes() throws Exception {
-        String body = mvc.perform(get("/api/users").session(admin()))
+        String body = mvc.perform(get("/api/users").with(admin()))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(body).doesNotContain("password").doesNotContain("$2a$");
@@ -158,25 +154,25 @@ class ApiIntegrationTests {
     void membersCannotUseAdminEndpoints() throws Exception {
         String email = unique("member") + "@example.com";
         createUser(admin(), email, "MEMBER", 1L);
-        MockHttpSession member = login(email, PASSWORD);
+        TestSession member = login(email, PASSWORD);
 
-        mvc.perform(json(post("/api/keys"), "{\"name\":\"x\"}").session(member)).andExpect(status().isForbidden());
-        mvc.perform(get("/api/connections").session(member)).andExpect(status().isForbidden());
-        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"UTC\"}").session(member))
+        mvc.perform(json(post("/api/keys"), "{\"name\":\"x\"}").with(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/connections").with(member)).andExpect(status().isForbidden());
+        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"UTC\"}").with(member))
                 .andExpect(status().isForbidden());
-        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Dept") + "\"}").session(member))
+        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Dept") + "\"}").with(member))
                 .andExpect(status().isForbidden());
-        mvc.perform(delete("/api/users/1").session(member)).andExpect(status().isForbidden());
-        mvc.perform(get("/api/database/tables").session(member)).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/users/1").with(member)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/database/tables").with(member)).andExpect(status().isForbidden());
         // Audit entries other than exports cannot be forged from the browser.
         mvc.perform(json(post("/api/audit/event"), "{\"eventType\":\"dept_deleted\",\"description\":\"fake\"}")
-                        .session(member))
+                        .with(member))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void managersAreScopedToTheirOwnDepartment() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long deptA = createDepartment(admin, unique("Alpha"));
         long deptB = createDepartment(admin, unique("Beta"));
         String managerEmail = unique("manager") + "@example.com";
@@ -186,23 +182,23 @@ class ApiIntegrationTests {
         String memberBEmail = unique("b") + "@example.com";
         long memberB = createUser(admin, memberBEmail, "MEMBER", deptB);
 
-        MockHttpSession manager = login(managerEmail, PASSWORD);
+        TestSession manager = login(managerEmail, PASSWORD);
 
-        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "VIEWER", "Active", deptA)).session(manager))
+        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "VIEWER", "Active", deptA)).with(manager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roles[0]").value("VIEWER"));
-        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "ADMIN", "Active", deptA)).session(manager))
+        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "ADMIN", "Active", deptA)).with(manager))
                 .andExpect(status().isForbidden());
-        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "MEMBER", "Active", deptB)).session(manager))
+        mvc.perform(json(put("/api/users/" + memberA), userUpdate(memberAEmail, "MEMBER", "Active", deptB)).with(manager))
                 .andExpect(status().isForbidden());
-        mvc.perform(json(put("/api/users/" + memberB), userUpdate(memberBEmail, "MEMBER", "Active", deptB)).session(manager))
+        mvc.perform(json(put("/api/users/" + memberB), userUpdate(memberBEmail, "MEMBER", "Active", deptB)).with(manager))
                 .andExpect(status().isForbidden());
 
-        mvc.perform(json(put("/api/departments/" + deptA), "{\"name\":\"" + unique("Alpha") + "\"}").session(manager))
+        mvc.perform(json(put("/api/departments/" + deptA), "{\"name\":\"" + unique("Alpha") + "\"}").with(manager))
                 .andExpect(status().isOk());
-        mvc.perform(json(put("/api/departments/" + deptB), "{\"name\":\"" + unique("Beta") + "\"}").session(manager))
+        mvc.perform(json(put("/api/departments/" + deptB), "{\"name\":\"" + unique("Beta") + "\"}").with(manager))
                 .andExpect(status().isForbidden());
-        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Gamma") + "\"}").session(manager))
+        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Gamma") + "\"}").with(manager))
                 .andExpect(status().isForbidden());
     }
 
@@ -210,11 +206,11 @@ class ApiIntegrationTests {
 
     @Test
     void adminCanCreateUpdateDeactivateAndDeleteUsers() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         String email = unique("crud") + "@example.com";
         long id = createUser(admin, email, "MEMBER", null);
 
-        mvc.perform(json(put("/api/users/" + id), userUpdate(email, "MEMBER", "Inactive", null)).session(admin))
+        mvc.perform(json(put("/api/users/" + id), userUpdate(email, "MEMBER", "Inactive", null)).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Inactive"));
 
@@ -222,30 +218,30 @@ class ApiIntegrationTests {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value(startsWith("This account is inactive")));
 
-        mvc.perform(delete("/api/users/" + id).session(admin)).andExpect(status().isNoContent());
-        mvc.perform(delete("/api/users/" + id).session(admin)).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/users/" + id).with(admin)).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/users/" + id).with(admin)).andExpect(status().isNotFound());
     }
 
     @Test
     void deactivatedUserLosesTheirSessionImmediately() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         String email = unique("kick") + "@example.com";
         long id = createUser(admin, email, "MEMBER", 1L);
-        MockHttpSession member = login(email, PASSWORD);
+        TestSession member = login(email, PASSWORD);
 
-        mvc.perform(get("/api/users").session(member)).andExpect(status().isOk());
-        mvc.perform(json(put("/api/users/" + id), userUpdate(email, "MEMBER", "Inactive", 1L)).session(admin))
+        mvc.perform(get("/api/users").with(member)).andExpect(status().isOk());
+        mvc.perform(json(put("/api/users/" + id), userUpdate(email, "MEMBER", "Inactive", 1L)).with(admin))
                 .andExpect(status().isOk());
-        mvc.perform(get("/api/users").session(member)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/users").with(member)).andExpect(status().isUnauthorized());
     }
 
     @Test
     void theLastActiveAdminIsProtected() throws Exception {
-        MockHttpSession admin = admin();
-        mvc.perform(delete("/api/users/1").session(admin)).andExpect(status().isBadRequest());
-        mvc.perform(json(put("/api/users/1"), userUpdate(ADMIN_EMAIL, "MEMBER", "Active", null)).session(admin))
+        TestSession admin = admin();
+        mvc.perform(delete("/api/users/1").with(admin)).andExpect(status().isBadRequest());
+        mvc.perform(json(put("/api/users/1"), userUpdate(ADMIN_EMAIL, "MEMBER", "Active", null)).with(admin))
                 .andExpect(status().isConflict());
-        mvc.perform(json(put("/api/users/1"), userUpdate(ADMIN_EMAIL, "ADMIN", "Inactive", null)).session(admin))
+        mvc.perform(json(put("/api/users/1"), userUpdate(ADMIN_EMAIL, "ADMIN", "Inactive", null)).with(admin))
                 .andExpect(status().isBadRequest());
     }
 
@@ -253,35 +249,35 @@ class ApiIntegrationTests {
     void changingOwnEmailKeepsTheSessionAndRequiresPassword() throws Exception {
         String email = unique("mail") + "@example.com";
         createUser(admin(), email, "MEMBER", 1L);
-        MockHttpSession session = login(email, PASSWORD);
+        TestSession session = login(email, PASSWORD);
         String newEmail = unique("renamed") + "@example.com";
 
         mvc.perform(json(post("/api/auth/email"), "{\"email\":\"" + newEmail + "\",\"currentPassword\":\"wrong\"}")
-                        .session(session))
+                        .with(session))
                 .andExpect(status().isBadRequest());
 
         mvc.perform(json(post("/api/auth/email"), "{\"email\":\"" + newEmail + "\",\"currentPassword\":\"" + PASSWORD + "\"}")
-                        .session(session))
+                        .with(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(newEmail));
 
-        mvc.perform(get("/api/auth/me").session(session))
+        mvc.perform(get("/api/auth/me").with(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(newEmail));
-        mvc.perform(get("/api/users").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/users").with(session)).andExpect(status().isOk());
     }
 
     @Test
     void changingPasswordWorks() throws Exception {
         String email = unique("pw") + "@example.com";
         createUser(admin(), email, "MEMBER", 1L);
-        MockHttpSession session = login(email, PASSWORD);
+        TestSession session = login(email, PASSWORD);
 
         mvc.perform(json(post("/api/auth/password"), "{\"currentPassword\":\"" + PASSWORD + "\",\"newPassword\":\"short\"}")
-                        .session(session))
+                        .with(session))
                 .andExpect(status().isBadRequest());
         mvc.perform(json(post("/api/auth/password"), "{\"currentPassword\":\"" + PASSWORD + "\",\"newPassword\":\"Another#456\"}")
-                        .session(session))
+                        .with(session))
                 .andExpect(status().isNoContent());
         login(email, "Another#456");
     }
@@ -309,28 +305,28 @@ class ApiIntegrationTests {
 
     @Test
     void deletingADepartmentUnassignsItsMembers() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         long dept = createDepartment(admin, unique("Temp"));
         String email = unique("dept") + "@example.com";
         long userId = createUser(admin, email, "MEMBER", dept);
 
-        mvc.perform(delete("/api/departments/" + dept).session(admin)).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/departments/" + dept).with(admin)).andExpect(status().isNoContent());
 
-        String users = mvc.perform(get("/api/users").session(admin)).andReturn().getResponse().getContentAsString();
+        String users = mvc.perform(get("/api/users").with(admin)).andReturn().getResponse().getContentAsString();
         Object departmentId = JsonPath.read(users, "$[?(@.id == " + userId + ")].departmentId");
         assertThat(departmentId.toString()).isEqualTo("[null]");
     }
 
     @Test
     void departmentNamesAreValidatedAndUnique() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         String name = unique("Unique");
         createDepartment(admin, name);
-        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + name.toUpperCase() + "\"}").session(admin))
+        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + name.toUpperCase() + "\"}").with(admin))
                 .andExpect(status().isConflict());
-        mvc.perform(json(post("/api/departments"), "{\"name\":\"   \"}").session(admin))
+        mvc.perform(json(post("/api/departments"), "{\"name\":\"   \"}").with(admin))
                 .andExpect(status().isBadRequest());
-        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Bad") + "\",\"color\":\"red; x\"}").session(admin))
+        mvc.perform(json(post("/api/departments"), "{\"name\":\"" + unique("Bad") + "\",\"color\":\"red; x\"}").with(admin))
                 .andExpect(status().isBadRequest());
     }
 
@@ -338,54 +334,54 @@ class ApiIntegrationTests {
 
     @Test
     void apiKeySecretIsReturnedOnlyOnce() throws Exception {
-        MockHttpSession admin = admin();
-        MvcResult created = mvc.perform(json(post("/api/keys"), "{\"name\":\"CI key\"}").session(admin))
+        TestSession admin = admin();
+        MvcResult created = mvc.perform(json(post("/api/keys"), "{\"name\":\"CI key\"}").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.secret").value(startsWith("msk_")))
                 .andReturn();
         String secret = JsonPath.read(created.getResponse().getContentAsString(), "$.secret");
 
-        String list = mvc.perform(get("/api/keys").session(admin)).andReturn().getResponse().getContentAsString();
+        String list = mvc.perform(get("/api/keys").with(admin)).andReturn().getResponse().getContentAsString();
         assertThat(list).contains("CI key").doesNotContain(secret).doesNotContain("\"secret\"");
     }
 
     @Test
     void integrationsAndWebhooksValidateInput() throws Exception {
-        MockHttpSession admin = admin();
-        mvc.perform(get("/api/connections").session(admin))
+        TestSession admin = admin();
+        mvc.perform(get("/api/connections").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(12));
-        mvc.perform(post("/api/connections/not-a-service/connect").session(admin)).andExpect(status().isNotFound());
-        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"javascript:alert(1)\"}").session(admin))
+        mvc.perform(post("/api/connections/not-a-service/connect").with(admin)).andExpect(status().isNotFound());
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"javascript:alert(1)\"}").with(admin))
                 .andExpect(status().isBadRequest());
 
         MvcResult created = mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/hook\",\"events\":[\"*\"]}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.active").value(true))
                 .andReturn();
         int id = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
-        mvc.perform(patch("/api/webhooks/" + id + "/toggle").session(admin))
+        mvc.perform(patch("/api/webhooks/" + id + "/toggle").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active").value(false));
     }
 
     @Test
     void settingsAreValidated() throws Exception {
-        MockHttpSession admin = admin();
-        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"Mars/Olympus\"}").session(admin))
+        TestSession admin = admin();
+        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"Mars/Olympus\"}").with(admin))
                 .andExpect(status().isBadRequest());
-        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"Europe/Bucharest\"}").session(admin))
+        mvc.perform(json(put("/api/settings/orgTimezone"), "{\"value\":\"Europe/Bucharest\"}").with(admin))
                 .andExpect(status().isOk());
-        mvc.perform(get("/api/settings/orgTimezone").session(admin))
+        mvc.perform(get("/api/settings/orgTimezone").with(admin))
                 .andExpect(jsonPath("$.value").value("Europe/Bucharest"));
 
         mvc.perform(json(put("/api/settings/worldClocks"),
-                        "{\"value\":\"[{\\\"label\\\":\\\"Cluj\\\",\\\"tz\\\":\\\"Europe/Bucharest\\\"}]\"}").session(admin))
+                        "{\"value\":\"[{\\\"label\\\":\\\"Cluj\\\",\\\"tz\\\":\\\"Europe/Bucharest\\\"}]\"}").with(admin))
                 .andExpect(status().isOk());
-        mvc.perform(json(put("/api/settings/worldClocks"), "{\"value\":\"not json\"}").session(admin))
+        mvc.perform(json(put("/api/settings/worldClocks"), "{\"value\":\"not json\"}").with(admin))
                 .andExpect(status().isBadRequest());
-        mvc.perform(json(put("/api/settings/somethingElse"), "{\"value\":\"x\"}").session(admin))
+        mvc.perform(json(put("/api/settings/somethingElse"), "{\"value\":\"x\"}").with(admin))
                 .andExpect(status().isNotFound());
     }
 
@@ -393,47 +389,47 @@ class ApiIntegrationTests {
 
     @Test
     void apiKeyBodyAndNameAreOptional() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         // No body at all, an empty object and a blank name all get the default name.
-        mvc.perform(post("/api/keys").session(admin))
+        mvc.perform(post("/api/keys").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("API key"));
-        mvc.perform(json(post("/api/keys"), "{}").session(admin))
+        mvc.perform(json(post("/api/keys"), "{}").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("API key"));
-        mvc.perform(json(post("/api/keys"), "{\"name\":\"   \"}").session(admin))
+        mvc.perform(json(post("/api/keys"), "{\"name\":\"   \"}").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("API key"));
-        mvc.perform(json(post("/api/keys"), "{\"name\":\"" + "k".repeat(61) + "\"}").session(admin))
+        mvc.perform(json(post("/api/keys"), "{\"name\":\"" + "k".repeat(61) + "\"}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Key name must be at most 60 characters"));
     }
 
     @Test
     void webhookEventsDefaultToEverything() throws Exception {
-        MockHttpSession admin = admin();
-        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/no-events\"}").session(admin))
+        TestSession admin = admin();
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/no-events\"}").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.events").value("*"));
-        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/empty\",\"events\":[]}").session(admin))
+        mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/empty\",\"events\":[]}").with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.events").value("*"));
         mvc.perform(json(post("/api/webhooks"),
                         "{\"url\":\"https://example.com/list\",\"events\":[\"user.created\",\" user.deleted \",\"user.created\"]}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.events").value("user.created,user.deleted"));
         // The comma-separated string accepted by the untyped body still works.
         mvc.perform(json(post("/api/webhooks"),
                         "{\"url\":\"https://example.com/string\",\"events\":\"user.created, dept.deleted\"}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.events").value("user.created,dept.deleted"));
         mvc.perform(json(post("/api/webhooks"), "{\"url\":\"https://example.com/bad\",\"events\":[\"Bad Event\"]}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid event name: Bad Event"));
-        mvc.perform(json(post("/api/webhooks"), "{\"events\":[\"*\"]}").session(admin))
+        mvc.perform(json(post("/api/webhooks"), "{\"events\":[\"*\"]}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Webhook URL is required"));
     }
@@ -450,28 +446,28 @@ class ApiIntegrationTests {
         mvc.perform(json(post("/api/auth/forgot-password"), "{\"email\":\"nobody@example.com\",\"extra\":1}"))
                 .andExpect(status().isNoContent());
 
-        MockHttpSession admin = admin();
-        mvc.perform(json(post("/api/auth/password"), "{\"newPassword\":\"Whatever#123\"}").session(admin))
+        TestSession admin = admin();
+        mvc.perform(json(post("/api/auth/password"), "{\"newPassword\":\"Whatever#123\"}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Current password is incorrect"));
-        mvc.perform(json(put("/api/settings/orgTimezone"), "{}").session(admin))
+        mvc.perform(json(put("/api/settings/orgTimezone"), "{}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Timezone is required"));
-        mvc.perform(json(post("/api/audit/event"), "{}").session(admin))
+        mvc.perform(json(post("/api/audit/event"), "{}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Unsupported event type"));
 
         // A missing description falls back to the default text.
-        mvc.perform(json(post("/api/audit/event"), "{\"eventType\":\"export_generated\"}").session(admin))
+        mvc.perform(json(post("/api/audit/event"), "{\"eventType\":\"export_generated\"}").with(admin))
                 .andExpect(status().isNoContent());
-        mvc.perform(get("/api/audit").param("limit", "1").session(admin))
+        mvc.perform(get("/api/audit").param("limit", "1").with(admin))
                 .andExpect(jsonPath("$[0].eventType").value("export_generated"))
                 .andExpect(jsonPath("$[0].description").value("Exported data"));
     }
 
     @Test
     void malformedBodiesGiveA400JsonError() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         String[][] requests = {
                 {"/api/auth/forgot-password", "{not json"},
                 {"/api/auth/reset-password", "[1, 2]"},
@@ -480,13 +476,13 @@ class ApiIntegrationTests {
                 {"/api/keys", "{\"name\":"},
         };
         for (String[] request : requests) {
-            mvc.perform(json(post(request[0]), request[1]).session(admin))
+            mvc.perform(json(post(request[0]), request[1]).with(admin))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.message").value("Malformed request body"));
         }
-        mvc.perform(json(put("/api/settings/worldClocks"), "{\"value\":[{\"label\":\"Cluj\"}]}").session(admin))
+        mvc.perform(json(put("/api/settings/worldClocks"), "{\"value\":[{\"label\":\"Cluj\"}]}").with(admin))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Malformed request body"));
     }
@@ -495,7 +491,7 @@ class ApiIntegrationTests {
 
     @Test
     void importCreatesValidRowsAndReportsTheRest() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         String a = unique("imp") + "@example.com";
         String b = unique("imp") + "@example.com";
         String body = "{\"rows\":["
@@ -506,7 +502,7 @@ class ApiIntegrationTests {
                 + "{\"fullName\":\"No Dept\",\"email\":\"" + unique("x") + "@example.com\",\"department\":\"Nowhere\"}"
                 + "]}";
 
-        mvc.perform(json(post("/api/import/users"), body).session(admin))
+        mvc.perform(json(post("/api/import/users"), body).with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(2))
                 .andExpect(jsonPath("$.skipped").value(3))
@@ -514,7 +510,7 @@ class ApiIntegrationTests {
 
         mvc.perform(json(post("/api/import/departments"),
                         "{\"rows\":[{\"name\":\"" + unique("Imported") + "\",\"color\":\"avatar-rose\"},{\"name\":\"Development\"}]}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(1))
                 .andExpect(jsonPath("$.skipped").value(1));
@@ -522,7 +518,7 @@ class ApiIntegrationTests {
 
     @Test
     void databasePageListsRealTables() throws Exception {
-        mvc.perform(get("/api/database/tables").session(admin()))
+        mvc.perform(get("/api/database/tables").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].name").value(hasItem("users")))
                 .andExpect(jsonPath("$[*].name").value(hasItem("departments")))
@@ -531,11 +527,11 @@ class ApiIntegrationTests {
 
     @Test
     void exportEventsCanBeLoggedByPermittedUsers() throws Exception {
-        MockHttpSession admin = admin();
+        TestSession admin = admin();
         mvc.perform(json(post("/api/audit/event"), "{\"eventType\":\"export_generated\",\"description\":\"Exported users CSV\"}")
-                        .session(admin))
+                        .with(admin))
                 .andExpect(status().isNoContent());
-        mvc.perform(get("/api/audit").param("limit", "5").session(admin))
+        mvc.perform(get("/api/audit").param("limit", "5").with(admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].eventType").value(hasItem("export_generated")))
                 .andExpect(jsonPath("$[0].createdAt").value(not(org.hamcrest.Matchers.emptyOrNullString())));

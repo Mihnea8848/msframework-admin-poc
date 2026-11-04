@@ -46,5 +46,9 @@ public enum Permission {
 
     API_KEY_READ,
     API_KEY_CREATE,
-    API_KEY_DELETE
+    API_KEY_DELETE,
+
+    // Sessions and organisation settings (sessions-security)
+    SESSIONS_MANAGE,
+    ORG_SETTINGS_MANAGE
 }
