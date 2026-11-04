@@ -205,6 +205,11 @@ section into a version (see `AGENTS.md`, Git workflow).
   figures that count up once. All of it is off with reduced motion.
 
 ### Fixed
+- The sign-in art animates smoothly again instead of at about 4 frames per
+  second.
+- Departments created by older versions had no colour, so all of them showed
+  the Quality Control seal. `V8` gives the seven standard departments their
+  own seal's colour when theirs is missing.
 - The user list no longer runs one query per user (roles and departments
   are batch-fetched).
 - Changing your own email no longer logs you out.

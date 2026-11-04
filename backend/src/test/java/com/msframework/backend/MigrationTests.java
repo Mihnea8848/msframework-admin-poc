@@ -147,7 +147,16 @@ class MigrationTests {
                 "3 SQL people").contains("5 SQL business");
 
         // (b) the data survived, and every user has exactly the expected role and a status
-        assertThat(rows(db, legacyColumns)).isEqualTo(legacyRows);
+        // Departments are checked apart: V8 fills in a missing colour for the standard ones.
+        Map<String, List<String>> migratedRows = rows(db, legacyColumns);
+        List<String> legacyDepartments = legacyRows.remove("departments");
+        List<String> migratedDepartments = migratedRows.remove("departments");
+        assertThat(migratedRows).isEqualTo(legacyRows);
+        if (legacyDepartments != null) {
+            assertThat(migratedDepartments).hasSameSizeAs(legacyDepartments);
+        }
+        assertThat(new JdbcTemplate(db).queryForObject(
+                "SELECT COUNT(*) FROM departments WHERE color IS NULL OR trim(color) = ''", Integer.class)).isZero();
         JdbcTemplate jdbc = new JdbcTemplate(db);
         Map<String, String> actualUsers = new TreeMap<>();
         jdbc.query("SELECT u.email, r.name, u.status FROM users u "

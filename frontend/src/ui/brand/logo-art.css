@@ -169,27 +169,27 @@
   @media (prefers-reduced-motion: no-preference) {
     :root[data-motion="full"] .ms-logo-art__dust {
       will-change: transform;
-      animation: ms-logo-art-dust 90s steps(256) infinite;
+      animation: ms-logo-art-dust 90s linear infinite;
     }
 
     :root[data-motion="full"] .ms-logo-art__stars {
       will-change: transform;
-      animation: ms-logo-art-stars 90s steps(512) infinite;
+      animation: ms-logo-art-stars 90s linear infinite;
     }
 
     :root[data-motion="full"] .ms-logo-art__twinkle {
       will-change: opacity;
-      animation: ms-logo-art-twinkle var(--d) steps(10) var(--delay) infinite;
+      animation: ms-logo-art-twinkle var(--d) ease-in-out var(--delay) infinite;
     }
 
     :root[data-motion="full"] .ms-logo-art__pulse {
       will-change: opacity;
-      animation: ms-logo-art-pulse 7s steps(28) infinite;
+      animation: ms-logo-art-pulse 7s ease-in-out infinite;
     }
 
     :root[data-motion="full"] .ms-logo-art__cluster {
       will-change: transform;
-      animation: ms-logo-art-float 11s steps(4) infinite alternate;
+      animation: ms-logo-art-float 11s ease-in-out infinite alternate;
     }
   }
 
