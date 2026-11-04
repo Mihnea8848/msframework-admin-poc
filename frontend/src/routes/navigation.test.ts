@@ -3,7 +3,7 @@ import {
     LEGACY_PATHS, MOBILE_TAB_COUNT, PAGES, SETTINGS_TABS, crumbFor, groupPages, mobileTabs, morePages, pageByPath, visiblePages,
 } from "./navigation";
 
-const ALL = [...new Set(PAGES.map((p) => p.permission).filter((p) => p !== null))];
+const ALL = [...new Set(PAGES.flatMap((p) => (p.permission === null ? [] : typeof p.permission === "string" ? [p.permission] : [...p.permission])))];
 const admin = { roles: ["ADMIN"], permissions: ALL };
 const member = { roles: ["MEMBER"], permissions: ["DASHBOARD_READ", "USER_READ", "DEPARTMENT_READ", "TIMEZONES_READ", "DOCUMENTATION_READ"] };
 const viewer = { roles: ["VIEWER"], permissions: ["DASHBOARD_READ", "DOCUMENTATION_READ"] };
@@ -56,8 +56,8 @@ describe("morePages", () => {
 
 describe("groupPages and pageByPath", () => {
     it("groups in sidebar group order and skips empty groups", () => {
-        // Performance has no pages yet, so it is skipped.
-        expect(groupPages(visiblePages(admin)).map((g) => g.group)).toEqual(["Overview", "People", "Finance", "Operations", "Security", "Resources"]);
+        expect(groupPages(visiblePages(admin)).map((g) => g.group)).toEqual(["Overview", "People", "Performance", "Finance", "Operations", "Security", "Resources"]);
+        expect(groupPages(visiblePages(viewer)).map((g) => g.group)).toEqual(["Overview", "Resources"]);
         expect(groupPages(PAGES.filter((p) => p.key === "users")).map((g) => g.group)).toEqual(["People"]);
     });
 
@@ -87,5 +87,36 @@ describe("Settings and old paths", () => {
         const targets = new Set([...PAGES.map((p) => p.path), ...SETTINGS_TABS.map((t) => t.path)]);
         for (const to of Object.values(LEGACY_PATHS)) expect(targets.has(to)).toBe(true);
         expect(LEGACY_PATHS["/notifications"]).toBe("/activity");
+    });
+});
+
+describe("business pages", () => {
+    const realMember = { roles: ["MEMBER"], permissions: [...member.permissions, "EXPENSE_SUBMIT", "GOALS_READ"] };
+    const realViewer = { roles: ["VIEWER"], permissions: [...viewer.permissions, "REPORTS_READ", "GOALS_READ"] };
+    const manager = {
+        roles: ["MANAGER"],
+        permissions: [...member.permissions, "AUDIT_READ", "FINANCE_READ", "EXPENSE_SUBMIT", "EXPENSE_APPROVE", "GOALS_READ", "GOALS_MANAGE", "REPORTS_READ"],
+    };
+    const business = (user: { permissions: string[] }) =>
+        keys(visiblePages(user)).filter((k) => ["goals", "reports", "budgets", "expenses", "payments", "import"].includes(k));
+
+    it("puts Goals and Reports under Performance, Budgets, Expenses and Payments under Finance", () => {
+        const groups = Object.fromEntries(groupPages(visiblePages(admin)).map((g) => [g.group, keys(g.pages)]));
+        expect(groups.Performance).toEqual(["goals", "reports"]);
+        expect(groups.Finance).toEqual(["budgets", "expenses", "payments"]);
+    });
+
+    it("shows each role only the business pages it may use", () => {
+        expect(business(admin)).toEqual(["goals", "reports", "budgets", "expenses", "payments", "import"]);
+        // Managers import check-ins (GOALS_MANAGE) but not users, departments or money.
+        expect(business(manager)).toEqual(["goals", "reports", "budgets", "expenses", "payments", "import"]);
+        expect(business(realMember)).toEqual(["goals", "expenses"]);
+        expect(business(realViewer)).toEqual(["goals", "reports"]);
+    });
+
+    it("opens Expenses with any of submit, approve or finance read", () => {
+        expect(business({ permissions: ["EXPENSE_APPROVE"] })).toEqual(["expenses"]);
+        expect(business({ permissions: ["FINANCE_READ"] })).toEqual(["budgets", "expenses", "payments"]);
+        expect(business({ permissions: ["PAYMENTS_READ"] })).toEqual([]);
     });
 });

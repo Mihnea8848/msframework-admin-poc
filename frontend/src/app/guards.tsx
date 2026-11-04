@@ -37,7 +37,7 @@ export function RedirectIfAuthed({ children }: Children) {
 }
 
 /** A page that needs a permission: without it the user is sent home. */
-export function RequirePermission({ permission, children }: Children & { permission: Permission | null }) {
+export function RequirePermission({ permission, children }: Children & { permission: Permission | readonly Permission[] | null }) {
     const { user, loading } = useAuth();
 
     if (loading) return <FullPageLoading />;

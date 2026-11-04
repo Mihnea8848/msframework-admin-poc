@@ -151,3 +151,36 @@ describe("router guards", () => {
         await waitFor(() => expect(document.querySelector(".ms-sidebar [aria-current=page]")).toHaveAttribute("href", "/activity"));
     });
 });
+
+describe("business pages", () => {
+    const member: CurrentUserDto = {
+        ...viewer, id: 9, email: "kenji@mehstudios.net", roles: ["MEMBER"], departmentId: 2, departmentName: "Development",
+        permissions: ["DASHBOARD_READ", "USER_READ", "DEPARTMENT_READ", "EXPENSE_SUBMIT", "GOALS_READ"],
+    };
+    const reportViewer: CurrentUserDto = { ...viewer, id: 10, permissions: ["DASHBOARD_READ", "REPORTS_READ", "GOALS_READ"] };
+
+    it("lets a member open Goals", async () => {
+        backend(member);
+        await settlesAt(start("/goals"), "/goals");
+    });
+
+    it("lets a member open Expenses (EXPENSE_SUBMIT is one of its permissions)", async () => {
+        backend(member);
+        await settlesAt(start("/expenses"), "/expenses");
+    });
+
+    it.each(["/budgets", "/payments", "/reports"])("sends a member away from %s", async (path) => {
+        backend(member);
+        await settlesAt(start(path), "/");
+    });
+
+    it("lets a viewer read Reports", async () => {
+        backend(reportViewer);
+        await settlesAt(start("/reports"), "/reports");
+    });
+
+    it("sends a viewer away from Expenses", async () => {
+        backend(reportViewer);
+        await settlesAt(start("/expenses"), "/");
+    });
+});
